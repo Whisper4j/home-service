@@ -1,0 +1,6152 @@
+openapi: 3.0.3
+info:
+  title: 家政预约与调度平台
+  version: 1.0.0
+  description: |-
+    本文件为唯一正式接口契约。平台管理型、单SKU单人员，三端独立角色。所有 HTTP 接口相对 servers=/api；成功 code=SUCCESS，失败使用真实HTTP状态和字符串业务码。分页默认1/20，最大100，空页list=[]、total=0、pages=0；超末页返回空list但保留真实total/pages。未知JSON字段拒绝，字符串去除两侧空白后校验（密码不裁剪）。所有 ID 十进制字符串、金额两位小数字符串，日期时间 Asia/Shanghai +08:00。
+
+    并发最终由MySQL订单条件更新、按时间排序的全部槽条件更新和事务裁决；Redis/推送不能作为唯一保障。SERVICE与BUFFER完整可用才可分配，标准尾部缓冲120分钟、优惠60分钟，全部槽须在工作区间内。时间窗边界：最早/最远/优惠提前量取包含，支付/报价/抢单在 now>=deadline 时拒绝并执行到期处理。
+
+    状态路径：PENDING_PAYMENT→WAITING_DISPATCH(标准)或WAITING_ACCEPTANCE(优惠)→PENDING_SERVICE→DEPARTED→ARRIVED→IN_SERVICE→PENDING_CONFIRMATION→COMPLETED；允许的取消分支→CANCELLED。支付独立UNPAID/PAID/PARTIALLY_REFUNDED/REFUNDED，调度独立NOT_REQUIRED/PENDING/SUCCEEDED/FAILED；取消已分配订单保留调度成功历史。
+
+    错误码与HTTP：400 VALIDATION_ERROR；401 UNAUTHENTICATED/TOKEN_EXPIRED/INVALID_CREDENTIALS；403 FORBIDDEN/ACCOUNT_DISABLED；404 NOT_FOUND；409 USERNAME_EXISTS/IDEMPOTENCY_CONFLICT/REQUEST_IN_PROGRESS/STATE_CONFLICT/PRICE_CHANGED/SLOT_CONFLICT/SCHEDULE_CONFLICT/OFFER_CLOSED/ORDER_TAKEN/REVIEW_EXISTS/RESOURCE_IN_USE/CONFIG_CONFLICT；422 PRICE_OUT_OF_RANGE/OUTSIDE_SERVICE_AREA/BOOKING_WINDOW_INVALID/OFFER_NOT_SUPPORTED/WORKER_INELIGIBLE/START_CODE_INVALID/CATALOG_UNAVAILABLE；500 INTERNAL_ERROR。
+
+    WebSocket不作为OpenAPI HTTP path。连接同源 /ws，首帧 WsAuthFrame，成功 WsAuthAck；随后 WsEvent。握手后认证前不推送数据，业务通知在事务提交后发送，重连必须重新HTTP查询。各事件共用隐私最小化 WsOrderPayload；不接受WebSocket业务写操作。
+servers:
+  - url: /api
+    description: 同源，由Nginx代理；不硬编码后端主机
+tags:
+  - name: customer
+    description: 客户接口
+  - name: worker
+    description: 服务人员接口
+  - name: admin
+    description: 管理员接口
+security:
+  - bearerAuth: []
+paths:
+  /customer/auth/login:
+    post:
+      tags:
+        - customer
+      operationId: customerLogin
+      summary: 用户名密码登录
+      description: |-
+        三端独立入口，拒绝非对应角色。密码 BCrypt；HS256 JWT 至少包含 accountId、role、exp。有效期/密钥配置化。不实现刷新令牌、黑名单或服务端退出，退出仅删除客户端令牌。
+        无需登录。
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginDTO"
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginVOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /customer/auth/me:
+    get:
+      tags:
+        - customer
+      operationId: customerCurrentAccount
+      summary: 当前账号
+      description: |-
+        
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccountVOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /worker/auth/login:
+    post:
+      tags:
+        - worker
+      operationId: workerLogin
+      summary: 用户名密码登录
+      description: |-
+        三端独立入口，拒绝非对应角色。密码 BCrypt；HS256 JWT 至少包含 accountId、role、exp。有效期/密钥配置化。不实现刷新令牌、黑名单或服务端退出，退出仅删除客户端令牌。
+        无需登录。
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginDTO"
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginVOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /worker/auth/me:
+    get:
+      tags:
+        - worker
+      operationId: workerCurrentAccount
+      summary: 当前账号
+      description: |-
+        
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccountVOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /admin/auth/login:
+    post:
+      tags:
+        - admin
+      operationId: adminLogin
+      summary: 用户名密码登录
+      description: |-
+        三端独立入口，拒绝非对应角色。密码 BCrypt；HS256 JWT 至少包含 accountId、role、exp。有效期/密钥配置化。不实现刷新令牌、黑名单或服务端退出，退出仅删除客户端令牌。
+        无需登录。
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginDTO"
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginVOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /admin/auth/me:
+    get:
+      tags:
+        - admin
+      operationId: adminCurrentAccount
+      summary: 当前账号
+      description: |-
+        
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccountVOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /customer/auth/register:
+    post:
+      tags:
+        - customer
+      operationId: customerRegister
+      summary: 客户注册
+      description: |-
+        
+        无需登录。写操作遵循 Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterDTO"
+      responses:
+        "201":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccountVOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /customer/regions:
+    get:
+      tags:
+        - customer
+      operationId: listServiceRegions
+      summary: 服务城市与行政区
+      description: |-
+        
+        无需登录。
+      security: []
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RegionListResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /customer/booking-rules:
+    get:
+      tags:
+        - customer
+      operationId: getBookingRules
+      summary: 预约规则
+      description: |-
+        
+        无需登录。
+      security: []
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BookingRulesVOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /customer/categories:
+    get:
+      tags:
+        - customer
+      operationId: listCustomerCategory
+      summary: 浏览上架服务目录
+      description: |-
+        仅返回本层及父级均上架数据；status 只能省略或 ON_SHELF。
+        无需登录。
+      security: []
+      parameters:
+        - name: pageNo
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 2147483647
+            default: 1
+        - name: pageSize
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: keyword
+          in: query
+          required: false
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 100
+        - name: categoryId
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: itemId
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/CatalogStatus"
+      x-query-schema: CatalogQuery
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CategoryPageDTOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /customer/service-items:
+    get:
+      tags:
+        - customer
+      operationId: listCustomerServiceItem
+      summary: 浏览上架服务目录
+      description: |-
+        仅返回本层及父级均上架数据；status 只能省略或 ON_SHELF。
+        无需登录。
+      security: []
+      parameters:
+        - name: pageNo
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 2147483647
+            default: 1
+        - name: pageSize
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: keyword
+          in: query
+          required: false
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 100
+        - name: categoryId
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: itemId
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/CatalogStatus"
+      x-query-schema: CatalogQuery
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceItemPageDTOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /customer/skus:
+    get:
+      tags:
+        - customer
+      operationId: listCustomerSku
+      summary: 浏览上架服务目录
+      description: |-
+        仅返回本层及父级均上架数据；status 只能省略或 ON_SHELF。
+        无需登录。
+      security: []
+      parameters:
+        - name: pageNo
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 2147483647
+            default: 1
+        - name: pageSize
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: keyword
+          in: query
+          required: false
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 100
+        - name: categoryId
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: itemId
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/CatalogStatus"
+      x-query-schema: CatalogQuery
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SkuPageDTOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /customer/skus/{id}:
+    get:
+      tags:
+        - customer
+      operationId: getCustomerSku
+      summary: 规格详情
+      description: |-
+        
+        无需登录。
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SkuVOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /customer/addresses:
+    get:
+      tags:
+        - customer
+      operationId: listAddresses
+      summary: 地址列表
+      description: |-
+        
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AddressListResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+    post:
+      tags:
+        - customer
+      operationId: createAddress
+      summary: 新增地址
+      description: |-
+        
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循 Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddressDTO"
+      responses:
+        "201":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AddressVOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /customer/addresses/{id}:
+    put:
+      tags:
+        - customer
+      operationId: updateAddress
+      summary: 修改地址与默认标记
+      description: |-
+        
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循 Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddressDTO"
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AddressVOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+    delete:
+      tags:
+        - customer
+      operationId: deleteAddress
+      summary: 删除地址
+      description: |-
+        不影响历史订单地址快照；删除默认地址后自动选最早剩余地址为默认。
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循 Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MutationVOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /customer/orders:
+    post:
+      tags:
+        - customer
+      operationId: createOrder
+      summary: 创建预约
+      description: |-
+        保存服务/地址/价格范围快照。待支付15分钟；支付前不占槽、不承诺人员可用性。不提供修改规格/地址/时间接口，取消重下。
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循 Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOrderDTO"
+      responses:
+        "201":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderVOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+    get:
+      tags:
+        - customer
+      operationId: customerListOrders
+      summary: 分页查询订单
+      description: |-
+        
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。
+      parameters:
+        - name: pageNo
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 2147483647
+            default: 1
+        - name: pageSize
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: keyword
+          in: query
+          required: false
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 100
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/OrderStatus"
+        - name: bookingType
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/BookingType"
+        - name: from
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/LocalDate"
+        - name: to
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/LocalDate"
+      x-query-schema: OrderQuery
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderPageDTOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /customer/orders/{id}:
+    get:
+      tags:
+        - customer
+      operationId: customerGetOrder
+      summary: 订单详情
+      description: |-
+        
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderVOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /customer/orders/{id}/history:
+    get:
+      tags:
+        - customer
+      operationId: customerGetOrderHistory
+      summary: 支付、报价、分配与评价历史
+      description: |-
+        
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderHistoryVOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /worker/orders:
+    get:
+      tags:
+        - worker
+      operationId: workerListOrders
+      summary: 分页查询订单
+      description: |-
+        
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。
+      parameters:
+        - name: pageNo
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 2147483647
+            default: 1
+        - name: pageSize
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: keyword
+          in: query
+          required: false
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 100
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/OrderStatus"
+        - name: bookingType
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/BookingType"
+        - name: from
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/LocalDate"
+        - name: to
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/LocalDate"
+      x-query-schema: OrderQuery
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderPageDTOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /worker/orders/{id}:
+    get:
+      tags:
+        - worker
+      operationId: workerGetOrder
+      summary: 订单详情
+      description: |-
+        
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderVOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /worker/orders/{id}/history:
+    get:
+      tags:
+        - worker
+      operationId: workerGetOrderHistory
+      summary: 支付、报价、分配与评价历史
+      description: |-
+        
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderHistoryVOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /admin/orders:
+    get:
+      tags:
+        - admin
+      operationId: adminListOrders
+      summary: 分页查询订单
+      description: |-
+        
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。
+      parameters:
+        - name: pageNo
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 2147483647
+            default: 1
+        - name: pageSize
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: keyword
+          in: query
+          required: false
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 100
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/OrderStatus"
+        - name: bookingType
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/BookingType"
+        - name: from
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/LocalDate"
+        - name: to
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/LocalDate"
+      x-query-schema: OrderQuery
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderPageDTOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /admin/orders/{id}:
+    get:
+      tags:
+        - admin
+      operationId: adminGetOrder
+      summary: 订单详情
+      description: |-
+        
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderVOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /admin/orders/{id}/history:
+    get:
+      tags:
+        - admin
+      operationId: adminGetOrderHistory
+      summary: 支付、报价、分配与评价历史
+      description: |-
+        
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderHistoryVOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /customer/orders/{id}/payments:
+    post:
+      tags:
+        - customer
+      operationId: payOrder
+      summary: 模拟支付
+      description: >-
+        仅 PENDING_PAYMENT 且未过期。STANDARD 支付后同步按当天已分配服务分钟数、订单数、人员ID排序，有限候选尝试；无可用人员
+        WAITING_DISPATCH，每30秒扫描，5分钟超时取消全额退款。OFFER 进入 WAITING_ACCEPTANCE，截止 min(支付成功+2小时,开始-6小时)。支付成功与分配成功分别表达。
+
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循 Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderVOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /customer/orders/{id}/offer:
+    put:
+      tags:
+        - customer
+      operationId: changeOffer
+      summary: 调整优惠报价并模拟补差或退款
+      description: |-
+        预期金额或版本不匹配返回409 PRICE_CHANGED（含当前金额和版本）。价格与抢单竞争按订单条件更新裁决。涨价需客户明确确认模拟补差，降价同事务部分退款。
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循 Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangeOfferDTO"
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderVOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /customer/orders/{id}/cancellations:
+    post:
+      tags:
+        - customer
+      operationId: cancelCustomerOrder
+      summary: 客户取消预约
+      description: |-
+        仅 PENDING_PAYMENT/WAITING_DISPATCH/WAITING_ACCEPTANCE/PENDING_SERVICE。已出发及以后禁止。已支付退净已收金额并释放服务及缓冲槽，根据当前排班恢复 AVAILABLE/NON_WORKING。
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循 Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CancelOrderDTO"
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderVOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /customer/orders/{id}/start-code:
+    get:
+      tags:
+        - customer
+      operationId: getStartCode
+      summary: 客户查看服务开始码
+      description: |-
+        仅本人订单 PENDING_SERVICE/DEPARTED/ARRIVED/IN_SERVICE 可查询。开始码不返回人员或管理员。
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StartCodeVOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /customer/orders/{id}/confirmations:
+    post:
+      tags:
+        - customer
+      operationId: confirmOrder
+      summary: 客户确认完成
+      description: |-
+        仅 PENDING_CONFIRMATION；人员提交完成24小时后系统自动完成。
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循 Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderVOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /customer/orders/{id}/reviews:
+    post:
+      tags:
+        - customer
+      operationId: createReview
+      summary: 评价订单
+      description: |-
+        仅本人 COMPLETED 订单且每单一次；不提供修改/删除/回复。重复评价返回409 REVIEW_EXISTS。
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循 Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReviewDTO"
+      responses:
+        "201":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReviewVOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /worker/profile:
+    get:
+      tags:
+        - worker
+      operationId: getWorkerProfile
+      summary: 当前人员资料与技能
+      description: |-
+        
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkerVOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /worker/schedule:
+    get:
+      tags:
+        - worker
+      operationId: getSchedule
+      summary: 读取统一排班模板
+      description: |-
+        
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScheduleVOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+    put:
+      tags:
+        - worker
+      operationId: updateSchedule
+      summary: 设置统一每日区间和固定休息日
+      description: >-
+        所有非休息日复用相同区间；首次设置生成未来30天槽，后续仅更新空闲/非工作槽。不得覆盖请假或已占用槽，缩短区间/新增休息日影响 SERVICE/BUFFER 返回409
+        SCHEDULE_CONFLICT。生成幂等、启动补漏、零点补齐。
+
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循 Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScheduleDTO"
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScheduleVOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /worker/slots:
+    get:
+      tags:
+        - worker
+      operationId: listWorkerSlots
+      summary: 查看某天时间槽
+      description: |-
+        
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。
+      parameters:
+        - name: date
+          in: query
+          required: true
+          schema:
+            $ref: "#/components/schemas/LocalDate"
+      x-query-schema: SlotQuery
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SlotListResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /worker/leaves:
+    get:
+      tags:
+        - worker
+      operationId: listLeaves
+      summary: 分页查看请假
+      description: |-
+        
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。
+      parameters:
+        - name: pageNo
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 2147483647
+            default: 1
+        - name: pageSize
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      x-query-schema: PageQuery
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeavePageDTOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+    post:
+      tags:
+        - worker
+      operationId: createLeave
+      summary: 提交请假
+      description: |-
+        
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循 Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LeaveDTO"
+      responses:
+        "201":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeaveVOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /worker/leaves/{id}:
+    delete:
+      tags:
+        - worker
+      operationId: cancelLeave
+      summary: 撤销尚未开始的请假
+      description: |-
+        仅开始前可撤销，保留请假记录，将 LEAVE 恢复为当前排班对应状态。不得修改已有订单。
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循 Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MutationVOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /worker/offers:
+    get:
+      tags:
+        - worker
+      operationId: listEligibleOffers
+      summary: 符合资格的优惠抢单池
+      description: |-
+        账号启用、允许派单、技能覆盖、城市匹配、服务及全部缓冲槽可用才可见。不泄漏详细地址/电话。
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。
+      parameters:
+        - name: pageNo
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 2147483647
+            default: 1
+        - name: pageSize
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: keyword
+          in: query
+          required: false
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 100
+        - name: from
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/LocalDate"
+        - name: to
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/LocalDate"
+      x-query-schema: OfferQuery
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OfferPageDTOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /worker/offers/{id}/claims:
+    post:
+      tags:
+        - worker
+      operationId: claimOffer
+      summary: 按预期价格与版本抢单
+      description: |-
+        仅未截止 WAITING_ACCEPTANCE。PRICE_CHANGED 不静默成交；被抢 ORDER_TAKEN，截止 OFFER_CLOSED。订单状态+priceVersion条件更新与全部时间槽AVAILABLE条件占用同一事务，槽按时间顺序更新且影响行数必须完整；失败全回滚。成功锁定成交价、唯一分配和60分钟尾部缓冲。
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循 Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClaimOfferDTO"
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderVOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /worker/orders/{id}/departures:
+    post:
+      tags:
+        - worker
+      operationId: departOrder
+      summary: 出发
+      description: |-
+        仅已分配本人订单 PENDING_SERVICE → DEPARTED，禁止跳步。
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循 Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderVOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /worker/orders/{id}/arrivals:
+    post:
+      tags:
+        - worker
+      operationId: arriveOrder
+      summary: 到达
+      description: |-
+        仅已分配本人订单 DEPARTED → ARRIVED，禁止跳步。
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循 Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderVOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /worker/orders/{id}/starts:
+    post:
+      tags:
+        - worker
+      operationId: startOrder
+      summary: 开始服务
+      description: |-
+        仅已分配本人订单 ARRIVED → IN_SERVICE，禁止跳步。校验六位客户开始码且不得早于预约开始时间；开始码不是定位证明。
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循 Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StartServiceDTO"
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderVOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /worker/orders/{id}/completions:
+    post:
+      tags:
+        - worker
+      operationId: finishOrder
+      summary: 提交完成
+      description: |-
+        仅已分配本人订单 IN_SERVICE → PENDING_CONFIRMATION，禁止跳步。写入24小时确认截止时间，不强制照片。
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循 Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderVOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /admin/categories:
+    get:
+      tags:
+        - admin
+      operationId: listAdminCategory
+      summary: 分页维护目录
+      description: |-
+        
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。
+      parameters:
+        - name: pageNo
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 2147483647
+            default: 1
+        - name: pageSize
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: keyword
+          in: query
+          required: false
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 100
+        - name: categoryId
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: itemId
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/CatalogStatus"
+      x-query-schema: CatalogQuery
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CategoryPageDTOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+    post:
+      tags:
+        - admin
+      operationId: createAdminCategory
+      summary: 新增Category
+      description: |-
+        
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循 Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CategoryDTO"
+      responses:
+        "201":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CategoryVOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /admin/categories/{id}:
+    put:
+      tags:
+        - admin
+      operationId: updateAdminCategory
+      summary: 更新Category
+      description: |-
+        服务目录上下架/价格修改记录审计；不改写订单快照。
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循 Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CategoryDTO"
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CategoryVOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+    delete:
+      tags:
+        - admin
+      operationId: deleteAdminCategory
+      summary: 逻辑删除Category
+      description: |-
+        存在当前目录/人员引用时返回409 RESOURCE_IN_USE；历史快照不受影响。目录需先下架。所有删除记录审计，不物理删除订单及财务历史。
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循 Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MutationVOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /admin/service-items:
+    get:
+      tags:
+        - admin
+      operationId: listAdminServiceItem
+      summary: 分页维护目录
+      description: |-
+        
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。
+      parameters:
+        - name: pageNo
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 2147483647
+            default: 1
+        - name: pageSize
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: keyword
+          in: query
+          required: false
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 100
+        - name: categoryId
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: itemId
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/CatalogStatus"
+      x-query-schema: CatalogQuery
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceItemPageDTOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+    post:
+      tags:
+        - admin
+      operationId: createAdminServiceItem
+      summary: 新增ServiceItem
+      description: |-
+        
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循 Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ServiceItemDTO"
+      responses:
+        "201":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceItemVOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /admin/service-items/{id}:
+    put:
+      tags:
+        - admin
+      operationId: updateAdminServiceItem
+      summary: 更新ServiceItem
+      description: |-
+        服务目录上下架/价格修改记录审计；不改写订单快照。
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循 Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ServiceItemDTO"
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceItemVOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+    delete:
+      tags:
+        - admin
+      operationId: deleteAdminServiceItem
+      summary: 逻辑删除ServiceItem
+      description: |-
+        存在当前目录/人员引用时返回409 RESOURCE_IN_USE；历史快照不受影响。目录需先下架。所有删除记录审计，不物理删除订单及财务历史。
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循 Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MutationVOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /admin/skus:
+    get:
+      tags:
+        - admin
+      operationId: listAdminSku
+      summary: 分页维护目录
+      description: |-
+        
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。
+      parameters:
+        - name: pageNo
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 2147483647
+            default: 1
+        - name: pageSize
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: keyword
+          in: query
+          required: false
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 100
+        - name: categoryId
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: itemId
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/CatalogStatus"
+      x-query-schema: CatalogQuery
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SkuPageDTOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+    post:
+      tags:
+        - admin
+      operationId: createAdminSku
+      summary: 新增Sku
+      description: |-
+        
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循 Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SkuDTO"
+      responses:
+        "201":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SkuVOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /admin/skus/{id}:
+    put:
+      tags:
+        - admin
+      operationId: updateAdminSku
+      summary: 更新Sku
+      description: |-
+        服务目录上下架/价格修改记录审计；不改写订单快照。
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循 Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SkuDTO"
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SkuVOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+    delete:
+      tags:
+        - admin
+      operationId: deleteAdminSku
+      summary: 逻辑删除Sku
+      description: |-
+        存在当前目录/人员引用时返回409 RESOURCE_IN_USE；历史快照不受影响。目录需先下架。所有删除记录审计，不物理删除订单及财务历史。
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循 Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MutationVOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /admin/skills:
+    get:
+      tags:
+        - admin
+      operationId: listAdminSkill
+      summary: 分页维护目录
+      description: |-
+        
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。
+      parameters:
+        - name: pageNo
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 2147483647
+            default: 1
+        - name: pageSize
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: keyword
+          in: query
+          required: false
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 100
+        - name: categoryId
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: itemId
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/CatalogStatus"
+      x-query-schema: CatalogQuery
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SkillPageDTOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+    post:
+      tags:
+        - admin
+      operationId: createAdminSkill
+      summary: 新增Skill
+      description: |-
+        
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循 Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SkillDTO"
+      responses:
+        "201":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SkillVOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /admin/skills/{id}:
+    put:
+      tags:
+        - admin
+      operationId: updateAdminSkill
+      summary: 更新Skill
+      description: |-
+        服务目录上下架/价格修改记录审计；不改写订单快照。
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循 Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SkillDTO"
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SkillVOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+    delete:
+      tags:
+        - admin
+      operationId: deleteAdminSkill
+      summary: 逻辑删除Skill
+      description: |-
+        存在当前目录/人员引用时返回409 RESOURCE_IN_USE；历史快照不受影响。目录需先下架。所有删除记录审计，不物理删除订单及财务历史。
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循 Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MutationVOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /admin/accounts:
+    get:
+      tags:
+        - admin
+      operationId: listAccounts
+      summary: 账号列表
+      description: |-
+        
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。
+      parameters:
+        - name: pageNo
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 2147483647
+            default: 1
+        - name: pageSize
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: keyword
+          in: query
+          required: false
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 100
+        - name: role
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/Role"
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/AccountStatus"
+      x-query-schema: AccountQuery
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccountPageDTOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /admin/accounts/{id}/status:
+    put:
+      tags:
+        - admin
+      operationId: setAccountStatus
+      summary: 启用或禁用账号
+      description: |-
+        禁止禁用初始化管理员；有未完成分配的人员禁止禁用，需先处理异常订单。每次请求仍校验账号状态；不实现Token黑名单或强制下线。
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循 Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AccountStatusDTO"
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccountVOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /admin/accounts/{id}/profile:
+    put:
+      tags:
+        - admin
+      operationId: updateAccountProfile
+      summary: 维护账号联系资料
+      description: |-
+        
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循 Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AccountProfileDTO"
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccountVOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /admin/workers:
+    get:
+      tags:
+        - admin
+      operationId: listWorkers
+      summary: 服务人员列表
+      description: |-
+        
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。
+      parameters:
+        - name: pageNo
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 2147483647
+            default: 1
+        - name: pageSize
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: keyword
+          in: query
+          required: false
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 100
+        - name: skillId
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: dispatchEnabled
+          in: query
+          required: false
+          schema:
+            type: boolean
+      x-query-schema: WorkerQuery
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkerPageDTOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+    post:
+      tags:
+        - admin
+      operationId: createWorker
+      summary: 创建服务人员账号和资料
+      description: |-
+        仅管理员创建人员。初始无排班，槽为NON_WORKING；人员首次设置排班后参与调度。
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循 Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WorkerCreateDTO"
+      responses:
+        "201":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkerVOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /admin/workers/{id}:
+    put:
+      tags:
+        - admin
+      operationId: updateWorker
+      summary: 维护人员技能与派单开关
+      description: |-
+        派单开关只影响新的分配；已有订单继续履约。移除已分配订单所需技能返回409 RESOURCE_IN_USE。
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循 Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WorkerDTO"
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkerVOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /admin/workers/{id}/slots:
+    get:
+      tags:
+        - admin
+      operationId: getAdminWorkerSlots
+      summary: 查看人员时间槽
+      description: |-
+        
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: date
+          in: query
+          required: true
+          schema:
+            $ref: "#/components/schemas/LocalDate"
+      x-query-schema: SlotQuery
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SlotListResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /admin/orders/{id}/cancellations:
+    post:
+      tags:
+        - admin
+      operationId: cancelAdminOrder
+      summary: 异常取消并退款
+      description: |-
+        必须填写异常原因。允许所有非终态订单；全额退净收款并释放占用、保留分配历史及审计。COMPLETED/CANCELLED拒绝新操作；同Key重放仍返回原成功结果。无手工派单/改派。
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循 Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CancelOrderDTO"
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderVOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /admin/dispatch-attempts:
+    get:
+      tags:
+        - admin
+      operationId: listDispatchAttempts
+      summary: 候选筛选、调度尝试和失败原因
+      description: |-
+        
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。
+      parameters:
+        - name: pageNo
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 2147483647
+            default: 1
+        - name: pageSize
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: orderId
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: keyword
+          in: query
+          required: false
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 100
+      x-query-schema: RecordQuery
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DispatchAttemptPageDTOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /admin/payments:
+    get:
+      tags:
+        - admin
+      operationId: listPayments
+      summary: 支付、补差及退款流水
+      description: |-
+        退款由调价或异常取消产生，无任意金额的手动重复退款接口。
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。
+      parameters:
+        - name: pageNo
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 2147483647
+            default: 1
+        - name: pageSize
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: orderId
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: keyword
+          in: query
+          required: false
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 100
+      x-query-schema: RecordQuery
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentPageDTOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /admin/audits:
+    get:
+      tags:
+        - admin
+      operationId: listAudits
+      summary: 关键操作审计
+      description: |-
+        
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。
+      parameters:
+        - name: pageNo
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 2147483647
+            default: 1
+        - name: pageSize
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: orderId
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: keyword
+          in: query
+          required: false
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 100
+      x-query-schema: RecordQuery
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditPageDTOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /admin/settings:
+    get:
+      tags:
+        - admin
+      operationId: getSettings
+      summary: 读取平台规则
+      description: |-
+        
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BookingRulesVOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+    put:
+      tags:
+        - admin
+      operationId: updateSettings
+      summary: 修改预约窗口
+      description: |-
+        earliestHours 必须小于 latestDays*24；变更写审计。
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循 Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SettingsDTO"
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BookingRulesVOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "HS256访问令牌；Authorization: Bearer <JWT>。签名密钥和过期时间由后端配置，禁止提交密钥。"
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema:
+        type: string
+        minLength: 8
+        maxLength: 128
+        pattern: ^[A-Za-z0-9_-]{8,128}$
+      example: request_20261003_0001
+      description: 以账号+方法+路径+Key为作用域。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409
+        REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
+  responses:
+    Error400:
+      description: 请求格式或参数无效
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            default:
+              value:
+                code: VALIDATION_ERROR
+                message: 请求格式或参数无效
+                data: {}
+    Error401:
+      description: 未登录、凭证无效或令牌到期
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            default:
+              value:
+                code: UNAUTHENTICATED
+                message: 未登录、凭证无效或令牌到期
+                data: {}
+    Error403:
+      description: 角色或资源权限不足、账号禁用
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            default:
+              value:
+                code: FORBIDDEN
+                message: 角色或资源权限不足、账号禁用
+                data: {}
+    Error404:
+      description: 资源不存在或不属于当前访问范围
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            default:
+              value:
+                code: NOT_FOUND
+                message: 资源不存在或不属于当前访问范围
+                data: {}
+    Error409:
+      description: 状态、价格版本、时间槽或幂等冲突
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            default:
+              value:
+                code: PRICE_CHANGED
+                message: 状态、价格版本、时间槽或幂等冲突
+                data:
+                  currentPrice: "135.00"
+                  priceVersion: 2
+    Error422:
+      description: 业务规则不满足
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            default:
+              value:
+                code: BOOKING_WINDOW_INVALID
+                message: 业务规则不满足
+                data: {}
+    Error500:
+      description: 内部错误；事务已回滚
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            default:
+              value:
+                code: INTERNAL_ERROR
+                message: 内部错误；事务已回滚
+                data: {}
+  schemas:
+    Id:
+      type: string
+      minLength: 1
+      maxLength: 19
+      pattern: ^[1-9][0-9]{0,18}$
+      example: "10001"
+      description: 十进制字符串 ID，路径、查询、JSON 中均不得转为 JS number。
+    Money:
+      type: string
+      minLength: 1
+      maxLength: 12
+      pattern: ^(0|[1-9][0-9]{0,8})\.[0-9]{2}$
+      example: "128.00"
+      description: 人民币元，两位小数字符串。服务端 BigDecimal/decimal；前端比较和计算使用整数分。
+    DateTime:
+      type: string
+      minLength: 1
+      maxLength: 25
+      format: date-time
+      pattern: ^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+08:00$
+      example: 2026-10-04T09:00:00+08:00
+      description: Asia/Shanghai，必须显式 +08:00；不接受无偏移时间。
+    LocalTime:
+      type: string
+      minLength: 1
+      maxLength: 5
+      pattern: ^([01][0-9]|2[0-3]):(00|30)$
+      example: 08:00
+    LocalDate:
+      type: string
+      minLength: 1
+      maxLength: 10
+      format: date
+      example: 2026-10-04
+    Role:
+      type: string
+      enum:
+        - CUSTOMER
+        - WORKER
+        - ADMIN
+    AccountStatus:
+      type: string
+      enum:
+        - ENABLED
+        - DISABLED
+    CatalogStatus:
+      type: string
+      enum:
+        - ON_SHELF
+        - OFF_SHELF
+    BookingType:
+      type: string
+      enum:
+        - STANDARD
+        - OFFER
+    OrderStatus:
+      type: string
+      enum:
+        - PENDING_PAYMENT
+        - WAITING_DISPATCH
+        - WAITING_ACCEPTANCE
+        - PENDING_SERVICE
+        - DEPARTED
+        - ARRIVED
+        - IN_SERVICE
+        - PENDING_CONFIRMATION
+        - COMPLETED
+        - CANCELLED
+    PaymentStatus:
+      type: string
+      enum:
+        - UNPAID
+        - PAID
+        - PARTIALLY_REFUNDED
+        - REFUNDED
+    DispatchStatus:
+      type: string
+      enum:
+        - NOT_REQUIRED
+        - PENDING
+        - SUCCEEDED
+        - FAILED
+    SlotStatus:
+      type: string
+      enum:
+        - NON_WORKING
+        - AVAILABLE
+        - LEAVE
+        - SERVICE
+        - BUFFER
+    PaymentType:
+      type: string
+      enum:
+        - PAYMENT
+        - TOP_UP
+        - PARTIAL_REFUND
+        - FULL_REFUND
+    AssignmentStatus:
+      type: string
+      enum:
+        - ACTIVE
+        - RELEASED
+        - FINISHED
+    LeaveStatus:
+      type: string
+      enum:
+        - ACTIVE
+        - CANCELLED
+    ReviewTag:
+      type: string
+      enum:
+        - PUNCTUAL
+        - PROFESSIONAL
+        - FRIENDLY
+    DispatchAttemptResult:
+      type: string
+      enum:
+        - ASSIGNED
+        - INELIGIBLE
+        - SLOT_CONFLICT
+        - NO_CANDIDATE
+    WsEventType:
+      type: string
+      enum:
+        - OFFER_CREATED
+        - OFFER_PRICE_CHANGED
+        - ORDER_CLAIMED
+        - ORDER_CLOSED
+        - DISPATCH_SUCCEEDED
+        - DISPATCH_FAILED
+        - ORDER_STATUS_CHANGED
+    ErrorCode:
+      type: string
+      enum:
+        - VALIDATION_ERROR
+        - UNAUTHENTICATED
+        - TOKEN_EXPIRED
+        - FORBIDDEN
+        - ACCOUNT_DISABLED
+        - INVALID_CREDENTIALS
+        - USERNAME_EXISTS
+        - NOT_FOUND
+        - IDEMPOTENCY_CONFLICT
+        - REQUEST_IN_PROGRESS
+        - STATE_CONFLICT
+        - PRICE_CHANGED
+        - PRICE_OUT_OF_RANGE
+        - SLOT_CONFLICT
+        - SCHEDULE_CONFLICT
+        - OUTSIDE_SERVICE_AREA
+        - BOOKING_WINDOW_INVALID
+        - OFFER_NOT_SUPPORTED
+        - OFFER_CLOSED
+        - ORDER_TAKEN
+        - WORKER_INELIGIBLE
+        - START_CODE_INVALID
+        - REVIEW_EXISTS
+        - CATALOG_UNAVAILABLE
+        - RESOURCE_IN_USE
+        - CONFIG_CONFLICT
+        - INTERNAL_ERROR
+    PageQuery:
+      type: object
+      additionalProperties: false
+      properties:
+        pageNo:
+          type: integer
+          minimum: 1
+          maximum: 2147483647
+          default: 1
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+    LoginDTO:
+      type: object
+      additionalProperties: false
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          minLength: 1
+          maxLength: 32
+          pattern: ^[A-Za-z][A-Za-z0-9_]{2,31}$
+          example: customer
+        password:
+          type: string
+          minLength: 8
+          maxLength: 72
+          format: password
+          example: Demo12345
+    RegisterDTO:
+      type: object
+      additionalProperties: false
+      required:
+        - username
+        - password
+        - displayName
+        - phone
+      properties:
+        username:
+          type: string
+          minLength: 1
+          maxLength: 32
+          pattern: ^[A-Za-z][A-Za-z0-9_]{2,31}$
+          example: customer
+        password:
+          type: string
+          minLength: 8
+          maxLength: 72
+          format: password
+          example: Demo12345
+        displayName:
+          type: string
+          minLength: 1
+          maxLength: 40
+        phone:
+          type: string
+          minLength: 1
+          maxLength: 11
+          pattern: ^1[0-9]{10}$
+    AccountVO:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - username
+        - displayName
+        - role
+        - status
+        - phone
+      properties:
+        id:
+          $ref: "#/components/schemas/Id"
+        username:
+          type: string
+          minLength: 1
+          maxLength: 32
+        displayName:
+          type: string
+          minLength: 1
+          maxLength: 40
+        role:
+          $ref: "#/components/schemas/Role"
+        status:
+          $ref: "#/components/schemas/AccountStatus"
+        phone:
+          type: string
+          minLength: 1
+          maxLength: 11
+    LoginVO:
+      type: object
+      additionalProperties: false
+      required:
+        - accessToken
+        - tokenType
+        - expiresAt
+        - account
+      properties:
+        accessToken:
+          type: string
+          minLength: 1
+          maxLength: 2048
+        tokenType:
+          type: string
+          enum:
+            - Bearer
+        expiresAt:
+          $ref: "#/components/schemas/DateTime"
+        account:
+          $ref: "#/components/schemas/AccountVO"
+    AccountStatusDTO:
+      type: object
+      additionalProperties: false
+      required:
+        - status
+      properties:
+        status:
+          $ref: "#/components/schemas/AccountStatus"
+    AccountProfileDTO:
+      type: object
+      additionalProperties: false
+      required:
+        - displayName
+        - phone
+      properties:
+        displayName:
+          type: string
+          minLength: 1
+          maxLength: 40
+        phone:
+          type: string
+          minLength: 1
+          maxLength: 11
+          pattern: ^1[0-9]{10}$
+    AccountQuery:
+      type: object
+      additionalProperties: false
+      properties:
+        pageNo:
+          type: integer
+          minimum: 1
+          maximum: 2147483647
+          default: 1
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        keyword:
+          type: string
+          minLength: 1
+          maxLength: 100
+        role:
+          $ref: "#/components/schemas/Role"
+        status:
+          $ref: "#/components/schemas/AccountStatus"
+    AddressDTO:
+      type: object
+      additionalProperties: false
+      description: 仅支持广东省广州市及其全部区。行政区编码与名称必须匹配；经纬度同时为空或同时提供。不按距离计价。设置默认地址原子清除旧默认。
+      required:
+        - contactName
+        - contactPhone
+        - provinceCode
+        - provinceName
+        - cityCode
+        - cityName
+        - districtCode
+        - districtName
+        - detail
+        - longitude
+        - latitude
+        - isDefault
+      properties:
+        contactName:
+          type: string
+          minLength: 1
+          maxLength: 40
+        contactPhone:
+          type: string
+          minLength: 1
+          maxLength: 11
+          pattern: ^1[0-9]{10}$
+        provinceCode:
+          type: string
+          minLength: 1
+          maxLength: 6
+        provinceName:
+          type: string
+          minLength: 1
+          maxLength: 40
+        cityCode:
+          type: string
+          minLength: 1
+          maxLength: 6
+        cityName:
+          type: string
+          minLength: 1
+          maxLength: 40
+        districtCode:
+          type: string
+          minLength: 1
+          maxLength: 6
+        districtName:
+          type: string
+          minLength: 1
+          maxLength: 40
+        detail:
+          type: string
+          minLength: 1
+          maxLength: 200
+        longitude:
+          type: number
+          minimum: -180
+          maximum: 180
+          nullable: true
+        latitude:
+          type: number
+          minimum: -90
+          maximum: 90
+          nullable: true
+        isDefault:
+          type: boolean
+    AddressVO:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - contactName
+        - contactPhone
+        - provinceCode
+        - provinceName
+        - cityCode
+        - cityName
+        - districtCode
+        - districtName
+        - detail
+        - longitude
+        - latitude
+        - isDefault
+      properties:
+        id:
+          $ref: "#/components/schemas/Id"
+        contactName:
+          type: string
+          minLength: 1
+          maxLength: 40
+        contactPhone:
+          type: string
+          minLength: 1
+          maxLength: 11
+          pattern: ^1[0-9]{10}$
+        provinceCode:
+          type: string
+          minLength: 1
+          maxLength: 6
+        provinceName:
+          type: string
+          minLength: 1
+          maxLength: 40
+        cityCode:
+          type: string
+          minLength: 1
+          maxLength: 6
+        cityName:
+          type: string
+          minLength: 1
+          maxLength: 40
+        districtCode:
+          type: string
+          minLength: 1
+          maxLength: 6
+        districtName:
+          type: string
+          minLength: 1
+          maxLength: 40
+        detail:
+          type: string
+          minLength: 1
+          maxLength: 200
+        longitude:
+          type: number
+          minimum: -180
+          maximum: 180
+          nullable: true
+        latitude:
+          type: number
+          minimum: -90
+          maximum: 90
+          nullable: true
+        isDefault:
+          type: boolean
+    RegionVO:
+      type: object
+      additionalProperties: false
+      required:
+        - provinceCode
+        - provinceName
+        - cityCode
+        - cityName
+        - districts
+      properties:
+        provinceCode:
+          type: string
+          minLength: 1
+          maxLength: 6
+        provinceName:
+          type: string
+          minLength: 1
+          maxLength: 40
+        cityCode:
+          type: string
+          minLength: 1
+          maxLength: 6
+        cityName:
+          type: string
+          minLength: 1
+          maxLength: 40
+        districts:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required:
+              - code
+              - name
+            properties:
+              code:
+                type: string
+                minLength: 1
+                maxLength: 6
+              name:
+                type: string
+                minLength: 1
+                maxLength: 40
+    CategoryDTO:
+      type: object
+      additionalProperties: false
+      required:
+        - name
+        - sort
+        - status
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 60
+        sort:
+          type: integer
+          minimum: 0
+          maximum: 9999
+        status:
+          $ref: "#/components/schemas/CatalogStatus"
+    CategoryVO:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - name
+        - sort
+        - status
+      properties:
+        id:
+          $ref: "#/components/schemas/Id"
+        name:
+          type: string
+          minLength: 1
+          maxLength: 60
+        sort:
+          type: integer
+          minimum: 0
+          maximum: 9999
+        status:
+          $ref: "#/components/schemas/CatalogStatus"
+    ServiceItemDTO:
+      type: object
+      additionalProperties: false
+      required:
+        - categoryId
+        - name
+        - description
+        - status
+      properties:
+        categoryId:
+          $ref: "#/components/schemas/Id"
+        name:
+          type: string
+          minLength: 1
+          maxLength: 60
+        description:
+          type: string
+          minLength: 1
+          maxLength: 1000
+        status:
+          $ref: "#/components/schemas/CatalogStatus"
+    ServiceItemVO:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - categoryId
+        - name
+        - description
+        - status
+      properties:
+        id:
+          $ref: "#/components/schemas/Id"
+        categoryId:
+          $ref: "#/components/schemas/Id"
+        name:
+          type: string
+          minLength: 1
+          maxLength: 60
+        description:
+          type: string
+          minLength: 1
+          maxLength: 1000
+        status:
+          $ref: "#/components/schemas/CatalogStatus"
+    SkillDTO:
+      type: object
+      additionalProperties: false
+      required:
+        - name
+        - description
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 60
+        description:
+          type: string
+          minLength: 1
+          maxLength: 300
+    SkillVO:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - name
+        - description
+      properties:
+        id:
+          $ref: "#/components/schemas/Id"
+        name:
+          type: string
+          minLength: 1
+          maxLength: 60
+        description:
+          type: string
+          minLength: 1
+          maxLength: 300
+    SkuDTO:
+      type: object
+      additionalProperties: false
+      description: 价格必须大于 0；支持优惠时 0 < 最低价 < 标准价，报价以最低价为锚点步进 5 元。不支持优惠时最低价等于标准价。维修不开放优惠。上下架和价格变更仅影响后续订单，历史订单保留快照。
+      required:
+        - itemId
+        - name
+        - standardPrice
+        - minimumOfferPrice
+        - durationMinutes
+        - unit
+        - skillIds
+        - status
+        - supportsOffer
+        - description
+        - included
+        - excluded
+        - customerSuppliesParts
+      properties:
+        itemId:
+          $ref: "#/components/schemas/Id"
+        name:
+          type: string
+          minLength: 1
+          maxLength: 80
+        standardPrice:
+          $ref: "#/components/schemas/Money"
+        minimumOfferPrice:
+          $ref: "#/components/schemas/Money"
+        durationMinutes:
+          type: integer
+          minimum: 30
+          maximum: 720
+          multipleOf: 30
+        unit:
+          type: string
+          minLength: 1
+          maxLength: 20
+        skillIds:
+          type: array
+          items:
+            $ref: "#/components/schemas/Id"
+          minItems: 1
+          uniqueItems: true
+        status:
+          $ref: "#/components/schemas/CatalogStatus"
+        supportsOffer:
+          type: boolean
+        description:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        included:
+          type: string
+          minLength: 1
+          maxLength: 1000
+        excluded:
+          type: string
+          minLength: 1
+          maxLength: 1000
+        customerSuppliesParts:
+          type: boolean
+    SkuVO:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - categoryId
+        - categoryName
+        - itemName
+        - itemId
+        - name
+        - standardPrice
+        - minimumOfferPrice
+        - durationMinutes
+        - unit
+        - skillIds
+        - status
+        - supportsOffer
+        - description
+        - included
+        - excluded
+        - customerSuppliesParts
+      properties:
+        id:
+          $ref: "#/components/schemas/Id"
+        categoryId:
+          $ref: "#/components/schemas/Id"
+        categoryName:
+          type: string
+          minLength: 1
+          maxLength: 60
+        itemName:
+          type: string
+          minLength: 1
+          maxLength: 60
+        itemId:
+          $ref: "#/components/schemas/Id"
+        name:
+          type: string
+          minLength: 1
+          maxLength: 80
+        standardPrice:
+          $ref: "#/components/schemas/Money"
+        minimumOfferPrice:
+          $ref: "#/components/schemas/Money"
+        durationMinutes:
+          type: integer
+          minimum: 30
+          maximum: 720
+          multipleOf: 30
+        unit:
+          type: string
+          minLength: 1
+          maxLength: 20
+        skillIds:
+          type: array
+          items:
+            $ref: "#/components/schemas/Id"
+          minItems: 1
+          uniqueItems: true
+        status:
+          $ref: "#/components/schemas/CatalogStatus"
+        supportsOffer:
+          type: boolean
+        description:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        included:
+          type: string
+          minLength: 1
+          maxLength: 1000
+        excluded:
+          type: string
+          minLength: 1
+          maxLength: 1000
+        customerSuppliesParts:
+          type: boolean
+    CatalogQuery:
+      type: object
+      additionalProperties: false
+      properties:
+        pageNo:
+          type: integer
+          minimum: 1
+          maximum: 2147483647
+          default: 1
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        keyword:
+          type: string
+          minLength: 1
+          maxLength: 100
+        categoryId:
+          $ref: "#/components/schemas/Id"
+        itemId:
+          $ref: "#/components/schemas/Id"
+        status:
+          $ref: "#/components/schemas/CatalogStatus"
+    WorkerDTO:
+      type: object
+      additionalProperties: false
+      required:
+        - displayName
+        - phone
+        - cityCode
+        - skillIds
+        - dispatchEnabled
+      properties:
+        displayName:
+          type: string
+          minLength: 1
+          maxLength: 40
+        phone:
+          type: string
+          minLength: 1
+          maxLength: 11
+          pattern: ^1[0-9]{10}$
+        cityCode:
+          type: string
+          minLength: 1
+          maxLength: 6
+          enum:
+            - "440100"
+        skillIds:
+          type: array
+          items:
+            $ref: "#/components/schemas/Id"
+          minItems: 1
+          uniqueItems: true
+        dispatchEnabled:
+          type: boolean
+    WorkerCreateDTO:
+      type: object
+      additionalProperties: false
+      required:
+        - username
+        - password
+        - displayName
+        - phone
+        - cityCode
+        - skillIds
+        - dispatchEnabled
+      properties:
+        username:
+          type: string
+          minLength: 1
+          maxLength: 32
+          pattern: ^[A-Za-z][A-Za-z0-9_]{2,31}$
+          example: customer
+        password:
+          type: string
+          minLength: 8
+          maxLength: 72
+          format: password
+          example: Demo12345
+        displayName:
+          type: string
+          minLength: 1
+          maxLength: 40
+        phone:
+          type: string
+          minLength: 1
+          maxLength: 11
+          pattern: ^1[0-9]{10}$
+        cityCode:
+          type: string
+          minLength: 1
+          maxLength: 6
+          enum:
+            - "440100"
+        skillIds:
+          type: array
+          items:
+            $ref: "#/components/schemas/Id"
+          minItems: 1
+          uniqueItems: true
+        dispatchEnabled:
+          type: boolean
+    WorkerVO:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - accountId
+        - username
+        - status
+        - displayName
+        - phone
+        - cityCode
+        - skillIds
+        - dispatchEnabled
+      properties:
+        id:
+          $ref: "#/components/schemas/Id"
+        accountId:
+          $ref: "#/components/schemas/Id"
+        username:
+          type: string
+          minLength: 1
+          maxLength: 32
+        status:
+          $ref: "#/components/schemas/AccountStatus"
+        displayName:
+          type: string
+          minLength: 1
+          maxLength: 40
+        phone:
+          type: string
+          minLength: 1
+          maxLength: 11
+          pattern: ^1[0-9]{10}$
+        cityCode:
+          type: string
+          minLength: 1
+          maxLength: 6
+          enum:
+            - "440100"
+        skillIds:
+          type: array
+          items:
+            $ref: "#/components/schemas/Id"
+          minItems: 1
+          uniqueItems: true
+        dispatchEnabled:
+          type: boolean
+    WorkerQuery:
+      type: object
+      additionalProperties: false
+      properties:
+        pageNo:
+          type: integer
+          minimum: 1
+          maximum: 2147483647
+          default: 1
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        keyword:
+          type: string
+          minLength: 1
+          maxLength: 100
+        skillId:
+          $ref: "#/components/schemas/Id"
+        dispatchEnabled:
+          type: boolean
+    WorkIntervalDTO:
+      type: object
+      additionalProperties: false
+      description: 08:00 <= start < end <= 22:00，区间不可重叠，允许相邻。
+      required:
+        - start
+        - end
+      properties:
+        start:
+          $ref: "#/components/schemas/LocalTime"
+        end:
+          $ref: "#/components/schemas/LocalTime"
+    ScheduleDTO:
+      type: object
+      additionalProperties: false
+      required:
+        - intervals
+        - restWeekdays
+      properties:
+        intervals:
+          type: array
+          items:
+            $ref: "#/components/schemas/WorkIntervalDTO"
+          minItems: 1
+          maxItems: 14
+        restWeekdays:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+            maximum: 7
+            description: ISO 星期：1 周一至 7 周日
+          uniqueItems: true
+          maxItems: 7
+      example:
+        intervals:
+          - start: 08:00
+            end: 12:00
+          - start: 13:00
+            end: 22:00
+        restWeekdays:
+          - 7
+    ScheduleVO:
+      type: object
+      additionalProperties: false
+      required:
+        - configured
+        - intervals
+        - restWeekdays
+      properties:
+        configured:
+          type: boolean
+        intervals:
+          type: array
+          items:
+            $ref: "#/components/schemas/WorkIntervalDTO"
+        restWeekdays:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+            maximum: 7
+          uniqueItems: true
+    LeaveDTO:
+      type: object
+      additionalProperties: false
+      description: 30 分钟对齐、start < end、至少提前 2 小时且位于未来 30 天槽窗口；不得覆盖 SERVICE/BUFFER。
+      required:
+        - startTime
+        - endTime
+        - reason
+      properties:
+        startTime:
+          $ref: "#/components/schemas/DateTime"
+        endTime:
+          $ref: "#/components/schemas/DateTime"
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 300
+    LeaveVO:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - startTime
+        - endTime
+        - reason
+        - status
+      properties:
+        id:
+          $ref: "#/components/schemas/Id"
+        startTime:
+          $ref: "#/components/schemas/DateTime"
+        endTime:
+          $ref: "#/components/schemas/DateTime"
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 300
+        status:
+          $ref: "#/components/schemas/LeaveStatus"
+    SlotVO:
+      type: object
+      additionalProperties: false
+      description: 只有 SERVICE/BUFFER 包含 bookingType、assignmentId、orderId。每天 08:00—22:00，未来 30 天，不包含窗口末日。
+      required:
+        - startTime
+        - endTime
+        - status
+      properties:
+        startTime:
+          $ref: "#/components/schemas/DateTime"
+        endTime:
+          $ref: "#/components/schemas/DateTime"
+        status:
+          $ref: "#/components/schemas/SlotStatus"
+        bookingType:
+          $ref: "#/components/schemas/BookingType"
+        assignmentId:
+          $ref: "#/components/schemas/Id"
+        orderId:
+          $ref: "#/components/schemas/Id"
+    SlotQuery:
+      type: object
+      additionalProperties: false
+      required:
+        - date
+      properties:
+        date:
+          $ref: "#/components/schemas/LocalDate"
+    BookingRulesVO:
+      type: object
+      additionalProperties: false
+      required:
+        - cityCode
+        - workStart
+        - workEnd
+        - slotMinutes
+        - earliestHours
+        - latestDays
+        - offerLeadHours
+        - offerWaitMinutes
+        - offerSafetyHours
+        - paymentTimeoutMinutes
+        - dispatchWaitMinutes
+        - dispatchScanSeconds
+        - standardBufferMinutes
+        - offerBufferMinutes
+        - autoConfirmHours
+        - priceStep
+      properties:
+        cityCode:
+          type: string
+          minLength: 1
+          maxLength: 6
+        workStart:
+          $ref: "#/components/schemas/LocalTime"
+        workEnd:
+          $ref: "#/components/schemas/LocalTime"
+        slotMinutes:
+          type: integer
+          minimum: 30
+          maximum: 30
+        earliestHours:
+          type: integer
+          minimum: 2
+          maximum: 24
+        latestDays:
+          type: integer
+          minimum: 1
+          maximum: 7
+        offerLeadHours:
+          type: integer
+          minimum: 12
+          maximum: 12
+        offerWaitMinutes:
+          type: integer
+          minimum: 120
+          maximum: 120
+        offerSafetyHours:
+          type: integer
+          minimum: 6
+          maximum: 6
+        paymentTimeoutMinutes:
+          type: integer
+          minimum: 15
+          maximum: 15
+        dispatchWaitMinutes:
+          type: integer
+          minimum: 5
+          maximum: 5
+        dispatchScanSeconds:
+          type: integer
+          minimum: 30
+          maximum: 30
+        standardBufferMinutes:
+          type: integer
+          minimum: 120
+          maximum: 120
+        offerBufferMinutes:
+          type: integer
+          minimum: 60
+          maximum: 60
+        autoConfirmHours:
+          type: integer
+          minimum: 24
+          maximum: 24
+        priceStep:
+          type: string
+          minLength: 1
+          maxLength: 12
+          pattern: ^(0|[1-9][0-9]{0,8})\.[0-9]{2}$
+          example: "128.00"
+          description: 人民币元，两位小数字符串。服务端 BigDecimal/decimal；前端比较和计算使用整数分。
+          enum:
+            - "5.00"
+    SettingsDTO:
+      type: object
+      additionalProperties: false
+      description: 当前仅预约窗口可配置，其他核心规则只读。只影响新预约，已创建订单的截止时间不改变。
+      required:
+        - earliestHours
+        - latestDays
+      properties:
+        earliestHours:
+          type: integer
+          minimum: 2
+          maximum: 24
+        latestDays:
+          type: integer
+          minimum: 1
+          maximum: 7
+    CreateOrderDTO:
+      type: object
+      additionalProperties: false
+      description: OFFER 必须提供 offerPrice；STANDARD 不提供。数量固定 1。开始时间按半小时对齐，至少提前 earliestHours、最多 latestDays。OFFER 需 SKU
+        支持且至少提前 12 小时。服务及尾部缓冲均在 08:00—22:00 内。
+      required:
+        - skuId
+        - addressId
+        - bookingType
+        - startTime
+      properties:
+        skuId:
+          $ref: "#/components/schemas/Id"
+        addressId:
+          $ref: "#/components/schemas/Id"
+        bookingType:
+          $ref: "#/components/schemas/BookingType"
+        startTime:
+          $ref: "#/components/schemas/DateTime"
+        offerPrice:
+          $ref: "#/components/schemas/Money"
+        remark:
+          type: string
+          minLength: 0
+          maxLength: 300
+      example:
+        skuId: "301"
+        addressId: "401"
+        bookingType: OFFER
+        startTime: 2026-10-04T09:00:00+08:00
+        offerPrice: "130.00"
+        remark: 请提前联系
+    ServiceSnapshotVO:
+      type: object
+      additionalProperties: false
+      required:
+        - categoryName
+        - itemName
+        - skuName
+        - standardPrice
+        - minimumOfferPrice
+        - durationMinutes
+        - unit
+        - skillIds
+        - description
+        - included
+        - excluded
+        - customerSuppliesParts
+      properties:
+        categoryName:
+          type: string
+          minLength: 1
+          maxLength: 60
+        itemName:
+          type: string
+          minLength: 1
+          maxLength: 60
+        skuName:
+          type: string
+          minLength: 1
+          maxLength: 80
+        standardPrice:
+          $ref: "#/components/schemas/Money"
+        minimumOfferPrice:
+          $ref: "#/components/schemas/Money"
+        durationMinutes:
+          type: integer
+          minimum: 30
+          maximum: 720
+        unit:
+          type: string
+          minLength: 1
+          maxLength: 20
+        skillIds:
+          type: array
+          items:
+            $ref: "#/components/schemas/Id"
+        description:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        included:
+          type: string
+          minLength: 1
+          maxLength: 1000
+        excluded:
+          type: string
+          minLength: 1
+          maxLength: 1000
+        customerSuppliesParts:
+          type: boolean
+    OrderVO:
+      type: object
+      additionalProperties: false
+      description: 客户仅自己的订单；人员仅分配给自己的订单；管理员可查看全部。未发生的可选时间/人员/成交字段省略，不传 null。已支付订单禁止修改 SKU、地址和预约时间。开始码单独返回，不泄漏给人员。
+      required:
+        - id
+        - customerId
+        - skuId
+        - bookingType
+        - status
+        - paymentStatus
+        - dispatchStatus
+        - service
+        - address
+        - startTime
+        - endTime
+        - bufferEndTime
+        - createdAt
+        - paymentDeadline
+        - currentPrice
+        - priceVersion
+        - remark
+        - reviewed
+      properties:
+        id:
+          $ref: "#/components/schemas/Id"
+        customerId:
+          $ref: "#/components/schemas/Id"
+        skuId:
+          $ref: "#/components/schemas/Id"
+        bookingType:
+          $ref: "#/components/schemas/BookingType"
+        status:
+          $ref: "#/components/schemas/OrderStatus"
+        paymentStatus:
+          $ref: "#/components/schemas/PaymentStatus"
+        dispatchStatus:
+          $ref: "#/components/schemas/DispatchStatus"
+        service:
+          $ref: "#/components/schemas/ServiceSnapshotVO"
+        address:
+          $ref: "#/components/schemas/AddressDTO"
+        startTime:
+          $ref: "#/components/schemas/DateTime"
+        endTime:
+          $ref: "#/components/schemas/DateTime"
+        bufferEndTime:
+          $ref: "#/components/schemas/DateTime"
+        createdAt:
+          $ref: "#/components/schemas/DateTime"
+        paymentDeadline:
+          $ref: "#/components/schemas/DateTime"
+        offerDeadline:
+          $ref: "#/components/schemas/DateTime"
+        dispatchDeadline:
+          $ref: "#/components/schemas/DateTime"
+        confirmationDeadline:
+          $ref: "#/components/schemas/DateTime"
+        currentPrice:
+          $ref: "#/components/schemas/Money"
+        dealPrice:
+          $ref: "#/components/schemas/Money"
+        priceVersion:
+          type: integer
+          minimum: 1
+          maximum: 2147483647
+        workerId:
+          $ref: "#/components/schemas/Id"
+        workerName:
+          type: string
+          minLength: 1
+          maxLength: 40
+        cancellationReason:
+          type: string
+          minLength: 1
+          maxLength: 300
+        remark:
+          type: string
+          minLength: 0
+          maxLength: 300
+        reviewed:
+          type: boolean
+    OrderQuery:
+      type: object
+      additionalProperties: false
+      description: 日期按预约开始时间在 Asia/Shanghai 的自然日闭区间筛选；from 不得晚于 to。keyword 搜索订单 ID 或服务名称。
+      properties:
+        pageNo:
+          type: integer
+          minimum: 1
+          maximum: 2147483647
+          default: 1
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        keyword:
+          type: string
+          minLength: 1
+          maxLength: 100
+        status:
+          $ref: "#/components/schemas/OrderStatus"
+        bookingType:
+          $ref: "#/components/schemas/BookingType"
+        from:
+          $ref: "#/components/schemas/LocalDate"
+        to:
+          $ref: "#/components/schemas/LocalDate"
+    OfferQuery:
+      type: object
+      additionalProperties: false
+      properties:
+        pageNo:
+          type: integer
+          minimum: 1
+          maximum: 2147483647
+          default: 1
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        keyword:
+          type: string
+          minLength: 1
+          maxLength: 100
+        from:
+          $ref: "#/components/schemas/LocalDate"
+        to:
+          $ref: "#/components/schemas/LocalDate"
+    OfferVO:
+      type: object
+      additionalProperties: false
+      description: 抢单前最小信息集，无客户 ID、门牌、电话、联系人或开始码。仅符合条件的人员可见。
+      required:
+        - id
+        - skuName
+        - districtName
+        - cityCode
+        - durationMinutes
+        - startTime
+        - endTime
+        - bufferEndTime
+        - currentPrice
+        - priceVersion
+        - offerDeadline
+        - description
+        - included
+        - excluded
+        - customerSuppliesParts
+      properties:
+        id:
+          $ref: "#/components/schemas/Id"
+        skuName:
+          type: string
+          minLength: 1
+          maxLength: 80
+        districtName:
+          type: string
+          minLength: 1
+          maxLength: 40
+        cityCode:
+          type: string
+          minLength: 1
+          maxLength: 6
+        durationMinutes:
+          type: integer
+          minimum: 30
+          maximum: 720
+        startTime:
+          $ref: "#/components/schemas/DateTime"
+        endTime:
+          $ref: "#/components/schemas/DateTime"
+        bufferEndTime:
+          $ref: "#/components/schemas/DateTime"
+        currentPrice:
+          $ref: "#/components/schemas/Money"
+        priceVersion:
+          type: integer
+          minimum: 1
+          maximum: 2147483647
+        offerDeadline:
+          $ref: "#/components/schemas/DateTime"
+        description:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        included:
+          type: string
+          minLength: 1
+          maxLength: 1000
+        excluded:
+          type: string
+          minLength: 1
+          maxLength: 1000
+        customerSuppliesParts:
+          type: boolean
+    ChangeOfferDTO:
+      type: object
+      additionalProperties: false
+      description: 只有 WAITING_ACCEPTANCE 且未截止可调价。newPrice 与旧价相差非零 5 元整数倍且在订单快照范围内；涨价需
+        confirmSimulatedPayment=true。涨价补差或降价退款、报价历史、版本递增在同一事务提交，失败全部回滚。
+      required:
+        - newPrice
+        - expectedPrice
+        - priceVersion
+        - confirmSimulatedPayment
+      properties:
+        newPrice:
+          $ref: "#/components/schemas/Money"
+        expectedPrice:
+          $ref: "#/components/schemas/Money"
+        priceVersion:
+          type: integer
+          minimum: 1
+          maximum: 2147483647
+        confirmSimulatedPayment:
+          type: boolean
+      example:
+        newPrice: "135.00"
+        expectedPrice: "130.00"
+        priceVersion: 1
+        confirmSimulatedPayment: true
+    ClaimOfferDTO:
+      type: object
+      additionalProperties: false
+      required:
+        - expectedPrice
+        - priceVersion
+      properties:
+        expectedPrice:
+          $ref: "#/components/schemas/Money"
+        priceVersion:
+          type: integer
+          minimum: 1
+          maximum: 2147483647
+      example:
+        expectedPrice: "135.00"
+        priceVersion: 2
+    CancelOrderDTO:
+      type: object
+      additionalProperties: false
+      required:
+        - reason
+      properties:
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 300
+    StartServiceDTO:
+      type: object
+      additionalProperties: false
+      required:
+        - startCode
+      properties:
+        startCode:
+          type: string
+          minLength: 1
+          maxLength: 6
+          pattern: ^[0-9]{6}$
+    StartCodeVO:
+      type: object
+      additionalProperties: false
+      required:
+        - startCode
+      properties:
+        startCode:
+          type: string
+          minLength: 1
+          maxLength: 6
+          pattern: ^[0-9]{6}$
+          example: "123456"
+    ReviewDTO:
+      type: object
+      additionalProperties: false
+      required:
+        - score
+        - tags
+        - content
+      properties:
+        score:
+          type: integer
+          minimum: 1
+          maximum: 5
+        tags:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReviewTag"
+          uniqueItems: true
+          maxItems: 3
+        content:
+          type: string
+          minLength: 0
+          maxLength: 500
+    ReviewVO:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - orderId
+        - createdAt
+        - score
+        - tags
+        - content
+      properties:
+        id:
+          $ref: "#/components/schemas/Id"
+        orderId:
+          $ref: "#/components/schemas/Id"
+        createdAt:
+          $ref: "#/components/schemas/DateTime"
+        score:
+          type: integer
+          minimum: 1
+          maximum: 5
+        tags:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReviewTag"
+          uniqueItems: true
+          maxItems: 3
+        content:
+          type: string
+          minLength: 0
+          maxLength: 500
+    PaymentVO:
+      type: object
+      additionalProperties: false
+      description: 所有金额为正；流水不可修改或删除。模拟支付同步成功或整体失败，不存在真实渠道回调。净收款为 PAYMENT+TOP_UP-PARTIAL_REFUND-FULL_REFUND。
+      required:
+        - id
+        - orderId
+        - businessNo
+        - type
+        - amount
+        - createdAt
+      properties:
+        id:
+          $ref: "#/components/schemas/Id"
+        orderId:
+          $ref: "#/components/schemas/Id"
+        businessNo:
+          type: string
+          minLength: 1
+          maxLength: 80
+        type:
+          $ref: "#/components/schemas/PaymentType"
+        amount:
+          $ref: "#/components/schemas/Money"
+        createdAt:
+          $ref: "#/components/schemas/DateTime"
+    PriceHistoryVO:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - orderId
+        - previousPrice
+        - newPrice
+        - priceVersion
+        - createdAt
+      properties:
+        id:
+          $ref: "#/components/schemas/Id"
+        orderId:
+          $ref: "#/components/schemas/Id"
+        previousPrice:
+          $ref: "#/components/schemas/Money"
+        newPrice:
+          $ref: "#/components/schemas/Money"
+        priceVersion:
+          type: integer
+          minimum: 1
+          maximum: 2147483647
+        createdAt:
+          $ref: "#/components/schemas/DateTime"
+    AssignmentVO:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - orderId
+        - workerId
+        - workerName
+        - bookingType
+        - status
+        - assignedAt
+      properties:
+        id:
+          $ref: "#/components/schemas/Id"
+        orderId:
+          $ref: "#/components/schemas/Id"
+        workerId:
+          $ref: "#/components/schemas/Id"
+        workerName:
+          type: string
+          minLength: 1
+          maxLength: 40
+        bookingType:
+          $ref: "#/components/schemas/BookingType"
+        status:
+          $ref: "#/components/schemas/AssignmentStatus"
+        assignedAt:
+          $ref: "#/components/schemas/DateTime"
+    DispatchAttemptVO:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - orderId
+        - result
+        - reason
+        - createdAt
+      properties:
+        id:
+          $ref: "#/components/schemas/Id"
+        orderId:
+          $ref: "#/components/schemas/Id"
+        workerId:
+          $ref: "#/components/schemas/Id"
+        result:
+          $ref: "#/components/schemas/DispatchAttemptResult"
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 300
+        serviceMinutes:
+          type: integer
+          minimum: 0
+          maximum: 2147483647
+        orderCount:
+          type: integer
+          minimum: 0
+          maximum: 2147483647
+        createdAt:
+          $ref: "#/components/schemas/DateTime"
+    OrderHistoryVO:
+      type: object
+      additionalProperties: false
+      required:
+        - payments
+        - priceHistory
+        - assignments
+      properties:
+        payments:
+          type: array
+          items:
+            $ref: "#/components/schemas/PaymentVO"
+        priceHistory:
+          type: array
+          items:
+            $ref: "#/components/schemas/PriceHistoryVO"
+        assignments:
+          type: array
+          items:
+            $ref: "#/components/schemas/AssignmentVO"
+        review:
+          $ref: "#/components/schemas/ReviewVO"
+    AuditVO:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - actorId
+        - action
+        - targetId
+        - detail
+        - createdAt
+      properties:
+        id:
+          $ref: "#/components/schemas/Id"
+        actorId:
+          $ref: "#/components/schemas/Id"
+        action:
+          type: string
+          minLength: 1
+          maxLength: 100
+        targetId:
+          $ref: "#/components/schemas/Id"
+        detail:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        createdAt:
+          $ref: "#/components/schemas/DateTime"
+    RecordQuery:
+      type: object
+      additionalProperties: false
+      properties:
+        pageNo:
+          type: integer
+          minimum: 1
+          maximum: 2147483647
+          default: 1
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        orderId:
+          $ref: "#/components/schemas/Id"
+        keyword:
+          type: string
+          minLength: 1
+          maxLength: 100
+    MutationVO:
+      type: object
+      additionalProperties: false
+      required:
+        - success
+      properties:
+        success:
+          type: boolean
+          enum:
+            - true
+    ErrorDetailsVO:
+      type: object
+      additionalProperties: false
+      description: PRICE_CHANGED 必须携带 currentPrice 和 priceVersion；客户端展示变化并重新查询，不能自动重试抢单或调价。
+      properties:
+        fieldErrors:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required:
+              - field
+              - message
+            properties:
+              field:
+                type: string
+                minLength: 1
+                maxLength: 100
+              message:
+                type: string
+                minLength: 1
+                maxLength: 300
+        currentPrice:
+          $ref: "#/components/schemas/Money"
+        priceVersion:
+          type: integer
+          minimum: 1
+          maximum: 2147483647
+        currentStatus:
+          $ref: "#/components/schemas/OrderStatus"
+    ErrorResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - message
+        - data
+      properties:
+        code:
+          $ref: "#/components/schemas/ErrorCode"
+        message:
+          type: string
+          minLength: 1
+          maxLength: 500
+        data:
+          $ref: "#/components/schemas/ErrorDetailsVO"
+    WsAuthFrame:
+      type: object
+      additionalProperties: false
+      description: 浏览器原生 WebSocket 不能设置 Authorization 请求头。连接同源 /ws 后 5 秒内发首帧 AUTH，服务端在校验前不发送业务数据；不得把 JWT 放
+        URL。认证失败或过期以 4401 关闭，账号禁用/角色非法以 4403 关闭。
+      required:
+        - type
+        - accessToken
+      properties:
+        type:
+          type: string
+          enum:
+            - AUTH
+        accessToken:
+          type: string
+          minLength: 1
+          maxLength: 2048
+    WsAuthAck:
+      type: object
+      additionalProperties: false
+      required:
+        - type
+        - occurredAt
+      properties:
+        type:
+          type: string
+          enum:
+            - AUTHENTICATED
+        occurredAt:
+          $ref: "#/components/schemas/DateTime"
+    WsOrderPayload:
+      type: object
+      additionalProperties: false
+      description: 无门牌、电话、开始码。仅事件相关且有权限的用户收到；优惠池事件需按人员资格过滤。reason 用于关闭或失败。
+      required:
+        - status
+        - currentPrice
+      properties:
+        status:
+          $ref: "#/components/schemas/OrderStatus"
+        currentPrice:
+          $ref: "#/components/schemas/Money"
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 300
+    WsEvent:
+      type: object
+      additionalProperties: false
+      description: 同源
+        /ws，仅通知，事务提交后发送。OFFER_CREATED=新优惠单；OFFER_PRICE_CHANGED=变价；ORDER_CLAIMED=被抢；ORDER_CLOSED=取消/超时；DISPATCH_SUCCEEDED/FAILED=标准调度结果；ORDER_STATUS_CHANGED=履约变化。客户收本人订单；人员收本人分配及有资格的池事件；管理员收管理事件。允许丢失/重复/乱序，eventId
+        去重，priceVersion 不得回退；断线、重连、重新登录必须 HTTP 重查，不以推送作为状态裁决。
+      required:
+        - eventId
+        - type
+        - orderId
+        - priceVersion
+        - occurredAt
+        - payload
+      properties:
+        eventId:
+          $ref: "#/components/schemas/Id"
+        type:
+          $ref: "#/components/schemas/WsEventType"
+        orderId:
+          $ref: "#/components/schemas/Id"
+        priceVersion:
+          type: integer
+          minimum: 1
+          maximum: 2147483647
+        occurredAt:
+          $ref: "#/components/schemas/DateTime"
+        payload:
+          $ref: "#/components/schemas/WsOrderPayload"
+      example:
+        eventId: "9001"
+        type: OFFER_PRICE_CHANGED
+        orderId: "10001"
+        priceVersion: 2
+        occurredAt: 2026-10-03T10:00:00+08:00
+        payload:
+          status: WAITING_ACCEPTANCE
+          currentPrice: "135.00"
+    LoginVOResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - message
+        - data
+      properties:
+        code:
+          type: string
+          enum:
+            - SUCCESS
+        message:
+          type: string
+          minLength: 1
+          maxLength: 200
+        data:
+          $ref: "#/components/schemas/LoginVO"
+    AccountVOResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - message
+        - data
+      properties:
+        code:
+          type: string
+          enum:
+            - SUCCESS
+        message:
+          type: string
+          minLength: 1
+          maxLength: 200
+        data:
+          $ref: "#/components/schemas/AccountVO"
+    RegionListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - message
+        - data
+      properties:
+        code:
+          type: string
+          enum:
+            - SUCCESS
+        message:
+          type: string
+          minLength: 1
+          maxLength: 200
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/RegionVO"
+    BookingRulesVOResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - message
+        - data
+      properties:
+        code:
+          type: string
+          enum:
+            - SUCCESS
+        message:
+          type: string
+          minLength: 1
+          maxLength: 200
+        data:
+          $ref: "#/components/schemas/BookingRulesVO"
+    CategoryPageDTO:
+      type: object
+      additionalProperties: false
+      required:
+        - list
+        - total
+        - pages
+      properties:
+        list:
+          type: array
+          items:
+            $ref: "#/components/schemas/CategoryVO"
+        total:
+          type: integer
+          minimum: 0
+          maximum: 2147483647
+        pages:
+          type: integer
+          minimum: 0
+          maximum: 2147483647
+    CategoryPageDTOResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - message
+        - data
+      properties:
+        code:
+          type: string
+          enum:
+            - SUCCESS
+        message:
+          type: string
+          minLength: 1
+          maxLength: 200
+        data:
+          $ref: "#/components/schemas/CategoryPageDTO"
+    ServiceItemPageDTO:
+      type: object
+      additionalProperties: false
+      required:
+        - list
+        - total
+        - pages
+      properties:
+        list:
+          type: array
+          items:
+            $ref: "#/components/schemas/ServiceItemVO"
+        total:
+          type: integer
+          minimum: 0
+          maximum: 2147483647
+        pages:
+          type: integer
+          minimum: 0
+          maximum: 2147483647
+    ServiceItemPageDTOResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - message
+        - data
+      properties:
+        code:
+          type: string
+          enum:
+            - SUCCESS
+        message:
+          type: string
+          minLength: 1
+          maxLength: 200
+        data:
+          $ref: "#/components/schemas/ServiceItemPageDTO"
+    SkuPageDTO:
+      type: object
+      additionalProperties: false
+      required:
+        - list
+        - total
+        - pages
+      properties:
+        list:
+          type: array
+          items:
+            $ref: "#/components/schemas/SkuVO"
+        total:
+          type: integer
+          minimum: 0
+          maximum: 2147483647
+        pages:
+          type: integer
+          minimum: 0
+          maximum: 2147483647
+    SkuPageDTOResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - message
+        - data
+      properties:
+        code:
+          type: string
+          enum:
+            - SUCCESS
+        message:
+          type: string
+          minLength: 1
+          maxLength: 200
+        data:
+          $ref: "#/components/schemas/SkuPageDTO"
+      example:
+        code: SUCCESS
+        message: 成功
+        data:
+          list: []
+          total: 0
+          pages: 0
+    SkuVOResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - message
+        - data
+      properties:
+        code:
+          type: string
+          enum:
+            - SUCCESS
+        message:
+          type: string
+          minLength: 1
+          maxLength: 200
+        data:
+          $ref: "#/components/schemas/SkuVO"
+    AddressListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - message
+        - data
+      properties:
+        code:
+          type: string
+          enum:
+            - SUCCESS
+        message:
+          type: string
+          minLength: 1
+          maxLength: 200
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/AddressVO"
+    AddressVOResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - message
+        - data
+      properties:
+        code:
+          type: string
+          enum:
+            - SUCCESS
+        message:
+          type: string
+          minLength: 1
+          maxLength: 200
+        data:
+          $ref: "#/components/schemas/AddressVO"
+    MutationVOResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - message
+        - data
+      properties:
+        code:
+          type: string
+          enum:
+            - SUCCESS
+        message:
+          type: string
+          minLength: 1
+          maxLength: 200
+        data:
+          $ref: "#/components/schemas/MutationVO"
+    OrderVOResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - message
+        - data
+      properties:
+        code:
+          type: string
+          enum:
+            - SUCCESS
+        message:
+          type: string
+          minLength: 1
+          maxLength: 200
+        data:
+          $ref: "#/components/schemas/OrderVO"
+    OrderPageDTO:
+      type: object
+      additionalProperties: false
+      required:
+        - list
+        - total
+        - pages
+      properties:
+        list:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrderVO"
+        total:
+          type: integer
+          minimum: 0
+          maximum: 2147483647
+        pages:
+          type: integer
+          minimum: 0
+          maximum: 2147483647
+    OrderPageDTOResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - message
+        - data
+      properties:
+        code:
+          type: string
+          enum:
+            - SUCCESS
+        message:
+          type: string
+          minLength: 1
+          maxLength: 200
+        data:
+          $ref: "#/components/schemas/OrderPageDTO"
+    OrderHistoryVOResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - message
+        - data
+      properties:
+        code:
+          type: string
+          enum:
+            - SUCCESS
+        message:
+          type: string
+          minLength: 1
+          maxLength: 200
+        data:
+          $ref: "#/components/schemas/OrderHistoryVO"
+    StartCodeVOResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - message
+        - data
+      properties:
+        code:
+          type: string
+          enum:
+            - SUCCESS
+        message:
+          type: string
+          minLength: 1
+          maxLength: 200
+        data:
+          $ref: "#/components/schemas/StartCodeVO"
+    ReviewVOResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - message
+        - data
+      properties:
+        code:
+          type: string
+          enum:
+            - SUCCESS
+        message:
+          type: string
+          minLength: 1
+          maxLength: 200
+        data:
+          $ref: "#/components/schemas/ReviewVO"
+    WorkerVOResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - message
+        - data
+      properties:
+        code:
+          type: string
+          enum:
+            - SUCCESS
+        message:
+          type: string
+          minLength: 1
+          maxLength: 200
+        data:
+          $ref: "#/components/schemas/WorkerVO"
+    ScheduleVOResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - message
+        - data
+      properties:
+        code:
+          type: string
+          enum:
+            - SUCCESS
+        message:
+          type: string
+          minLength: 1
+          maxLength: 200
+        data:
+          $ref: "#/components/schemas/ScheduleVO"
+    SlotListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - message
+        - data
+      properties:
+        code:
+          type: string
+          enum:
+            - SUCCESS
+        message:
+          type: string
+          minLength: 1
+          maxLength: 200
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/SlotVO"
+    LeavePageDTO:
+      type: object
+      additionalProperties: false
+      required:
+        - list
+        - total
+        - pages
+      properties:
+        list:
+          type: array
+          items:
+            $ref: "#/components/schemas/LeaveVO"
+        total:
+          type: integer
+          minimum: 0
+          maximum: 2147483647
+        pages:
+          type: integer
+          minimum: 0
+          maximum: 2147483647
+    LeavePageDTOResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - message
+        - data
+      properties:
+        code:
+          type: string
+          enum:
+            - SUCCESS
+        message:
+          type: string
+          minLength: 1
+          maxLength: 200
+        data:
+          $ref: "#/components/schemas/LeavePageDTO"
+    LeaveVOResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - message
+        - data
+      properties:
+        code:
+          type: string
+          enum:
+            - SUCCESS
+        message:
+          type: string
+          minLength: 1
+          maxLength: 200
+        data:
+          $ref: "#/components/schemas/LeaveVO"
+    OfferPageDTO:
+      type: object
+      additionalProperties: false
+      required:
+        - list
+        - total
+        - pages
+      properties:
+        list:
+          type: array
+          items:
+            $ref: "#/components/schemas/OfferVO"
+        total:
+          type: integer
+          minimum: 0
+          maximum: 2147483647
+        pages:
+          type: integer
+          minimum: 0
+          maximum: 2147483647
+    OfferPageDTOResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - message
+        - data
+      properties:
+        code:
+          type: string
+          enum:
+            - SUCCESS
+        message:
+          type: string
+          minLength: 1
+          maxLength: 200
+        data:
+          $ref: "#/components/schemas/OfferPageDTO"
+    CategoryVOResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - message
+        - data
+      properties:
+        code:
+          type: string
+          enum:
+            - SUCCESS
+        message:
+          type: string
+          minLength: 1
+          maxLength: 200
+        data:
+          $ref: "#/components/schemas/CategoryVO"
+    ServiceItemVOResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - message
+        - data
+      properties:
+        code:
+          type: string
+          enum:
+            - SUCCESS
+        message:
+          type: string
+          minLength: 1
+          maxLength: 200
+        data:
+          $ref: "#/components/schemas/ServiceItemVO"
+    SkillPageDTO:
+      type: object
+      additionalProperties: false
+      required:
+        - list
+        - total
+        - pages
+      properties:
+        list:
+          type: array
+          items:
+            $ref: "#/components/schemas/SkillVO"
+        total:
+          type: integer
+          minimum: 0
+          maximum: 2147483647
+        pages:
+          type: integer
+          minimum: 0
+          maximum: 2147483647
+    SkillPageDTOResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - message
+        - data
+      properties:
+        code:
+          type: string
+          enum:
+            - SUCCESS
+        message:
+          type: string
+          minLength: 1
+          maxLength: 200
+        data:
+          $ref: "#/components/schemas/SkillPageDTO"
+    SkillVOResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - message
+        - data
+      properties:
+        code:
+          type: string
+          enum:
+            - SUCCESS
+        message:
+          type: string
+          minLength: 1
+          maxLength: 200
+        data:
+          $ref: "#/components/schemas/SkillVO"
+    AccountPageDTO:
+      type: object
+      additionalProperties: false
+      required:
+        - list
+        - total
+        - pages
+      properties:
+        list:
+          type: array
+          items:
+            $ref: "#/components/schemas/AccountVO"
+        total:
+          type: integer
+          minimum: 0
+          maximum: 2147483647
+        pages:
+          type: integer
+          minimum: 0
+          maximum: 2147483647
+    AccountPageDTOResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - message
+        - data
+      properties:
+        code:
+          type: string
+          enum:
+            - SUCCESS
+        message:
+          type: string
+          minLength: 1
+          maxLength: 200
+        data:
+          $ref: "#/components/schemas/AccountPageDTO"
+    WorkerPageDTO:
+      type: object
+      additionalProperties: false
+      required:
+        - list
+        - total
+        - pages
+      properties:
+        list:
+          type: array
+          items:
+            $ref: "#/components/schemas/WorkerVO"
+        total:
+          type: integer
+          minimum: 0
+          maximum: 2147483647
+        pages:
+          type: integer
+          minimum: 0
+          maximum: 2147483647
+    WorkerPageDTOResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - message
+        - data
+      properties:
+        code:
+          type: string
+          enum:
+            - SUCCESS
+        message:
+          type: string
+          minLength: 1
+          maxLength: 200
+        data:
+          $ref: "#/components/schemas/WorkerPageDTO"
+    DispatchAttemptPageDTO:
+      type: object
+      additionalProperties: false
+      required:
+        - list
+        - total
+        - pages
+      properties:
+        list:
+          type: array
+          items:
+            $ref: "#/components/schemas/DispatchAttemptVO"
+        total:
+          type: integer
+          minimum: 0
+          maximum: 2147483647
+        pages:
+          type: integer
+          minimum: 0
+          maximum: 2147483647
+    DispatchAttemptPageDTOResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - message
+        - data
+      properties:
+        code:
+          type: string
+          enum:
+            - SUCCESS
+        message:
+          type: string
+          minLength: 1
+          maxLength: 200
+        data:
+          $ref: "#/components/schemas/DispatchAttemptPageDTO"
+    PaymentPageDTO:
+      type: object
+      additionalProperties: false
+      required:
+        - list
+        - total
+        - pages
+      properties:
+        list:
+          type: array
+          items:
+            $ref: "#/components/schemas/PaymentVO"
+        total:
+          type: integer
+          minimum: 0
+          maximum: 2147483647
+        pages:
+          type: integer
+          minimum: 0
+          maximum: 2147483647
+    PaymentPageDTOResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - message
+        - data
+      properties:
+        code:
+          type: string
+          enum:
+            - SUCCESS
+        message:
+          type: string
+          minLength: 1
+          maxLength: 200
+        data:
+          $ref: "#/components/schemas/PaymentPageDTO"
+    AuditPageDTO:
+      type: object
+      additionalProperties: false
+      required:
+        - list
+        - total
+        - pages
+      properties:
+        list:
+          type: array
+          items:
+            $ref: "#/components/schemas/AuditVO"
+        total:
+          type: integer
+          minimum: 0
+          maximum: 2147483647
+        pages:
+          type: integer
+          minimum: 0
+          maximum: 2147483647
+    AuditPageDTOResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - message
+        - data
+      properties:
+        code:
+          type: string
+          enum:
+            - SUCCESS
+        message:
+          type: string
+          minLength: 1
+          maxLength: 200
+        data:
+          $ref: "#/components/schemas/AuditPageDTO"
