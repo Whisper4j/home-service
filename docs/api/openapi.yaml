@@ -3492,6 +3492,12 @@ components:
       enum:
         - ON_SHELF
         - OFF_SHELF
+    ServiceKind:
+      type: string
+      enum:
+        - CLEANING
+        - REPAIR
+        - OTHER
     BookingType:
       type: string
       enum:
@@ -3983,9 +3989,11 @@ components:
     ServiceItemDTO:
       type: object
       additionalProperties: false
+      description: 业务性质独立于可维护分类名称和ID。当前只有 CLEANING 可支持优惠，REPAIR 和 OTHER 仅标准；有支持优惠的SKU时不能改为非清洁。新增分类无需新增订单流程。
       required:
         - categoryId
         - name
+        - serviceKind
         - description
         - status
       properties:
@@ -3995,6 +4003,8 @@ components:
           type: string
           minLength: 1
           maxLength: 60
+        serviceKind:
+          $ref: "#/components/schemas/ServiceKind"
         description:
           type: string
           minLength: 1
@@ -4008,6 +4018,7 @@ components:
         - id
         - categoryId
         - name
+        - serviceKind
         - description
         - status
       properties:
@@ -4019,6 +4030,8 @@ components:
           type: string
           minLength: 1
           maxLength: 60
+        serviceKind:
+          $ref: "#/components/schemas/ServiceKind"
         description:
           type: string
           minLength: 1

@@ -1,0 +1,19 @@
+import type { Schema } from '../api/types'
+export const orderLabels: Record<Schema['OrderStatus'], string> = {
+  PENDING_PAYMENT: '待支付', WAITING_DISPATCH: '待自动派单', WAITING_ACCEPTANCE: '待抢单',
+  PENDING_SERVICE: '待服务', DEPARTED: '已出发', ARRIVED: '已到达', IN_SERVICE: '服务中',
+  PENDING_CONFIRMATION: '待客户确认', COMPLETED: '已完成', CANCELLED: '已取消',
+}
+export const labels: Record<string, string> = {
+  ...orderLabels, STANDARD: '标准预约', OFFER: '优惠预约', UNPAID: '未支付', PAID: '已支付',
+  PARTIALLY_REFUNDED: '部分退款', REFUNDED: '已全额退款', NOT_REQUIRED: '无需调度', PENDING: '调度中', SUCCEEDED: '派单成功', FAILED: '派单失败',
+  NON_WORKING: '非工作', AVAILABLE: '可接单', LEAVE: '请假', SERVICE: '服务占用', BUFFER: '缓冲占用',
+  PAYMENT: '模拟支付', TOP_UP: '模拟补差', PARTIAL_REFUND: '部分退款', FULL_REFUND: '全额退款',
+  CUSTOMER: '客户', WORKER: '服务人员', ADMIN: '管理员', ON_SHELF: '已上架', OFF_SHELF: '已下架', ENABLED: '启用', DISABLED: '禁用',
+  ACTIVE: '生效', RELEASED: '已释放', FINISHED: '已结束', ASSIGNED: '已分配', INELIGIBLE: '条件不符', SLOT_CONFLICT: '时间槽冲突', NO_CANDIDATE: '暂无候选',
+  PUNCTUAL: '准时', PROFESSIONAL: '专业', FRIENDLY: '服务态度好',
+  OFFER_CREATED: '新优惠预约', OFFER_PRICE_CHANGED: '报价已变化', ORDER_CLAIMED: '订单已被抢', ORDER_CLOSED: '订单已关闭',
+  DISPATCH_SUCCEEDED: '自动派单成功', DISPATCH_FAILED: '自动派单失败', ORDER_STATUS_CHANGED: '履约进度更新',
+}
+export const label = (value: string | undefined) => value ? labels[value] || value : '—'
+export const roleLabels = { customer: '客户', worker: '服务人员', admin: '管理员' }

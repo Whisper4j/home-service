@@ -1,0 +1,3609 @@
+{
+  "Id": {
+    "type": "string",
+    "minLength": 1,
+    "maxLength": 19,
+    "pattern": "^[1-9][0-9]{0,18}$",
+    "example": "10001",
+    "description": "十进制字符串 ID，路径、查询、JSON 中均不得转为 JS number。"
+  },
+  "Money": {
+    "type": "string",
+    "minLength": 1,
+    "maxLength": 12,
+    "pattern": "^(0|[1-9][0-9]{0,8})\\.[0-9]{2}$",
+    "example": "128.00",
+    "description": "人民币元，两位小数字符串。服务端 BigDecimal/decimal；前端比较和计算使用整数分。"
+  },
+  "DateTime": {
+    "type": "string",
+    "minLength": 1,
+    "maxLength": 25,
+    "format": "date-time",
+    "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\+08:00$",
+    "example": "2026-10-04T09:00:00+08:00",
+    "description": "Asia/Shanghai，必须显式 +08:00；不接受无偏移时间。"
+  },
+  "LocalTime": {
+    "type": "string",
+    "minLength": 1,
+    "maxLength": 5,
+    "pattern": "^([01][0-9]|2[0-3]):(00|30)$",
+    "example": "08:00"
+  },
+  "LocalDate": {
+    "type": "string",
+    "minLength": 1,
+    "maxLength": 10,
+    "format": "date",
+    "example": "2026-10-04"
+  },
+  "Role": {
+    "type": "string",
+    "enum": [
+      "CUSTOMER",
+      "WORKER",
+      "ADMIN"
+    ]
+  },
+  "AccountStatus": {
+    "type": "string",
+    "enum": [
+      "ENABLED",
+      "DISABLED"
+    ]
+  },
+  "CatalogStatus": {
+    "type": "string",
+    "enum": [
+      "ON_SHELF",
+      "OFF_SHELF"
+    ]
+  },
+  "ServiceKind": {
+    "type": "string",
+    "enum": [
+      "CLEANING",
+      "REPAIR",
+      "OTHER"
+    ]
+  },
+  "BookingType": {
+    "type": "string",
+    "enum": [
+      "STANDARD",
+      "OFFER"
+    ]
+  },
+  "OrderStatus": {
+    "type": "string",
+    "enum": [
+      "PENDING_PAYMENT",
+      "WAITING_DISPATCH",
+      "WAITING_ACCEPTANCE",
+      "PENDING_SERVICE",
+      "DEPARTED",
+      "ARRIVED",
+      "IN_SERVICE",
+      "PENDING_CONFIRMATION",
+      "COMPLETED",
+      "CANCELLED"
+    ]
+  },
+  "PaymentStatus": {
+    "type": "string",
+    "enum": [
+      "UNPAID",
+      "PAID",
+      "PARTIALLY_REFUNDED",
+      "REFUNDED"
+    ]
+  },
+  "DispatchStatus": {
+    "type": "string",
+    "enum": [
+      "NOT_REQUIRED",
+      "PENDING",
+      "SUCCEEDED",
+      "FAILED"
+    ]
+  },
+  "SlotStatus": {
+    "type": "string",
+    "enum": [
+      "NON_WORKING",
+      "AVAILABLE",
+      "LEAVE",
+      "SERVICE",
+      "BUFFER"
+    ]
+  },
+  "PaymentType": {
+    "type": "string",
+    "enum": [
+      "PAYMENT",
+      "TOP_UP",
+      "PARTIAL_REFUND",
+      "FULL_REFUND"
+    ]
+  },
+  "AssignmentStatus": {
+    "type": "string",
+    "enum": [
+      "ACTIVE",
+      "RELEASED",
+      "FINISHED"
+    ]
+  },
+  "LeaveStatus": {
+    "type": "string",
+    "enum": [
+      "ACTIVE",
+      "CANCELLED"
+    ]
+  },
+  "ReviewTag": {
+    "type": "string",
+    "enum": [
+      "PUNCTUAL",
+      "PROFESSIONAL",
+      "FRIENDLY"
+    ]
+  },
+  "DispatchAttemptResult": {
+    "type": "string",
+    "enum": [
+      "ASSIGNED",
+      "INELIGIBLE",
+      "SLOT_CONFLICT",
+      "NO_CANDIDATE"
+    ]
+  },
+  "WsEventType": {
+    "type": "string",
+    "enum": [
+      "OFFER_CREATED",
+      "OFFER_PRICE_CHANGED",
+      "ORDER_CLAIMED",
+      "ORDER_CLOSED",
+      "DISPATCH_SUCCEEDED",
+      "DISPATCH_FAILED",
+      "ORDER_STATUS_CHANGED"
+    ]
+  },
+  "ErrorCode": {
+    "type": "string",
+    "enum": [
+      "VALIDATION_ERROR",
+      "UNAUTHENTICATED",
+      "TOKEN_EXPIRED",
+      "FORBIDDEN",
+      "ACCOUNT_DISABLED",
+      "INVALID_CREDENTIALS",
+      "USERNAME_EXISTS",
+      "NOT_FOUND",
+      "IDEMPOTENCY_CONFLICT",
+      "REQUEST_IN_PROGRESS",
+      "STATE_CONFLICT",
+      "PRICE_CHANGED",
+      "PRICE_OUT_OF_RANGE",
+      "SLOT_CONFLICT",
+      "SCHEDULE_CONFLICT",
+      "OUTSIDE_SERVICE_AREA",
+      "BOOKING_WINDOW_INVALID",
+      "OFFER_NOT_SUPPORTED",
+      "OFFER_CLOSED",
+      "ORDER_TAKEN",
+      "WORKER_INELIGIBLE",
+      "START_CODE_INVALID",
+      "REVIEW_EXISTS",
+      "CATALOG_UNAVAILABLE",
+      "RESOURCE_IN_USE",
+      "CONFIG_CONFLICT",
+      "INTERNAL_ERROR"
+    ]
+  },
+  "PageQuery": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "pageNo": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 2147483647,
+        "default": 1
+      },
+      "pageSize": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 100,
+        "default": 20
+      }
+    }
+  },
+  "LoginDTO": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "username",
+      "password"
+    ],
+    "properties": {
+      "username": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 32,
+        "pattern": "^[A-Za-z][A-Za-z0-9_]{2,31}$",
+        "example": "customer"
+      },
+      "password": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 72,
+        "format": "password",
+        "example": "Demo12345"
+      }
+    }
+  },
+  "RegisterDTO": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "username",
+      "password",
+      "displayName",
+      "phone"
+    ],
+    "properties": {
+      "username": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 32,
+        "pattern": "^[A-Za-z][A-Za-z0-9_]{2,31}$",
+        "example": "customer"
+      },
+      "password": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 72,
+        "format": "password",
+        "example": "Demo12345"
+      },
+      "displayName": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 40
+      },
+      "phone": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 11,
+        "pattern": "^1[0-9]{10}$"
+      }
+    }
+  },
+  "AccountVO": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "id",
+      "username",
+      "displayName",
+      "role",
+      "status",
+      "phone"
+    ],
+    "properties": {
+      "id": {
+        "$ref": "#/components/schemas/Id"
+      },
+      "username": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 32
+      },
+      "displayName": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 40
+      },
+      "role": {
+        "$ref": "#/components/schemas/Role"
+      },
+      "status": {
+        "$ref": "#/components/schemas/AccountStatus"
+      },
+      "phone": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 11
+      }
+    }
+  },
+  "LoginVO": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "accessToken",
+      "tokenType",
+      "expiresAt",
+      "account"
+    ],
+    "properties": {
+      "accessToken": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 2048
+      },
+      "tokenType": {
+        "type": "string",
+        "enum": [
+          "Bearer"
+        ]
+      },
+      "expiresAt": {
+        "$ref": "#/components/schemas/DateTime"
+      },
+      "account": {
+        "$ref": "#/components/schemas/AccountVO"
+      }
+    }
+  },
+  "AccountStatusDTO": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "status"
+    ],
+    "properties": {
+      "status": {
+        "$ref": "#/components/schemas/AccountStatus"
+      }
+    }
+  },
+  "AccountProfileDTO": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "displayName",
+      "phone"
+    ],
+    "properties": {
+      "displayName": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 40
+      },
+      "phone": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 11,
+        "pattern": "^1[0-9]{10}$"
+      }
+    }
+  },
+  "AccountQuery": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "pageNo": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 2147483647,
+        "default": 1
+      },
+      "pageSize": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 100,
+        "default": 20
+      },
+      "keyword": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 100
+      },
+      "role": {
+        "$ref": "#/components/schemas/Role"
+      },
+      "status": {
+        "$ref": "#/components/schemas/AccountStatus"
+      }
+    }
+  },
+  "AddressDTO": {
+    "type": "object",
+    "additionalProperties": false,
+    "description": "仅支持广东省广州市及其全部区。行政区编码与名称必须匹配；经纬度同时为空或同时提供。不按距离计价。设置默认地址原子清除旧默认。",
+    "required": [
+      "contactName",
+      "contactPhone",
+      "provinceCode",
+      "provinceName",
+      "cityCode",
+      "cityName",
+      "districtCode",
+      "districtName",
+      "detail",
+      "longitude",
+      "latitude",
+      "isDefault"
+    ],
+    "properties": {
+      "contactName": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 40
+      },
+      "contactPhone": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 11,
+        "pattern": "^1[0-9]{10}$"
+      },
+      "provinceCode": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 6
+      },
+      "provinceName": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 40
+      },
+      "cityCode": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 6
+      },
+      "cityName": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 40
+      },
+      "districtCode": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 6
+      },
+      "districtName": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 40
+      },
+      "detail": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "longitude": {
+        "type": "number",
+        "minimum": -180,
+        "maximum": 180,
+        "nullable": true
+      },
+      "latitude": {
+        "type": "number",
+        "minimum": -90,
+        "maximum": 90,
+        "nullable": true
+      },
+      "isDefault": {
+        "type": "boolean"
+      }
+    }
+  },
+  "AddressVO": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "id",
+      "contactName",
+      "contactPhone",
+      "provinceCode",
+      "provinceName",
+      "cityCode",
+      "cityName",
+      "districtCode",
+      "districtName",
+      "detail",
+      "longitude",
+      "latitude",
+      "isDefault"
+    ],
+    "properties": {
+      "id": {
+        "$ref": "#/components/schemas/Id"
+      },
+      "contactName": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 40
+      },
+      "contactPhone": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 11,
+        "pattern": "^1[0-9]{10}$"
+      },
+      "provinceCode": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 6
+      },
+      "provinceName": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 40
+      },
+      "cityCode": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 6
+      },
+      "cityName": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 40
+      },
+      "districtCode": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 6
+      },
+      "districtName": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 40
+      },
+      "detail": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "longitude": {
+        "type": "number",
+        "minimum": -180,
+        "maximum": 180,
+        "nullable": true
+      },
+      "latitude": {
+        "type": "number",
+        "minimum": -90,
+        "maximum": 90,
+        "nullable": true
+      },
+      "isDefault": {
+        "type": "boolean"
+      }
+    }
+  },
+  "RegionVO": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "provinceCode",
+      "provinceName",
+      "cityCode",
+      "cityName",
+      "districts"
+    ],
+    "properties": {
+      "provinceCode": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 6
+      },
+      "provinceName": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 40
+      },
+      "cityCode": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 6
+      },
+      "cityName": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 40
+      },
+      "districts": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "code",
+            "name"
+          ],
+          "properties": {
+            "code": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 6
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 40
+            }
+          }
+        }
+      }
+    }
+  },
+  "CategoryDTO": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "name",
+      "sort",
+      "status"
+    ],
+    "properties": {
+      "name": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 60
+      },
+      "sort": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 9999
+      },
+      "status": {
+        "$ref": "#/components/schemas/CatalogStatus"
+      }
+    }
+  },
+  "CategoryVO": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "id",
+      "name",
+      "sort",
+      "status"
+    ],
+    "properties": {
+      "id": {
+        "$ref": "#/components/schemas/Id"
+      },
+      "name": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 60
+      },
+      "sort": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 9999
+      },
+      "status": {
+        "$ref": "#/components/schemas/CatalogStatus"
+      }
+    }
+  },
+  "ServiceItemDTO": {
+    "type": "object",
+    "additionalProperties": false,
+    "description": "业务性质独立于可维护分类名称和ID。当前只有 CLEANING 可支持优惠，REPAIR 和 OTHER 仅标准；有支持优惠的SKU时不能改为非清洁。新增分类无需新增订单流程。",
+    "required": [
+      "categoryId",
+      "name",
+      "serviceKind",
+      "description",
+      "status"
+    ],
+    "properties": {
+      "categoryId": {
+        "$ref": "#/components/schemas/Id"
+      },
+      "name": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 60
+      },
+      "serviceKind": {
+        "$ref": "#/components/schemas/ServiceKind"
+      },
+      "description": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 1000
+      },
+      "status": {
+        "$ref": "#/components/schemas/CatalogStatus"
+      }
+    }
+  },
+  "ServiceItemVO": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "id",
+      "categoryId",
+      "name",
+      "serviceKind",
+      "description",
+      "status"
+    ],
+    "properties": {
+      "id": {
+        "$ref": "#/components/schemas/Id"
+      },
+      "categoryId": {
+        "$ref": "#/components/schemas/Id"
+      },
+      "name": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 60
+      },
+      "serviceKind": {
+        "$ref": "#/components/schemas/ServiceKind"
+      },
+      "description": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 1000
+      },
+      "status": {
+        "$ref": "#/components/schemas/CatalogStatus"
+      }
+    }
+  },
+  "SkillDTO": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "name",
+      "description"
+    ],
+    "properties": {
+      "name": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 60
+      },
+      "description": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 300
+      }
+    }
+  },
+  "SkillVO": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "id",
+      "name",
+      "description"
+    ],
+    "properties": {
+      "id": {
+        "$ref": "#/components/schemas/Id"
+      },
+      "name": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 60
+      },
+      "description": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 300
+      }
+    }
+  },
+  "SkuDTO": {
+    "type": "object",
+    "additionalProperties": false,
+    "description": "价格必须大于 0；支持优惠时 0 < 最低价 < 标准价，报价以最低价为锚点步进 5 元。不支持优惠时最低价等于标准价。维修不开放优惠。上下架和价格变更仅影响后续订单，历史订单保留快照。",
+    "required": [
+      "itemId",
+      "name",
+      "standardPrice",
+      "minimumOfferPrice",
+      "durationMinutes",
+      "unit",
+      "skillIds",
+      "status",
+      "supportsOffer",
+      "description",
+      "included",
+      "excluded",
+      "customerSuppliesParts"
+    ],
+    "properties": {
+      "itemId": {
+        "$ref": "#/components/schemas/Id"
+      },
+      "name": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 80
+      },
+      "standardPrice": {
+        "$ref": "#/components/schemas/Money"
+      },
+      "minimumOfferPrice": {
+        "$ref": "#/components/schemas/Money"
+      },
+      "durationMinutes": {
+        "type": "integer",
+        "minimum": 30,
+        "maximum": 720,
+        "multipleOf": 30
+      },
+      "unit": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 20
+      },
+      "skillIds": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/Id"
+        },
+        "minItems": 1,
+        "uniqueItems": true
+      },
+      "status": {
+        "$ref": "#/components/schemas/CatalogStatus"
+      },
+      "supportsOffer": {
+        "type": "boolean"
+      },
+      "description": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 2000
+      },
+      "included": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 1000
+      },
+      "excluded": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 1000
+      },
+      "customerSuppliesParts": {
+        "type": "boolean"
+      }
+    }
+  },
+  "SkuVO": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "id",
+      "categoryId",
+      "categoryName",
+      "itemName",
+      "itemId",
+      "name",
+      "standardPrice",
+      "minimumOfferPrice",
+      "durationMinutes",
+      "unit",
+      "skillIds",
+      "status",
+      "supportsOffer",
+      "description",
+      "included",
+      "excluded",
+      "customerSuppliesParts"
+    ],
+    "properties": {
+      "id": {
+        "$ref": "#/components/schemas/Id"
+      },
+      "categoryId": {
+        "$ref": "#/components/schemas/Id"
+      },
+      "categoryName": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 60
+      },
+      "itemName": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 60
+      },
+      "itemId": {
+        "$ref": "#/components/schemas/Id"
+      },
+      "name": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 80
+      },
+      "standardPrice": {
+        "$ref": "#/components/schemas/Money"
+      },
+      "minimumOfferPrice": {
+        "$ref": "#/components/schemas/Money"
+      },
+      "durationMinutes": {
+        "type": "integer",
+        "minimum": 30,
+        "maximum": 720,
+        "multipleOf": 30
+      },
+      "unit": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 20
+      },
+      "skillIds": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/Id"
+        },
+        "minItems": 1,
+        "uniqueItems": true
+      },
+      "status": {
+        "$ref": "#/components/schemas/CatalogStatus"
+      },
+      "supportsOffer": {
+        "type": "boolean"
+      },
+      "description": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 2000
+      },
+      "included": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 1000
+      },
+      "excluded": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 1000
+      },
+      "customerSuppliesParts": {
+        "type": "boolean"
+      }
+    }
+  },
+  "CatalogQuery": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "pageNo": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 2147483647,
+        "default": 1
+      },
+      "pageSize": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 100,
+        "default": 20
+      },
+      "keyword": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 100
+      },
+      "categoryId": {
+        "$ref": "#/components/schemas/Id"
+      },
+      "itemId": {
+        "$ref": "#/components/schemas/Id"
+      },
+      "status": {
+        "$ref": "#/components/schemas/CatalogStatus"
+      }
+    }
+  },
+  "WorkerDTO": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "displayName",
+      "phone",
+      "cityCode",
+      "skillIds",
+      "dispatchEnabled"
+    ],
+    "properties": {
+      "displayName": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 40
+      },
+      "phone": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 11,
+        "pattern": "^1[0-9]{10}$"
+      },
+      "cityCode": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 6,
+        "enum": [
+          "440100"
+        ]
+      },
+      "skillIds": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/Id"
+        },
+        "minItems": 1,
+        "uniqueItems": true
+      },
+      "dispatchEnabled": {
+        "type": "boolean"
+      }
+    }
+  },
+  "WorkerCreateDTO": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "username",
+      "password",
+      "displayName",
+      "phone",
+      "cityCode",
+      "skillIds",
+      "dispatchEnabled"
+    ],
+    "properties": {
+      "username": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 32,
+        "pattern": "^[A-Za-z][A-Za-z0-9_]{2,31}$",
+        "example": "customer"
+      },
+      "password": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 72,
+        "format": "password",
+        "example": "Demo12345"
+      },
+      "displayName": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 40
+      },
+      "phone": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 11,
+        "pattern": "^1[0-9]{10}$"
+      },
+      "cityCode": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 6,
+        "enum": [
+          "440100"
+        ]
+      },
+      "skillIds": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/Id"
+        },
+        "minItems": 1,
+        "uniqueItems": true
+      },
+      "dispatchEnabled": {
+        "type": "boolean"
+      }
+    }
+  },
+  "WorkerVO": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "id",
+      "accountId",
+      "username",
+      "status",
+      "displayName",
+      "phone",
+      "cityCode",
+      "skillIds",
+      "dispatchEnabled"
+    ],
+    "properties": {
+      "id": {
+        "$ref": "#/components/schemas/Id"
+      },
+      "accountId": {
+        "$ref": "#/components/schemas/Id"
+      },
+      "username": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 32
+      },
+      "status": {
+        "$ref": "#/components/schemas/AccountStatus"
+      },
+      "displayName": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 40
+      },
+      "phone": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 11,
+        "pattern": "^1[0-9]{10}$"
+      },
+      "cityCode": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 6,
+        "enum": [
+          "440100"
+        ]
+      },
+      "skillIds": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/Id"
+        },
+        "minItems": 1,
+        "uniqueItems": true
+      },
+      "dispatchEnabled": {
+        "type": "boolean"
+      }
+    }
+  },
+  "WorkerQuery": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "pageNo": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 2147483647,
+        "default": 1
+      },
+      "pageSize": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 100,
+        "default": 20
+      },
+      "keyword": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 100
+      },
+      "skillId": {
+        "$ref": "#/components/schemas/Id"
+      },
+      "dispatchEnabled": {
+        "type": "boolean"
+      }
+    }
+  },
+  "WorkIntervalDTO": {
+    "type": "object",
+    "additionalProperties": false,
+    "description": "08:00 <= start < end <= 22:00，区间不可重叠，允许相邻。",
+    "required": [
+      "start",
+      "end"
+    ],
+    "properties": {
+      "start": {
+        "$ref": "#/components/schemas/LocalTime"
+      },
+      "end": {
+        "$ref": "#/components/schemas/LocalTime"
+      }
+    }
+  },
+  "ScheduleDTO": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "intervals",
+      "restWeekdays"
+    ],
+    "properties": {
+      "intervals": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/WorkIntervalDTO"
+        },
+        "minItems": 1,
+        "maxItems": 14
+      },
+      "restWeekdays": {
+        "type": "array",
+        "items": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 7,
+          "description": "ISO 星期：1 周一至 7 周日"
+        },
+        "uniqueItems": true,
+        "maxItems": 7
+      }
+    },
+    "example": {
+      "intervals": [
+        {
+          "start": "08:00",
+          "end": "12:00"
+        },
+        {
+          "start": "13:00",
+          "end": "22:00"
+        }
+      ],
+      "restWeekdays": [
+        7
+      ]
+    }
+  },
+  "ScheduleVO": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "configured",
+      "intervals",
+      "restWeekdays"
+    ],
+    "properties": {
+      "configured": {
+        "type": "boolean"
+      },
+      "intervals": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/WorkIntervalDTO"
+        }
+      },
+      "restWeekdays": {
+        "type": "array",
+        "items": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 7
+        },
+        "uniqueItems": true
+      }
+    }
+  },
+  "LeaveDTO": {
+    "type": "object",
+    "additionalProperties": false,
+    "description": "30 分钟对齐、start < end、至少提前 2 小时且位于未来 30 天槽窗口；不得覆盖 SERVICE/BUFFER。",
+    "required": [
+      "startTime",
+      "endTime",
+      "reason"
+    ],
+    "properties": {
+      "startTime": {
+        "$ref": "#/components/schemas/DateTime"
+      },
+      "endTime": {
+        "$ref": "#/components/schemas/DateTime"
+      },
+      "reason": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 300
+      }
+    }
+  },
+  "LeaveVO": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "id",
+      "startTime",
+      "endTime",
+      "reason",
+      "status"
+    ],
+    "properties": {
+      "id": {
+        "$ref": "#/components/schemas/Id"
+      },
+      "startTime": {
+        "$ref": "#/components/schemas/DateTime"
+      },
+      "endTime": {
+        "$ref": "#/components/schemas/DateTime"
+      },
+      "reason": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 300
+      },
+      "status": {
+        "$ref": "#/components/schemas/LeaveStatus"
+      }
+    }
+  },
+  "SlotVO": {
+    "type": "object",
+    "additionalProperties": false,
+    "description": "只有 SERVICE/BUFFER 包含 bookingType、assignmentId、orderId。每天 08:00—22:00，未来 30 天，不包含窗口末日。",
+    "required": [
+      "startTime",
+      "endTime",
+      "status"
+    ],
+    "properties": {
+      "startTime": {
+        "$ref": "#/components/schemas/DateTime"
+      },
+      "endTime": {
+        "$ref": "#/components/schemas/DateTime"
+      },
+      "status": {
+        "$ref": "#/components/schemas/SlotStatus"
+      },
+      "bookingType": {
+        "$ref": "#/components/schemas/BookingType"
+      },
+      "assignmentId": {
+        "$ref": "#/components/schemas/Id"
+      },
+      "orderId": {
+        "$ref": "#/components/schemas/Id"
+      }
+    }
+  },
+  "SlotQuery": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "date"
+    ],
+    "properties": {
+      "date": {
+        "$ref": "#/components/schemas/LocalDate"
+      }
+    }
+  },
+  "BookingRulesVO": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "cityCode",
+      "workStart",
+      "workEnd",
+      "slotMinutes",
+      "earliestHours",
+      "latestDays",
+      "offerLeadHours",
+      "offerWaitMinutes",
+      "offerSafetyHours",
+      "paymentTimeoutMinutes",
+      "dispatchWaitMinutes",
+      "dispatchScanSeconds",
+      "standardBufferMinutes",
+      "offerBufferMinutes",
+      "autoConfirmHours",
+      "priceStep"
+    ],
+    "properties": {
+      "cityCode": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 6
+      },
+      "workStart": {
+        "$ref": "#/components/schemas/LocalTime"
+      },
+      "workEnd": {
+        "$ref": "#/components/schemas/LocalTime"
+      },
+      "slotMinutes": {
+        "type": "integer",
+        "minimum": 30,
+        "maximum": 30
+      },
+      "earliestHours": {
+        "type": "integer",
+        "minimum": 2,
+        "maximum": 24
+      },
+      "latestDays": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 7
+      },
+      "offerLeadHours": {
+        "type": "integer",
+        "minimum": 12,
+        "maximum": 12
+      },
+      "offerWaitMinutes": {
+        "type": "integer",
+        "minimum": 120,
+        "maximum": 120
+      },
+      "offerSafetyHours": {
+        "type": "integer",
+        "minimum": 6,
+        "maximum": 6
+      },
+      "paymentTimeoutMinutes": {
+        "type": "integer",
+        "minimum": 15,
+        "maximum": 15
+      },
+      "dispatchWaitMinutes": {
+        "type": "integer",
+        "minimum": 5,
+        "maximum": 5
+      },
+      "dispatchScanSeconds": {
+        "type": "integer",
+        "minimum": 30,
+        "maximum": 30
+      },
+      "standardBufferMinutes": {
+        "type": "integer",
+        "minimum": 120,
+        "maximum": 120
+      },
+      "offerBufferMinutes": {
+        "type": "integer",
+        "minimum": 60,
+        "maximum": 60
+      },
+      "autoConfirmHours": {
+        "type": "integer",
+        "minimum": 24,
+        "maximum": 24
+      },
+      "priceStep": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 12,
+        "pattern": "^(0|[1-9][0-9]{0,8})\\.[0-9]{2}$",
+        "example": "128.00",
+        "description": "人民币元，两位小数字符串。服务端 BigDecimal/decimal；前端比较和计算使用整数分。",
+        "enum": [
+          "5.00"
+        ]
+      }
+    }
+  },
+  "SettingsDTO": {
+    "type": "object",
+    "additionalProperties": false,
+    "description": "当前仅预约窗口可配置，其他核心规则只读。只影响新预约，已创建订单的截止时间不改变。",
+    "required": [
+      "earliestHours",
+      "latestDays"
+    ],
+    "properties": {
+      "earliestHours": {
+        "type": "integer",
+        "minimum": 2,
+        "maximum": 24
+      },
+      "latestDays": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 7
+      }
+    }
+  },
+  "CreateOrderDTO": {
+    "type": "object",
+    "additionalProperties": false,
+    "description": "OFFER 必须提供 offerPrice；STANDARD 不提供。数量固定 1。开始时间按半小时对齐，至少提前 earliestHours、最多 latestDays。OFFER 需 SKU 支持且至少提前 12 小时。服务及尾部缓冲均在 08:00—22:00 内。",
+    "required": [
+      "skuId",
+      "addressId",
+      "bookingType",
+      "startTime"
+    ],
+    "properties": {
+      "skuId": {
+        "$ref": "#/components/schemas/Id"
+      },
+      "addressId": {
+        "$ref": "#/components/schemas/Id"
+      },
+      "bookingType": {
+        "$ref": "#/components/schemas/BookingType"
+      },
+      "startTime": {
+        "$ref": "#/components/schemas/DateTime"
+      },
+      "offerPrice": {
+        "$ref": "#/components/schemas/Money"
+      },
+      "remark": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 300
+      }
+    },
+    "example": {
+      "skuId": "301",
+      "addressId": "401",
+      "bookingType": "OFFER",
+      "startTime": "2026-10-04T09:00:00+08:00",
+      "offerPrice": "130.00",
+      "remark": "请提前联系"
+    }
+  },
+  "ServiceSnapshotVO": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "categoryName",
+      "itemName",
+      "skuName",
+      "standardPrice",
+      "minimumOfferPrice",
+      "durationMinutes",
+      "unit",
+      "skillIds",
+      "description",
+      "included",
+      "excluded",
+      "customerSuppliesParts"
+    ],
+    "properties": {
+      "categoryName": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 60
+      },
+      "itemName": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 60
+      },
+      "skuName": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 80
+      },
+      "standardPrice": {
+        "$ref": "#/components/schemas/Money"
+      },
+      "minimumOfferPrice": {
+        "$ref": "#/components/schemas/Money"
+      },
+      "durationMinutes": {
+        "type": "integer",
+        "minimum": 30,
+        "maximum": 720
+      },
+      "unit": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 20
+      },
+      "skillIds": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/Id"
+        }
+      },
+      "description": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 2000
+      },
+      "included": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 1000
+      },
+      "excluded": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 1000
+      },
+      "customerSuppliesParts": {
+        "type": "boolean"
+      }
+    }
+  },
+  "OrderVO": {
+    "type": "object",
+    "additionalProperties": false,
+    "description": "客户仅自己的订单；人员仅分配给自己的订单；管理员可查看全部。未发生的可选时间/人员/成交字段省略，不传 null。已支付订单禁止修改 SKU、地址和预约时间。开始码单独返回，不泄漏给人员。",
+    "required": [
+      "id",
+      "customerId",
+      "skuId",
+      "bookingType",
+      "status",
+      "paymentStatus",
+      "dispatchStatus",
+      "service",
+      "address",
+      "startTime",
+      "endTime",
+      "bufferEndTime",
+      "createdAt",
+      "paymentDeadline",
+      "currentPrice",
+      "priceVersion",
+      "remark",
+      "reviewed"
+    ],
+    "properties": {
+      "id": {
+        "$ref": "#/components/schemas/Id"
+      },
+      "customerId": {
+        "$ref": "#/components/schemas/Id"
+      },
+      "skuId": {
+        "$ref": "#/components/schemas/Id"
+      },
+      "bookingType": {
+        "$ref": "#/components/schemas/BookingType"
+      },
+      "status": {
+        "$ref": "#/components/schemas/OrderStatus"
+      },
+      "paymentStatus": {
+        "$ref": "#/components/schemas/PaymentStatus"
+      },
+      "dispatchStatus": {
+        "$ref": "#/components/schemas/DispatchStatus"
+      },
+      "service": {
+        "$ref": "#/components/schemas/ServiceSnapshotVO"
+      },
+      "address": {
+        "$ref": "#/components/schemas/AddressDTO"
+      },
+      "startTime": {
+        "$ref": "#/components/schemas/DateTime"
+      },
+      "endTime": {
+        "$ref": "#/components/schemas/DateTime"
+      },
+      "bufferEndTime": {
+        "$ref": "#/components/schemas/DateTime"
+      },
+      "createdAt": {
+        "$ref": "#/components/schemas/DateTime"
+      },
+      "paymentDeadline": {
+        "$ref": "#/components/schemas/DateTime"
+      },
+      "offerDeadline": {
+        "$ref": "#/components/schemas/DateTime"
+      },
+      "dispatchDeadline": {
+        "$ref": "#/components/schemas/DateTime"
+      },
+      "confirmationDeadline": {
+        "$ref": "#/components/schemas/DateTime"
+      },
+      "currentPrice": {
+        "$ref": "#/components/schemas/Money"
+      },
+      "dealPrice": {
+        "$ref": "#/components/schemas/Money"
+      },
+      "priceVersion": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 2147483647
+      },
+      "workerId": {
+        "$ref": "#/components/schemas/Id"
+      },
+      "workerName": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 40
+      },
+      "cancellationReason": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 300
+      },
+      "remark": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 300
+      },
+      "reviewed": {
+        "type": "boolean"
+      }
+    }
+  },
+  "OrderQuery": {
+    "type": "object",
+    "additionalProperties": false,
+    "description": "日期按预约开始时间在 Asia/Shanghai 的自然日闭区间筛选；from 不得晚于 to。keyword 搜索订单 ID 或服务名称。",
+    "properties": {
+      "pageNo": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 2147483647,
+        "default": 1
+      },
+      "pageSize": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 100,
+        "default": 20
+      },
+      "keyword": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 100
+      },
+      "status": {
+        "$ref": "#/components/schemas/OrderStatus"
+      },
+      "bookingType": {
+        "$ref": "#/components/schemas/BookingType"
+      },
+      "from": {
+        "$ref": "#/components/schemas/LocalDate"
+      },
+      "to": {
+        "$ref": "#/components/schemas/LocalDate"
+      }
+    }
+  },
+  "OfferQuery": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "pageNo": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 2147483647,
+        "default": 1
+      },
+      "pageSize": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 100,
+        "default": 20
+      },
+      "keyword": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 100
+      },
+      "from": {
+        "$ref": "#/components/schemas/LocalDate"
+      },
+      "to": {
+        "$ref": "#/components/schemas/LocalDate"
+      }
+    }
+  },
+  "OfferVO": {
+    "type": "object",
+    "additionalProperties": false,
+    "description": "抢单前最小信息集，无客户 ID、门牌、电话、联系人或开始码。仅符合条件的人员可见。",
+    "required": [
+      "id",
+      "skuName",
+      "districtName",
+      "cityCode",
+      "durationMinutes",
+      "startTime",
+      "endTime",
+      "bufferEndTime",
+      "currentPrice",
+      "priceVersion",
+      "offerDeadline",
+      "description",
+      "included",
+      "excluded",
+      "customerSuppliesParts"
+    ],
+    "properties": {
+      "id": {
+        "$ref": "#/components/schemas/Id"
+      },
+      "skuName": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 80
+      },
+      "districtName": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 40
+      },
+      "cityCode": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 6
+      },
+      "durationMinutes": {
+        "type": "integer",
+        "minimum": 30,
+        "maximum": 720
+      },
+      "startTime": {
+        "$ref": "#/components/schemas/DateTime"
+      },
+      "endTime": {
+        "$ref": "#/components/schemas/DateTime"
+      },
+      "bufferEndTime": {
+        "$ref": "#/components/schemas/DateTime"
+      },
+      "currentPrice": {
+        "$ref": "#/components/schemas/Money"
+      },
+      "priceVersion": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 2147483647
+      },
+      "offerDeadline": {
+        "$ref": "#/components/schemas/DateTime"
+      },
+      "description": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 2000
+      },
+      "included": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 1000
+      },
+      "excluded": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 1000
+      },
+      "customerSuppliesParts": {
+        "type": "boolean"
+      }
+    }
+  },
+  "ChangeOfferDTO": {
+    "type": "object",
+    "additionalProperties": false,
+    "description": "只有 WAITING_ACCEPTANCE 且未截止可调价。newPrice 与旧价相差非零 5 元整数倍且在订单快照范围内；涨价需 confirmSimulatedPayment=true。涨价补差或降价退款、报价历史、版本递增在同一事务提交，失败全部回滚。",
+    "required": [
+      "newPrice",
+      "expectedPrice",
+      "priceVersion",
+      "confirmSimulatedPayment"
+    ],
+    "properties": {
+      "newPrice": {
+        "$ref": "#/components/schemas/Money"
+      },
+      "expectedPrice": {
+        "$ref": "#/components/schemas/Money"
+      },
+      "priceVersion": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 2147483647
+      },
+      "confirmSimulatedPayment": {
+        "type": "boolean"
+      }
+    },
+    "example": {
+      "newPrice": "135.00",
+      "expectedPrice": "130.00",
+      "priceVersion": 1,
+      "confirmSimulatedPayment": true
+    }
+  },
+  "ClaimOfferDTO": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "expectedPrice",
+      "priceVersion"
+    ],
+    "properties": {
+      "expectedPrice": {
+        "$ref": "#/components/schemas/Money"
+      },
+      "priceVersion": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 2147483647
+      }
+    },
+    "example": {
+      "expectedPrice": "135.00",
+      "priceVersion": 2
+    }
+  },
+  "CancelOrderDTO": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "reason"
+    ],
+    "properties": {
+      "reason": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 300
+      }
+    }
+  },
+  "StartServiceDTO": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "startCode"
+    ],
+    "properties": {
+      "startCode": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 6,
+        "pattern": "^[0-9]{6}$"
+      }
+    }
+  },
+  "StartCodeVO": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "startCode"
+    ],
+    "properties": {
+      "startCode": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 6,
+        "pattern": "^[0-9]{6}$",
+        "example": "123456"
+      }
+    }
+  },
+  "ReviewDTO": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "score",
+      "tags",
+      "content"
+    ],
+    "properties": {
+      "score": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 5
+      },
+      "tags": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/ReviewTag"
+        },
+        "uniqueItems": true,
+        "maxItems": 3
+      },
+      "content": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 500
+      }
+    }
+  },
+  "ReviewVO": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "id",
+      "orderId",
+      "createdAt",
+      "score",
+      "tags",
+      "content"
+    ],
+    "properties": {
+      "id": {
+        "$ref": "#/components/schemas/Id"
+      },
+      "orderId": {
+        "$ref": "#/components/schemas/Id"
+      },
+      "createdAt": {
+        "$ref": "#/components/schemas/DateTime"
+      },
+      "score": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 5
+      },
+      "tags": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/ReviewTag"
+        },
+        "uniqueItems": true,
+        "maxItems": 3
+      },
+      "content": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 500
+      }
+    }
+  },
+  "PaymentVO": {
+    "type": "object",
+    "additionalProperties": false,
+    "description": "所有金额为正；流水不可修改或删除。模拟支付同步成功或整体失败，不存在真实渠道回调。净收款为 PAYMENT+TOP_UP-PARTIAL_REFUND-FULL_REFUND。",
+    "required": [
+      "id",
+      "orderId",
+      "businessNo",
+      "type",
+      "amount",
+      "createdAt"
+    ],
+    "properties": {
+      "id": {
+        "$ref": "#/components/schemas/Id"
+      },
+      "orderId": {
+        "$ref": "#/components/schemas/Id"
+      },
+      "businessNo": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 80
+      },
+      "type": {
+        "$ref": "#/components/schemas/PaymentType"
+      },
+      "amount": {
+        "$ref": "#/components/schemas/Money"
+      },
+      "createdAt": {
+        "$ref": "#/components/schemas/DateTime"
+      }
+    }
+  },
+  "PriceHistoryVO": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "id",
+      "orderId",
+      "previousPrice",
+      "newPrice",
+      "priceVersion",
+      "createdAt"
+    ],
+    "properties": {
+      "id": {
+        "$ref": "#/components/schemas/Id"
+      },
+      "orderId": {
+        "$ref": "#/components/schemas/Id"
+      },
+      "previousPrice": {
+        "$ref": "#/components/schemas/Money"
+      },
+      "newPrice": {
+        "$ref": "#/components/schemas/Money"
+      },
+      "priceVersion": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 2147483647
+      },
+      "createdAt": {
+        "$ref": "#/components/schemas/DateTime"
+      }
+    }
+  },
+  "AssignmentVO": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "id",
+      "orderId",
+      "workerId",
+      "workerName",
+      "bookingType",
+      "status",
+      "assignedAt"
+    ],
+    "properties": {
+      "id": {
+        "$ref": "#/components/schemas/Id"
+      },
+      "orderId": {
+        "$ref": "#/components/schemas/Id"
+      },
+      "workerId": {
+        "$ref": "#/components/schemas/Id"
+      },
+      "workerName": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 40
+      },
+      "bookingType": {
+        "$ref": "#/components/schemas/BookingType"
+      },
+      "status": {
+        "$ref": "#/components/schemas/AssignmentStatus"
+      },
+      "assignedAt": {
+        "$ref": "#/components/schemas/DateTime"
+      }
+    }
+  },
+  "DispatchAttemptVO": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "id",
+      "orderId",
+      "result",
+      "reason",
+      "createdAt"
+    ],
+    "properties": {
+      "id": {
+        "$ref": "#/components/schemas/Id"
+      },
+      "orderId": {
+        "$ref": "#/components/schemas/Id"
+      },
+      "workerId": {
+        "$ref": "#/components/schemas/Id"
+      },
+      "result": {
+        "$ref": "#/components/schemas/DispatchAttemptResult"
+      },
+      "reason": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 300
+      },
+      "serviceMinutes": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 2147483647
+      },
+      "orderCount": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 2147483647
+      },
+      "createdAt": {
+        "$ref": "#/components/schemas/DateTime"
+      }
+    }
+  },
+  "OrderHistoryVO": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "payments",
+      "priceHistory",
+      "assignments"
+    ],
+    "properties": {
+      "payments": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/PaymentVO"
+        }
+      },
+      "priceHistory": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/PriceHistoryVO"
+        }
+      },
+      "assignments": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/AssignmentVO"
+        }
+      },
+      "review": {
+        "$ref": "#/components/schemas/ReviewVO"
+      }
+    }
+  },
+  "AuditVO": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "id",
+      "actorId",
+      "action",
+      "targetId",
+      "detail",
+      "createdAt"
+    ],
+    "properties": {
+      "id": {
+        "$ref": "#/components/schemas/Id"
+      },
+      "actorId": {
+        "$ref": "#/components/schemas/Id"
+      },
+      "action": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 100
+      },
+      "targetId": {
+        "$ref": "#/components/schemas/Id"
+      },
+      "detail": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 2000
+      },
+      "createdAt": {
+        "$ref": "#/components/schemas/DateTime"
+      }
+    }
+  },
+  "RecordQuery": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "pageNo": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 2147483647,
+        "default": 1
+      },
+      "pageSize": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 100,
+        "default": 20
+      },
+      "orderId": {
+        "$ref": "#/components/schemas/Id"
+      },
+      "keyword": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 100
+      }
+    }
+  },
+  "MutationVO": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "success"
+    ],
+    "properties": {
+      "success": {
+        "type": "boolean",
+        "enum": [
+          true
+        ]
+      }
+    }
+  },
+  "ErrorDetailsVO": {
+    "type": "object",
+    "additionalProperties": false,
+    "description": "PRICE_CHANGED 必须携带 currentPrice 和 priceVersion；客户端展示变化并重新查询，不能自动重试抢单或调价。",
+    "properties": {
+      "fieldErrors": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "field",
+            "message"
+          ],
+          "properties": {
+            "field": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            },
+            "message": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 300
+            }
+          }
+        }
+      },
+      "currentPrice": {
+        "$ref": "#/components/schemas/Money"
+      },
+      "priceVersion": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 2147483647
+      },
+      "currentStatus": {
+        "$ref": "#/components/schemas/OrderStatus"
+      }
+    }
+  },
+  "ErrorResponse": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "code",
+      "message",
+      "data"
+    ],
+    "properties": {
+      "code": {
+        "$ref": "#/components/schemas/ErrorCode"
+      },
+      "message": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 500
+      },
+      "data": {
+        "$ref": "#/components/schemas/ErrorDetailsVO"
+      }
+    }
+  },
+  "WsAuthFrame": {
+    "type": "object",
+    "additionalProperties": false,
+    "description": "浏览器原生 WebSocket 不能设置 Authorization 请求头。连接同源 /ws 后 5 秒内发首帧 AUTH，服务端在校验前不发送业务数据；不得把 JWT 放 URL。认证失败或过期以 4401 关闭，账号禁用/角色非法以 4403 关闭。",
+    "required": [
+      "type",
+      "accessToken"
+    ],
+    "properties": {
+      "type": {
+        "type": "string",
+        "enum": [
+          "AUTH"
+        ]
+      },
+      "accessToken": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 2048
+      }
+    }
+  },
+  "WsAuthAck": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "type",
+      "occurredAt"
+    ],
+    "properties": {
+      "type": {
+        "type": "string",
+        "enum": [
+          "AUTHENTICATED"
+        ]
+      },
+      "occurredAt": {
+        "$ref": "#/components/schemas/DateTime"
+      }
+    }
+  },
+  "WsOrderPayload": {
+    "type": "object",
+    "additionalProperties": false,
+    "description": "无门牌、电话、开始码。仅事件相关且有权限的用户收到；优惠池事件需按人员资格过滤。reason 用于关闭或失败。",
+    "required": [
+      "status",
+      "currentPrice"
+    ],
+    "properties": {
+      "status": {
+        "$ref": "#/components/schemas/OrderStatus"
+      },
+      "currentPrice": {
+        "$ref": "#/components/schemas/Money"
+      },
+      "reason": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 300
+      }
+    }
+  },
+  "WsEvent": {
+    "type": "object",
+    "additionalProperties": false,
+    "description": "同源 /ws，仅通知，事务提交后发送。OFFER_CREATED=新优惠单；OFFER_PRICE_CHANGED=变价；ORDER_CLAIMED=被抢；ORDER_CLOSED=取消/超时；DISPATCH_SUCCEEDED/FAILED=标准调度结果；ORDER_STATUS_CHANGED=履约变化。客户收本人订单；人员收本人分配及有资格的池事件；管理员收管理事件。允许丢失/重复/乱序，eventId 去重，priceVersion 不得回退；断线、重连、重新登录必须 HTTP 重查，不以推送作为状态裁决。",
+    "required": [
+      "eventId",
+      "type",
+      "orderId",
+      "priceVersion",
+      "occurredAt",
+      "payload"
+    ],
+    "properties": {
+      "eventId": {
+        "$ref": "#/components/schemas/Id"
+      },
+      "type": {
+        "$ref": "#/components/schemas/WsEventType"
+      },
+      "orderId": {
+        "$ref": "#/components/schemas/Id"
+      },
+      "priceVersion": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 2147483647
+      },
+      "occurredAt": {
+        "$ref": "#/components/schemas/DateTime"
+      },
+      "payload": {
+        "$ref": "#/components/schemas/WsOrderPayload"
+      }
+    },
+    "example": {
+      "eventId": "9001",
+      "type": "OFFER_PRICE_CHANGED",
+      "orderId": "10001",
+      "priceVersion": 2,
+      "occurredAt": "2026-10-03T10:00:00+08:00",
+      "payload": {
+        "status": "WAITING_ACCEPTANCE",
+        "currentPrice": "135.00"
+      }
+    }
+  },
+  "LoginVOResponse": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "code",
+      "message",
+      "data"
+    ],
+    "properties": {
+      "code": {
+        "type": "string",
+        "enum": [
+          "SUCCESS"
+        ]
+      },
+      "message": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "data": {
+        "$ref": "#/components/schemas/LoginVO"
+      }
+    }
+  },
+  "AccountVOResponse": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "code",
+      "message",
+      "data"
+    ],
+    "properties": {
+      "code": {
+        "type": "string",
+        "enum": [
+          "SUCCESS"
+        ]
+      },
+      "message": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "data": {
+        "$ref": "#/components/schemas/AccountVO"
+      }
+    }
+  },
+  "RegionListResponse": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "code",
+      "message",
+      "data"
+    ],
+    "properties": {
+      "code": {
+        "type": "string",
+        "enum": [
+          "SUCCESS"
+        ]
+      },
+      "message": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "data": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/RegionVO"
+        }
+      }
+    }
+  },
+  "BookingRulesVOResponse": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "code",
+      "message",
+      "data"
+    ],
+    "properties": {
+      "code": {
+        "type": "string",
+        "enum": [
+          "SUCCESS"
+        ]
+      },
+      "message": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "data": {
+        "$ref": "#/components/schemas/BookingRulesVO"
+      }
+    }
+  },
+  "CategoryPageDTO": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "list",
+      "total",
+      "pages"
+    ],
+    "properties": {
+      "list": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/CategoryVO"
+        }
+      },
+      "total": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 2147483647
+      },
+      "pages": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 2147483647
+      }
+    }
+  },
+  "CategoryPageDTOResponse": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "code",
+      "message",
+      "data"
+    ],
+    "properties": {
+      "code": {
+        "type": "string",
+        "enum": [
+          "SUCCESS"
+        ]
+      },
+      "message": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "data": {
+        "$ref": "#/components/schemas/CategoryPageDTO"
+      }
+    }
+  },
+  "ServiceItemPageDTO": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "list",
+      "total",
+      "pages"
+    ],
+    "properties": {
+      "list": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/ServiceItemVO"
+        }
+      },
+      "total": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 2147483647
+      },
+      "pages": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 2147483647
+      }
+    }
+  },
+  "ServiceItemPageDTOResponse": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "code",
+      "message",
+      "data"
+    ],
+    "properties": {
+      "code": {
+        "type": "string",
+        "enum": [
+          "SUCCESS"
+        ]
+      },
+      "message": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "data": {
+        "$ref": "#/components/schemas/ServiceItemPageDTO"
+      }
+    }
+  },
+  "SkuPageDTO": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "list",
+      "total",
+      "pages"
+    ],
+    "properties": {
+      "list": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/SkuVO"
+        }
+      },
+      "total": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 2147483647
+      },
+      "pages": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 2147483647
+      }
+    }
+  },
+  "SkuPageDTOResponse": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "code",
+      "message",
+      "data"
+    ],
+    "properties": {
+      "code": {
+        "type": "string",
+        "enum": [
+          "SUCCESS"
+        ]
+      },
+      "message": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "data": {
+        "$ref": "#/components/schemas/SkuPageDTO"
+      }
+    },
+    "example": {
+      "code": "SUCCESS",
+      "message": "成功",
+      "data": {
+        "list": [],
+        "total": 0,
+        "pages": 0
+      }
+    }
+  },
+  "SkuVOResponse": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "code",
+      "message",
+      "data"
+    ],
+    "properties": {
+      "code": {
+        "type": "string",
+        "enum": [
+          "SUCCESS"
+        ]
+      },
+      "message": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "data": {
+        "$ref": "#/components/schemas/SkuVO"
+      }
+    }
+  },
+  "AddressListResponse": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "code",
+      "message",
+      "data"
+    ],
+    "properties": {
+      "code": {
+        "type": "string",
+        "enum": [
+          "SUCCESS"
+        ]
+      },
+      "message": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "data": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/AddressVO"
+        }
+      }
+    }
+  },
+  "AddressVOResponse": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "code",
+      "message",
+      "data"
+    ],
+    "properties": {
+      "code": {
+        "type": "string",
+        "enum": [
+          "SUCCESS"
+        ]
+      },
+      "message": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "data": {
+        "$ref": "#/components/schemas/AddressVO"
+      }
+    }
+  },
+  "MutationVOResponse": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "code",
+      "message",
+      "data"
+    ],
+    "properties": {
+      "code": {
+        "type": "string",
+        "enum": [
+          "SUCCESS"
+        ]
+      },
+      "message": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "data": {
+        "$ref": "#/components/schemas/MutationVO"
+      }
+    }
+  },
+  "OrderVOResponse": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "code",
+      "message",
+      "data"
+    ],
+    "properties": {
+      "code": {
+        "type": "string",
+        "enum": [
+          "SUCCESS"
+        ]
+      },
+      "message": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "data": {
+        "$ref": "#/components/schemas/OrderVO"
+      }
+    }
+  },
+  "OrderPageDTO": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "list",
+      "total",
+      "pages"
+    ],
+    "properties": {
+      "list": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/OrderVO"
+        }
+      },
+      "total": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 2147483647
+      },
+      "pages": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 2147483647
+      }
+    }
+  },
+  "OrderPageDTOResponse": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "code",
+      "message",
+      "data"
+    ],
+    "properties": {
+      "code": {
+        "type": "string",
+        "enum": [
+          "SUCCESS"
+        ]
+      },
+      "message": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "data": {
+        "$ref": "#/components/schemas/OrderPageDTO"
+      }
+    }
+  },
+  "OrderHistoryVOResponse": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "code",
+      "message",
+      "data"
+    ],
+    "properties": {
+      "code": {
+        "type": "string",
+        "enum": [
+          "SUCCESS"
+        ]
+      },
+      "message": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "data": {
+        "$ref": "#/components/schemas/OrderHistoryVO"
+      }
+    }
+  },
+  "StartCodeVOResponse": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "code",
+      "message",
+      "data"
+    ],
+    "properties": {
+      "code": {
+        "type": "string",
+        "enum": [
+          "SUCCESS"
+        ]
+      },
+      "message": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "data": {
+        "$ref": "#/components/schemas/StartCodeVO"
+      }
+    }
+  },
+  "ReviewVOResponse": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "code",
+      "message",
+      "data"
+    ],
+    "properties": {
+      "code": {
+        "type": "string",
+        "enum": [
+          "SUCCESS"
+        ]
+      },
+      "message": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "data": {
+        "$ref": "#/components/schemas/ReviewVO"
+      }
+    }
+  },
+  "WorkerVOResponse": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "code",
+      "message",
+      "data"
+    ],
+    "properties": {
+      "code": {
+        "type": "string",
+        "enum": [
+          "SUCCESS"
+        ]
+      },
+      "message": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "data": {
+        "$ref": "#/components/schemas/WorkerVO"
+      }
+    }
+  },
+  "ScheduleVOResponse": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "code",
+      "message",
+      "data"
+    ],
+    "properties": {
+      "code": {
+        "type": "string",
+        "enum": [
+          "SUCCESS"
+        ]
+      },
+      "message": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "data": {
+        "$ref": "#/components/schemas/ScheduleVO"
+      }
+    }
+  },
+  "SlotListResponse": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "code",
+      "message",
+      "data"
+    ],
+    "properties": {
+      "code": {
+        "type": "string",
+        "enum": [
+          "SUCCESS"
+        ]
+      },
+      "message": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "data": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/SlotVO"
+        }
+      }
+    }
+  },
+  "LeavePageDTO": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "list",
+      "total",
+      "pages"
+    ],
+    "properties": {
+      "list": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/LeaveVO"
+        }
+      },
+      "total": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 2147483647
+      },
+      "pages": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 2147483647
+      }
+    }
+  },
+  "LeavePageDTOResponse": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "code",
+      "message",
+      "data"
+    ],
+    "properties": {
+      "code": {
+        "type": "string",
+        "enum": [
+          "SUCCESS"
+        ]
+      },
+      "message": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "data": {
+        "$ref": "#/components/schemas/LeavePageDTO"
+      }
+    }
+  },
+  "LeaveVOResponse": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "code",
+      "message",
+      "data"
+    ],
+    "properties": {
+      "code": {
+        "type": "string",
+        "enum": [
+          "SUCCESS"
+        ]
+      },
+      "message": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "data": {
+        "$ref": "#/components/schemas/LeaveVO"
+      }
+    }
+  },
+  "OfferPageDTO": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "list",
+      "total",
+      "pages"
+    ],
+    "properties": {
+      "list": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/OfferVO"
+        }
+      },
+      "total": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 2147483647
+      },
+      "pages": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 2147483647
+      }
+    }
+  },
+  "OfferPageDTOResponse": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "code",
+      "message",
+      "data"
+    ],
+    "properties": {
+      "code": {
+        "type": "string",
+        "enum": [
+          "SUCCESS"
+        ]
+      },
+      "message": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "data": {
+        "$ref": "#/components/schemas/OfferPageDTO"
+      }
+    }
+  },
+  "CategoryVOResponse": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "code",
+      "message",
+      "data"
+    ],
+    "properties": {
+      "code": {
+        "type": "string",
+        "enum": [
+          "SUCCESS"
+        ]
+      },
+      "message": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "data": {
+        "$ref": "#/components/schemas/CategoryVO"
+      }
+    }
+  },
+  "ServiceItemVOResponse": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "code",
+      "message",
+      "data"
+    ],
+    "properties": {
+      "code": {
+        "type": "string",
+        "enum": [
+          "SUCCESS"
+        ]
+      },
+      "message": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "data": {
+        "$ref": "#/components/schemas/ServiceItemVO"
+      }
+    }
+  },
+  "SkillPageDTO": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "list",
+      "total",
+      "pages"
+    ],
+    "properties": {
+      "list": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/SkillVO"
+        }
+      },
+      "total": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 2147483647
+      },
+      "pages": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 2147483647
+      }
+    }
+  },
+  "SkillPageDTOResponse": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "code",
+      "message",
+      "data"
+    ],
+    "properties": {
+      "code": {
+        "type": "string",
+        "enum": [
+          "SUCCESS"
+        ]
+      },
+      "message": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "data": {
+        "$ref": "#/components/schemas/SkillPageDTO"
+      }
+    }
+  },
+  "SkillVOResponse": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "code",
+      "message",
+      "data"
+    ],
+    "properties": {
+      "code": {
+        "type": "string",
+        "enum": [
+          "SUCCESS"
+        ]
+      },
+      "message": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "data": {
+        "$ref": "#/components/schemas/SkillVO"
+      }
+    }
+  },
+  "AccountPageDTO": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "list",
+      "total",
+      "pages"
+    ],
+    "properties": {
+      "list": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/AccountVO"
+        }
+      },
+      "total": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 2147483647
+      },
+      "pages": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 2147483647
+      }
+    }
+  },
+  "AccountPageDTOResponse": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "code",
+      "message",
+      "data"
+    ],
+    "properties": {
+      "code": {
+        "type": "string",
+        "enum": [
+          "SUCCESS"
+        ]
+      },
+      "message": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "data": {
+        "$ref": "#/components/schemas/AccountPageDTO"
+      }
+    }
+  },
+  "WorkerPageDTO": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "list",
+      "total",
+      "pages"
+    ],
+    "properties": {
+      "list": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/WorkerVO"
+        }
+      },
+      "total": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 2147483647
+      },
+      "pages": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 2147483647
+      }
+    }
+  },
+  "WorkerPageDTOResponse": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "code",
+      "message",
+      "data"
+    ],
+    "properties": {
+      "code": {
+        "type": "string",
+        "enum": [
+          "SUCCESS"
+        ]
+      },
+      "message": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "data": {
+        "$ref": "#/components/schemas/WorkerPageDTO"
+      }
+    }
+  },
+  "DispatchAttemptPageDTO": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "list",
+      "total",
+      "pages"
+    ],
+    "properties": {
+      "list": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/DispatchAttemptVO"
+        }
+      },
+      "total": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 2147483647
+      },
+      "pages": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 2147483647
+      }
+    }
+  },
+  "DispatchAttemptPageDTOResponse": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "code",
+      "message",
+      "data"
+    ],
+    "properties": {
+      "code": {
+        "type": "string",
+        "enum": [
+          "SUCCESS"
+        ]
+      },
+      "message": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "data": {
+        "$ref": "#/components/schemas/DispatchAttemptPageDTO"
+      }
+    }
+  },
+  "PaymentPageDTO": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "list",
+      "total",
+      "pages"
+    ],
+    "properties": {
+      "list": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/PaymentVO"
+        }
+      },
+      "total": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 2147483647
+      },
+      "pages": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 2147483647
+      }
+    }
+  },
+  "PaymentPageDTOResponse": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "code",
+      "message",
+      "data"
+    ],
+    "properties": {
+      "code": {
+        "type": "string",
+        "enum": [
+          "SUCCESS"
+        ]
+      },
+      "message": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "data": {
+        "$ref": "#/components/schemas/PaymentPageDTO"
+      }
+    }
+  },
+  "AuditPageDTO": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "list",
+      "total",
+      "pages"
+    ],
+    "properties": {
+      "list": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/AuditVO"
+        }
+      },
+      "total": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 2147483647
+      },
+      "pages": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 2147483647
+      }
+    }
+  },
+  "AuditPageDTOResponse": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "code",
+      "message",
+      "data"
+    ],
+    "properties": {
+      "code": {
+        "type": "string",
+        "enum": [
+          "SUCCESS"
+        ]
+      },
+      "message": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "data": {
+        "$ref": "#/components/schemas/AuditPageDTO"
+      }
+    }
+  }
+}

@@ -15,6 +15,9 @@ logs/
 node_modules/
 dist/
 .vite/
+playwright-report/
+test-results/
+coverage/
 
 # Local configuration and secrets
 .env
