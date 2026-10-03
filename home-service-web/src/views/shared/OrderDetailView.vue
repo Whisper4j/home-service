@@ -8,6 +8,7 @@ import { useRefresh } from '../../composables/useRefresh'
 import { displayTime } from '../../utils/format'
 import { label } from '../../utils/labels'
 import Feedback from '../../components/Feedback.vue'
+import SceneImages from '../../components/SceneImages.vue'
 const props = defineProps<{ role: RolePath }>(),
   route = useRoute()
 const order = ref<Schema['OrderVO']>(),
@@ -185,7 +186,7 @@ useRefresh(load)
       </section>
       <section class="panel">
         <h2>服务与地址快照</h2>
-        <p>{{ order.address.contactName }} · {{ order.address.contactPhone }}</p>
+        <p>本次联系人：{{ order.contactName }} · {{ order.contactPhone }}</p>
         <p>
           {{ order.address.provinceName }}{{ order.address.cityName }}{{ order.address.districtName
           }}{{ order.address.detail }}
@@ -195,6 +196,7 @@ useRefresh(load)
         <p>排除：{{ order.service.excluded }}</p>
         <p>客户自备配件：{{ order.service.customerSuppliesParts ? '需要' : '不需要' }}</p>
         <p>备注：{{ order.remark || '无' }}</p>
+        <SceneImages :images="order.sceneImages" :role="role" :order-id="id" />
         <p v-if="order.cancellationReason">取消原因：{{ order.cancellationReason }}</p>
         <p v-if="startCode">
           <strong>服务开始码：{{ startCode }}</strong>

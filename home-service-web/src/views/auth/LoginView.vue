@@ -44,8 +44,8 @@ async function submit() {
 <template>
   <main class="auth">
     <h1>家政预约与调度平台</h1>
-    <h2>{{ roleLabels[role] }}登录</h2>
-    <nav class="actions">
+    <h2 v-if="role !== 'customer'">{{ roleLabels[role] }}登录</h2>
+    <nav v-if="role !== 'customer'" class="actions">
       <RouterLink v-for="(name, key) in roleLabels" :key="key" :to="`/${key}/login`">
         {{ name }}端
       </RouterLink>
@@ -76,21 +76,23 @@ async function submit() {
       <button :disabled="busy" type="submit">登录</button>
     </form>
     <Feedback :error="error" :busy="busy" />
-    <RouterLink v-if="role === 'customer'" to="/customer/register">注册客户账号</RouterLink>
+    <RouterLink v-if="role === 'customer'" :to="{ path: '/customer/register', query: route.query }">
+      注册客户账号
+    </RouterLink>
     <section v-if="useMock" class="panel">
       <p>
         当前为 Mock 原型，演示密码统一为
         <code>Demo12345</code>
         。
       </p>
-      <p>
+      <p v-if="role !== 'customer'">
         客户：customer / customer2
         <br />
         人员：worker / worker2 / repair
         <br />
         管理员：admin
       </p>
-      <p>人员由管理员创建，不提供人员自助注册。</p>
+      <p v-if="role === 'customer'">演示客户：customer / customer2。登录后返回刚才的操作。</p>
     </section>
   </main>
 </template>

@@ -30,7 +30,7 @@ export function readDatabase(): Database {
             contactPhone: order.address.contactPhone,
             sceneImages: [],
           })
-        // 旧响应不含新快照字段，保留写入记录但清除只读模拟响应缓存由新版本重新验证。
+        // 补齐历史幂等响应中的订单快照，保留原写入结果与幂等键。
         for (const cached of Object.values(saved.idempotency) as {
           response: { data: unknown }
         }[]) {

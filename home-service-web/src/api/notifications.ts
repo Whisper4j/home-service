@@ -8,10 +8,17 @@ export async function connectNotifications(
   status: (text: string) => void,
 ): Promise<() => void> {
   if (useMock) {
-    const { subscribeMock } = await import('../mock/transport')
+    const { subscribeMock, tickMock } = await import('../mock/transport')
     status('演示通知已连接')
     refresh()
-    return subscribeMock(token, receive)
+    const unsubscribe = subscribeMock(token, receive)
+    const timer = setInterval(() => {
+      void tickMock().catch(() => status('模拟任务暂不可用，请刷新重试'))
+    }, 10_000)
+    return () => {
+      clearInterval(timer)
+      unsubscribe()
+    }
   }
   let stopped = false,
     socket: WebSocket | undefined,

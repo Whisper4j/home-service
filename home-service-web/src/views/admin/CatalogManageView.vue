@@ -9,6 +9,7 @@ import { useRefresh } from '../../composables/useRefresh'
 import { label } from '../../utils/labels'
 import Feedback from '../../components/Feedback.vue'
 import Pagination from '../../components/Pagination.vue'
+import { clientEntries } from '../../utils/clientEntries'
 type Row = Schema['CategoryVO'] | Schema['ServiceItemVO'] | Schema['SkuVO'] | Schema['SkillVO']
 type Resource = 'categories' | 'service-items' | 'skus' | 'skills'
 const route = useRoute(),
@@ -43,6 +44,7 @@ const item = reactive<Schema['ServiceItemDTO']>({
 })
 const skill = reactive<Schema['SkillDTO']>({ name: '', description: '' })
 const initialSku = (): Schema['SkuDTO'] => ({
+  clientEntryCode: null,
   itemId: '',
   name: '',
   standardPrice: '160.00',
@@ -287,6 +289,18 @@ function resizePage(value: number) {
         </label>
       </template>
       <template v-if="resource === 'skus'">
+        <label>
+          客户端固定入口绑定
+          <select v-model="sku.clientEntryCode">
+            <option :value="null">不绑定客户端入口</option>
+            <option v-for="entry in clientEntries" :key="entry.code" :value="entry.code">
+              {{ entry.title }}（{{ entry.code }}）
+            </option>
+          </select>
+        </label>
+        <p class="muted">
+          每个入口仅绑定一个规格；已下架规格保留绑定，客户端显示暂不可预约。新增分类不会自动成为客户端入口。
+        </p>
         <div class="form-grid">
           <label>
             所属项目

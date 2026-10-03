@@ -30,6 +30,15 @@ export function writeCatalog(
       context.db.skus.some((s) => s.itemId === item.id && s.supportsOffer)
     )
       fail('OFFER_NOT_SUPPORTED', '请先关闭该项目下规格的优惠能力，再修改业务性质', 422)
+    if (
+      context.db.skus.some(
+        (s) =>
+          s.itemId === item.id &&
+          s.clientEntryCode &&
+          !matchesEntry(s.clientEntryCode, item.serviceKind, s.durationMinutes),
+      )
+    )
+      fail('CONFIG_CONFLICT', '请先解除不匹配的客户端入口绑定，再修改服务性质')
   }
   if (resource === 'skus') {
     const sku = data as Schema['SkuVO']

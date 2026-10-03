@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { reactive } from 'vue'
+import { useRoute } from 'vue-router'
+const route = useRoute()
 import { request } from '../../api/client'
 import { useTask } from '../../composables/useTask'
 import Feedback from '../../components/Feedback.vue'
@@ -48,6 +50,6 @@ function submit() {
       <button :disabled="busy">注册</button>
     </form>
     <Feedback :error="error" :success="success" :busy="busy" />
-    <RouterLink to="/customer/login">返回客户登录</RouterLink>
+    <RouterLink :to="{ path: '/customer/login', query: route.query }">返回客户登录</RouterLink>
   </main>
 </template>

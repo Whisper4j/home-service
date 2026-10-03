@@ -1,16 +1,20 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { sessions } from '../../stores/session'
 import { request } from '../../api/client'
 import type { Schema } from '../../api/types'
 import { useTask } from '../../composables/useTask'
 import { useRefresh } from '../../composables/useRefresh'
-import Feedback from '../../components/Feedback.vue'
+import Feedback from '../../components/CustomerFeedback.vue'
+const route = useRoute(),
+  router = useRouter()
 const addresses = ref<Schema['AddressVO'][]>([]),
   regions = ref<Schema['RegionVO'][]>([]),
   editingId = ref('')
 const empty = (): Schema['AddressDTO'] => ({
-  contactName: '',
-  contactPhone: '',
+  contactName: sessions.customer?.account.displayName || '',
+  contactPhone: sessions.customer?.account.phone || '',
   provinceCode: '440000',
   provinceName: '广东省',
   cityCode: '440100',
@@ -51,18 +55,26 @@ function save() {
     async (key) => {
       const district = regions.value[0].districts.find((d) => d.code === form.districtCode)!
       form.districtName = district.name
-      if (editingId.value)
-        await request('updateAddress', {
-          id: editingId.value,
-          body: { ...form },
-          idempotencyKey: key,
-        })
-      else await request('createAddress', { body: { ...form }, idempotencyKey: key })
+      const saved = editingId.value
+        ? await request('updateAddress', {
+            id: editingId.value,
+            body: { ...form },
+            idempotencyKey: key,
+          })
+        : await request('createAddress', { body: { ...form }, idempotencyKey: key })
+      if (
+        typeof route.query.returnTo === 'string' &&
+        route.query.returnTo.startsWith('/customer/booking/')
+      ) {
+        const target = router.resolve(route.query.returnTo)
+        await router.replace({ path: target.path, query: { ...target.query, addressId: saved.id } })
+        return
+      }
       reset()
       await refreshData()
     },
     '地址已保存',
-    JSON.stringify(form),
+    JSON.stringify({ form, id: editingId.value }),
   )
 }
 function remove(id: string) {
@@ -77,9 +89,23 @@ function remove(id: string) {
     )
 }
 useRefresh(load)
+function makeDefault(address: Schema['AddressVO']) {
+  const { id, ...dto } = address
+  return run(
+    async (key) => {
+      await request('updateAddress', { id, body: { ...dto, isDefault: true }, idempotencyKey: key })
+      await refreshData()
+    },
+    '默认地址已更新',
+    `default:${id}`,
+  )
+}
 </script>
 <template>
   <h1>我的地址</h1>
+  <p class="muted">
+    默认地址只有一个。删除默认地址后，最早添加的剩余地址会设为默认。地址联系人不会覆盖个人资料和历史订单。
+  </p>
   <Feedback :error="error" :success="success" :busy="busy" />
   <div class="grid">
     <article v-for="address in addresses" :key="address.id" class="panel">
@@ -94,6 +120,9 @@ useRefresh(load)
       </p>
       <div class="actions">
         <button @click="edit(address)">编辑</button>
+        <button v-if="!address.isDefault" :disabled="busy" @click="makeDefault(address)">
+          设为默认
+        </button>
         <button :disabled="busy" @click="remove(address.id)">删除</button>
       </div>
     </article>
@@ -101,7 +130,7 @@ useRefresh(load)
   <p v-if="!busy && !addresses.length" class="empty">还没有地址，请先添加。</p>
   <section id="address-form" class="panel">
     <h2>{{ editingId ? '编辑地址' : '新增地址' }}</h2>
-    <form @submit.prevent="save">
+    <form id="address-editor" @submit.prevent="save">
       <div class="form-grid">
         <label>
           联系人

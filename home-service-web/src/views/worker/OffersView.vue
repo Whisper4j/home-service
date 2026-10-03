@@ -8,6 +8,7 @@ import { useTask } from '../../composables/useTask'
 import { useRefresh } from '../../composables/useRefresh'
 import Feedback from '../../components/Feedback.vue'
 import Pagination from '../../components/Pagination.vue'
+import SceneImages from '../../components/SceneImages.vue'
 const page = ref<Schema['OfferPageDTO']>({ list: [], total: 0, pages: 0 }),
   selection = ref<Schema['OfferVO']>()
 const query = reactive({ pageNo: 1, pageSize: 20, keyword: '', from: '', to: '' })
@@ -91,6 +92,8 @@ function resizePage(value: number) {
       {{ selection.priceVersion }}
     </p>
     <p>将按以上价格与版本提交；如有变更或订单被抢会明确失败，不自动按新价格成交。</p>
+    <p>以下现场图片由客户主动提供，仅用于判断服务情况，不支持现场议价。</p>
+    <SceneImages :images="selection.sceneImages" role="worker" :order-id="selection.id" />
     <div class="actions">
       <button :disabled="busy" @click="claim">按此价格确认抢单</button>
       <button @click="selection = undefined">关闭确认</button>
