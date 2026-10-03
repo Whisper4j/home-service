@@ -3556,6 +3556,11 @@ components:
       enum:
         - ACTIVE
         - CANCELLED
+    ActorType:
+      type: string
+      enum:
+        - USER
+        - SYSTEM
     ReviewTag:
       type: string
       enum:
@@ -5169,9 +5174,10 @@ components:
     AuditVO:
       type: object
       additionalProperties: false
+      description: USER操作必须包含actorId；SYSTEM定时任务省略actorId。退款处理包含订单ID、退款类型与金额，不能伪造系统的用户身份。
       required:
         - id
-        - actorId
+        - actorType
         - action
         - targetId
         - detail
@@ -5179,6 +5185,8 @@ components:
       properties:
         id:
           $ref: "#/components/schemas/Id"
+        actorType:
+          $ref: "#/components/schemas/ActorType"
         actorId:
           $ref: "#/components/schemas/Id"
         action:

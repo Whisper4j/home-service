@@ -1347,6 +1347,8 @@ export interface components {
         /** @enum {string} */
         LeaveStatus: "ACTIVE" | "CANCELLED";
         /** @enum {string} */
+        ActorType: "USER" | "SYSTEM";
+        /** @enum {string} */
         ReviewTag: "PUNCTUAL" | "PROFESSIONAL" | "FRIENDLY";
         /** @enum {string} */
         DispatchAttemptResult: "ASSIGNED" | "INELIGIBLE" | "SLOT_CONFLICT" | "NO_CANDIDATE";
@@ -1850,9 +1852,11 @@ export interface components {
             assignments: components["schemas"]["AssignmentVO"][];
             review?: components["schemas"]["ReviewVO"];
         };
+        /** @description USER操作必须包含actorId；SYSTEM定时任务省略actorId。退款处理包含订单ID、退款类型与金额，不能伪造系统的用户身份。 */
         AuditVO: {
             id: components["schemas"]["Id"];
-            actorId: components["schemas"]["Id"];
+            actorType: components["schemas"]["ActorType"];
+            actorId?: components["schemas"]["Id"];
             action: string;
             targetId: components["schemas"]["Id"];
             detail: string;
