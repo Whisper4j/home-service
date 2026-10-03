@@ -212,11 +212,11 @@ function resizePage(value: number) {
   <form class="filters" @submit.prevent="search">
     <label>
       名称
-      <input v-model.trim="query.keyword" />
+      <input name="keyword" v-model.trim="query.keyword" />
     </label>
     <label v-if="resource !== 'skills'">
       状态
-      <select v-model="query.status">
+      <select name="status" v-model="query.status">
         <option value="">全部</option>
         <option value="ON_SHELF">已上架</option>
         <option value="OFF_SHELF">已下架</option>
@@ -232,15 +232,22 @@ function resizePage(value: number) {
       <template v-if="resource === 'categories'">
         <label>
           分类名称
-          <input v-model.trim="category.name" required maxlength="60" />
+          <input name="name" v-model.trim="category.name" required maxlength="60" />
         </label>
         <label>
           排序
-          <input v-model.number="category.sort" type="number" min="0" max="9999" required />
+          <input
+            name="sort"
+            v-model.number="category.sort"
+            type="number"
+            min="0"
+            max="9999"
+            required
+          />
         </label>
         <label>
           状态
-          <select v-model="category.status">
+          <select name="status" v-model="category.status">
             <option value="ON_SHELF">上架</option>
             <option value="OFF_SHELF">下架</option>
           </select>
@@ -249,18 +256,18 @@ function resizePage(value: number) {
       <template v-if="resource === 'service-items'">
         <label>
           所属分类
-          <select v-model="item.categoryId" required>
+          <select name="categoryId" v-model="item.categoryId" required>
             <option value="" disabled>选择分类</option>
             <option v-for="c in categories" :key="c.id" :value="c.id">{{ c.name }}</option>
           </select>
         </label>
         <label>
           项目名称
-          <input v-model.trim="item.name" required maxlength="60" />
+          <input name="name" v-model.trim="item.name" required maxlength="60" />
         </label>
         <label>
           业务性质
-          <select v-model="item.serviceKind">
+          <select name="serviceKind" v-model="item.serviceKind">
             <option value="CLEANING">清洁（可配置优惠）</option>
             <option value="REPAIR">维修（仅标准预约）</option>
             <option value="OTHER">其他（仅标准预约）</option>
@@ -268,11 +275,11 @@ function resizePage(value: number) {
         </label>
         <label>
           服务说明
-          <textarea v-model.trim="item.description" required maxlength="1000" />
+          <textarea name="description" v-model.trim="item.description" required maxlength="1000" />
         </label>
         <label>
           状态
-          <select v-model="item.status">
+          <select name="status" v-model="item.status">
             <option value="ON_SHELF">上架</option>
             <option value="OFF_SHELF">下架</option>
           </select>
@@ -281,17 +288,17 @@ function resizePage(value: number) {
       <template v-if="resource === 'skills'">
         <label>
           技能名称
-          <input v-model.trim="skill.name" required maxlength="60" />
+          <input name="name" v-model.trim="skill.name" required maxlength="60" />
         </label>
         <label>
           技能说明
-          <textarea v-model.trim="skill.description" required maxlength="300" />
+          <textarea name="description" v-model.trim="skill.description" required maxlength="300" />
         </label>
       </template>
       <template v-if="resource === 'skus'">
         <label>
           客户端固定入口绑定
-          <select v-model="sku.clientEntryCode">
+          <select name="clientEntryCode" v-model="sku.clientEntryCode">
             <option :value="null">不绑定客户端入口</option>
             <option v-for="entry in clientEntries" :key="entry.code" :value="entry.code">
               {{ entry.title }}（{{ entry.code }}）
@@ -304,26 +311,37 @@ function resizePage(value: number) {
         <div class="form-grid">
           <label>
             所属项目
-            <select v-model="sku.itemId" required>
+            <select name="itemId" v-model="sku.itemId" required>
               <option value="" disabled>选择项目</option>
               <option v-for="i in items" :key="i.id" :value="i.id">{{ i.name }}</option>
             </select>
           </label>
           <label>
             规格名称
-            <input v-model.trim="sku.name" required maxlength="80" />
+            <input name="name" v-model.trim="sku.name" required maxlength="80" />
           </label>
           <label>
             标准价（两位小数）
-            <input v-model="sku.standardPrice" required pattern="[0-9]+\.[0-9]{2}" />
+            <input
+              name="standardPrice"
+              v-model="sku.standardPrice"
+              required
+              pattern="[0-9]+\.[0-9]{2}"
+            />
           </label>
           <label>
             最低报价（不支持优惠时同标准价）
-            <input v-model="sku.minimumOfferPrice" required pattern="[0-9]+\.[0-9]{2}" />
+            <input
+              name="minimumOfferPrice"
+              v-model="sku.minimumOfferPrice"
+              required
+              pattern="[0-9]+\.[0-9]{2}"
+            />
           </label>
           <label>
             预计时长（分钟）
             <input
+              name="durationMinutes"
               v-model.number="sku.durationMinutes"
               required
               type="number"
@@ -334,11 +352,11 @@ function resizePage(value: number) {
           </label>
           <label>
             计价单位
-            <input v-model.trim="sku.unit" required maxlength="20" />
+            <input name="unit" v-model.trim="sku.unit" required maxlength="20" />
           </label>
           <label>
             状态
-            <select v-model="sku.status">
+            <select name="status" v-model="sku.status">
               <option value="ON_SHELF">上架</option>
               <option value="OFF_SHELF">下架</option>
             </select>
@@ -346,32 +364,36 @@ function resizePage(value: number) {
         </div>
         <div class="check-group">
           <label class="inline">
-            <input v-model="sku.supportsOffer" type="checkbox" />
+            <input name="supportsOffer" v-model="sku.supportsOffer" type="checkbox" />
             支持优惠预约（仅清洁项目）
           </label>
           <label class="inline">
-            <input v-model="sku.customerSuppliesParts" type="checkbox" />
+            <input
+              name="customerSuppliesParts"
+              v-model="sku.customerSuppliesParts"
+              type="checkbox"
+            />
             客户自备配件
           </label>
         </div>
         <p>所需技能（至少一项）</p>
         <div class="check-group">
           <label v-for="s in skills" :key="s.id" class="inline">
-            <input v-model="sku.skillIds" type="checkbox" :value="s.id" />
+            <input name="skillIds" v-model="sku.skillIds" type="checkbox" :value="s.id" />
             {{ s.name }}
           </label>
         </div>
         <label>
           服务说明
-          <textarea v-model.trim="sku.description" required maxlength="2000" />
+          <textarea name="description" v-model.trim="sku.description" required maxlength="2000" />
         </label>
         <label>
           包含内容
-          <textarea v-model.trim="sku.included" required maxlength="1000" />
+          <textarea name="included" v-model.trim="sku.included" required maxlength="1000" />
         </label>
         <label>
           排除内容
-          <textarea v-model.trim="sku.excluded" required maxlength="1000" />
+          <textarea name="excluded" v-model.trim="sku.excluded" required maxlength="1000" />
         </label>
       </template>
       <div class="actions">

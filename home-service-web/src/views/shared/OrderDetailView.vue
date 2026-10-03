@@ -264,6 +264,7 @@ useRefresh(load)
         <label>
           客户提供的六位开始码
           <input
+            name="enteredCode"
             v-model="enteredCode"
             required
             pattern="[0-9]{6}"
@@ -285,10 +286,20 @@ useRefresh(load)
         </p>
         <label>
           新报价
-          <input v-model="price.newPrice" required pattern="[0-9]+\.[0-9]{2}" inputmode="decimal" />
+          <input
+            name="newPrice"
+            v-model="price.newPrice"
+            required
+            pattern="[0-9]+\.[0-9]{2}"
+            inputmode="decimal"
+          />
         </label>
         <label class="inline">
-          <input v-model="price.confirmSimulatedPayment" type="checkbox" />
+          <input
+            name="confirmSimulatedPayment"
+            v-model="price.confirmSimulatedPayment"
+            type="checkbox"
+          />
           如果加价，我确认模拟支付差额；降价自动记录部分退款
         </label>
         <button :disabled="busy">提交报价调整</button>
@@ -296,7 +307,7 @@ useRefresh(load)
       <form v-if="canCancel" class="filters" @submit.prevent="act('cancel')">
         <label>
           {{ role === 'admin' ? '异常取消原因（必填）' : '取消原因' }}
-          <input v-model.trim="reason" required maxlength="300" />
+          <input name="reason" v-model.trim="reason" required maxlength="300" />
         </label>
         <button :disabled="busy">{{ role === 'admin' ? '异常取消并退款' : '取消预约' }}</button>
         <span>已支付部分将全额退回净收款，释放服务及缓冲槽。</span>
@@ -311,7 +322,7 @@ useRefresh(load)
         <h3>评价本次服务（每单一次）</h3>
         <label>
           评分
-          <select v-model.number="review.score">
+          <select name="score" v-model.number="review.score">
             <option v-for="score in 5" :key="score" :value="score">{{ score }} 分</option>
           </select>
         </label>
@@ -321,13 +332,13 @@ useRefresh(load)
             :key="tag"
             class="inline"
           >
-            <input v-model="review.tags" type="checkbox" :value="tag" />
+            <input name="tags" v-model="review.tags" type="checkbox" :value="tag" />
             {{ label(tag) }}
           </label>
         </div>
         <label>
           评价内容
-          <textarea v-model.trim="review.content" maxlength="500" />
+          <textarea name="content" v-model.trim="review.content" maxlength="500" />
         </label>
         <button :disabled="busy">提交评价</button>
       </form>

@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test, type WebSocketRoute } from '@playwright/test'
 import { routes } from '../../src/api/generated/routes'
 import type { OperationId, Schema } from '../../src/api/types'
 import { MockEngine } from '../../src/mock/engine'
@@ -7,6 +7,8 @@ import { ApiError } from '../../src/api/errors'
 test('真实模式使用同源API、Bearer、幂等重试和WebSocket认证首帧', async ({ page }) => {
   // 此测试用路由拦截模拟HTTP服务器；浏览器运行真实fetch分支，不导入Mock业务。
   const engine = new MockEngine()
+  const sockets: WebSocketRoute[] = []
+  let rejectPhone = true
   const paymentKeys: string[] = [],
     headers: string[] = [],
     requested: string[] = [],
@@ -49,6 +51,12 @@ test('真实模式使用同源API、Bearer、幂等重试和WebSocket认证首�
       if (operation === 'payOrder') paymentKeys.push(key)
       if (operation === 'createOrder') creationKeys.push(key)
       try {
+        if (operation === 'updateWorkerContact' && rejectPhone) {
+          rejectPhone = false
+          throw new ApiError('VALIDATION_ERROR', '请核对联系电话', 400, {
+            fieldErrors: [{ field: 'phone', message: '演示接口要求重新核对联系电话' }],
+          })
+        }
         let file: File | undefined
         if (meta.upload) {
           expect(req.headers()['content-type']).toMatch(/^multipart\/form-data; boundary=/)
@@ -99,6 +107,7 @@ test('真实模式使用同源API、Bearer、幂等重试和WebSocket认证首�
     },
   )
   await page.routeWebSocket('**/ws', (ws) => {
+    sockets.push(ws)
     expect(new URL(ws.url()).search).toBe('')
     ws.onMessage((message) => {
       authFrames.push(JSON.parse(String(message)))
@@ -129,7 +138,7 @@ test('真实模式使用同源API、Bearer、幂等重试和WebSocket认证首�
   })
   await expect(page.getByRole('button', { name: '预览现场图片 1', exact: true })).toBeVisible()
   await page.getByRole('button', { name: '提交预约并去支付' }).click()
-  await expect(page.getByRole('alert')).toContainText('无法连接服务')
+  await expect(page.locator('.error-toast')).toContainText('无法连接服务')
   await page.reload()
   await expect(page.getByLabel('本次联系人', { exact: true })).toHaveValue('接口联调联系人')
   await page.getByRole('button', { name: '提交预约并去支付' }).click()
@@ -139,8 +148,9 @@ test('真实模式使用同源API、Bearer、幂等重试和WebSocket认证首�
   expect(creationKeys[0]).toBe(creationKeys[1])
   expect(engine.db.orders).toHaveLength(28)
   await page.getByRole('button', { name: '确认模拟支付' }).click()
-  await expect(page.getByRole('alert')).toContainText('无法连接服务')
+  await expect(page.locator('.error-toast')).toContainText('无法连接服务')
   await page.getByRole('button', { name: '确认模拟支付' }).click()
+  await page.getByRole('link', { name: '查看订单进度' }).click()
   await expect(page.getByText('派单成功，人员已安排。', { exact: true })).toBeVisible()
   expect(paymentKeys).toHaveLength(2)
   expect(paymentKeys[0]).toBe(paymentKeys[1])
@@ -154,4 +164,38 @@ test('真实模式使用同源API、Bearer、幂等重试和WebSocket认证首�
   })
   await page.getByRole('button', { name: '重新查询最新状态' }).click()
   await expect(page).toHaveURL(/customer\/login/)
+  await page.goto('http://127.0.0.1:5180/worker/login')
+  await page.getByLabel('用户名', { exact: true }).fill('worker')
+  await page.getByLabel('密码', { exact: true }).fill('Demo12345')
+  await page.getByRole('button', { name: '登录', exact: true }).click()
+  await expect(page).toHaveURL(/worker\/home$/)
+  await expect(page.getByRole('button', { name: '查看全部1单' })).toBeVisible()
+  const before = requested.filter((url) => url.includes('/api/worker/offers')).length
+  const connectionCount = sockets.length
+  await sockets.at(-1)!.close({ code: 1012, reason: '测试重连' })
+  await expect.poll(() => sockets.length).toBeGreaterThan(connectionCount)
+  await expect
+    .poll(() => requested.filter((url) => url.includes('/api/worker/offers')).length)
+    .toBeGreaterThan(before)
+  await page.getByRole('link', { name: '我的', exact: true }).click()
+  await page.getByRole('link', { name: '个人资料', exact: true }).click()
+  await page.getByLabel('联系电话', { exact: true }).fill('13800000991')
+  await page.getByRole('button', { name: '保存联系电话' }).click()
+  await expect(page.locator('[data-field-error]')).toContainText('演示接口要求重新核对')
+  await expect(page.locator('.error-toast')).not.toBeVisible({ timeout: 4000 })
+  await expect(page.locator('[data-field-error]')).toBeVisible()
+  await page.getByLabel('联系电话', { exact: true }).focus()
+  await page.getByLabel('联系电话', { exact: true }).blur()
+  await expect(page.locator('[data-field-error]')).toBeVisible()
+  await page.getByLabel('联系电话', { exact: true }).fill('13800000992')
+  await expect(page.locator('[data-field-error]')).toHaveCount(0)
+  await page.getByRole('button', { name: '保存联系电话' }).click()
+  await expect(page.getByRole('status')).toContainText('联系电话已更新')
+  await page.getByRole('button', { name: '返回上一页' }).click()
+  await page.getByRole('link', { name: '服务数据', exact: true }).click()
+  await expect(page.getByRole('heading', { name: /累计已完成/ })).toBeVisible()
+  await page.getByRole('button', { name: '返回上一页' }).click()
+  await page.getByRole('link', { name: '工作时间与请假' }).click()
+  await expect(page.getByRole('region', { name: '工作月历' })).toBeVisible()
+  expect(requested.some((url) => url.includes('/src/mock/transport'))).toBe(false)
 })

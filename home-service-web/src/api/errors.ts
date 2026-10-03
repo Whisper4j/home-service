@@ -20,6 +20,6 @@ export function fail(
 }
 export function errorMessage(error: unknown): string {
   if (error instanceof ApiError)
-    return `${error.message}（${error.code}）${error.code === 'PRICE_CHANGED' ? `；当前报价 ¥${error.data.currentPrice}，版本 ${error.data.priceVersion}。请重新查询后确认。` : ''}`
+    return `${error.message}（${error.code}）${error.code === 'PRICE_CHANGED' ? `；最新报价 ¥${error.data.currentPrice}。请重新查询后确认。` : ''}`
   return error instanceof Error ? error.message : '请求失败，请重试'
 }

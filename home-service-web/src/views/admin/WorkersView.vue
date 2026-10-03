@@ -108,18 +108,18 @@ function resizePage(value: number) {
   <form class="filters" @submit.prevent="search">
     <label>
       姓名 / 用户名
-      <input v-model.trim="query.keyword" />
+      <input name="keyword" v-model.trim="query.keyword" />
     </label>
     <label>
       技能
-      <select v-model="query.skillId">
+      <select name="skillId" v-model="query.skillId">
         <option value="">全部</option>
         <option v-for="skill in skills" :key="skill.id" :value="skill.id">{{ skill.name }}</option>
       </select>
     </label>
     <label>
       允许派单
-      <select v-model="query.dispatchEnabled">
+      <select name="dispatchEnabled" v-model="query.dispatchEnabled">
         <option value="">全部</option>
         <option value="true">允许</option>
         <option value="false">暂停</option>
@@ -135,11 +135,17 @@ function resizePage(value: number) {
       <div class="form-grid">
         <label v-if="!editing">
           用户名
-          <input v-model.trim="form.username" required pattern="[A-Za-z][A-Za-z0-9_]{2,31}" />
+          <input
+            name="username"
+            v-model.trim="form.username"
+            required
+            pattern="[A-Za-z][A-Za-z0-9_]{2,31}"
+          />
         </label>
         <label v-if="!editing">
           初始密码
           <input
+            name="password"
             v-model="form.password"
             type="password"
             required
@@ -150,27 +156,27 @@ function resizePage(value: number) {
         </label>
         <label>
           姓名
-          <input v-model.trim="form.displayName" required maxlength="40" />
+          <input name="displayName" v-model.trim="form.displayName" required maxlength="40" />
         </label>
         <label>
           联系电话
-          <input v-model.trim="form.phone" required pattern="1[0-9]{10}" />
+          <input name="phone" v-model.trim="form.phone" required pattern="1[0-9]{10}" />
         </label>
         <label>
           服务城市
-          <select v-model="form.cityCode">
+          <select name="cityCode" v-model="form.cityCode">
             <option value="440100">广州市</option>
           </select>
         </label>
       </div>
       <div class="check-group">
         <label v-for="skill in skills" :key="skill.id" class="inline">
-          <input v-model="form.skillIds" type="checkbox" :value="skill.id" />
+          <input name="skillIds" v-model="form.skillIds" type="checkbox" :value="skill.id" />
           {{ skill.name }}
         </label>
       </div>
       <label class="inline">
-        <input v-model="form.dispatchEnabled" type="checkbox" />
+        <input name="dispatchEnabled" v-model="form.dispatchEnabled" type="checkbox" />
         允许新分配（不改变已有订单）
       </label>
       <p>新人员需登录后首次设置排班，才具备可接单时间槽。</p>
@@ -223,7 +229,7 @@ function resizePage(value: number) {
     <form class="filters" @submit.prevent="loadSlots">
       <label>
         日期
-        <input v-model="slotDate" type="date" required />
+        <input name="slotDate" v-model="slotDate" type="date" required />
       </label>
       <button :disabled="busy">查询</button>
     </form>

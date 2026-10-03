@@ -404,7 +404,7 @@ export const routes = {
     "input": "",
     "upload": false,
     "binary": false,
-    "output": "WorkerVOResponse",
+    "output": "WorkerProfileVOResponse",
     "query": "",
     "idempotent": false
   },
@@ -992,7 +992,7 @@ export const routes = {
     "input": "WorkerContactDTO",
     "upload": false,
     "binary": false,
-    "output": "WorkerVOResponse",
+    "output": "WorkerProfileVOResponse",
     "query": "",
     "idempotent": true
   },

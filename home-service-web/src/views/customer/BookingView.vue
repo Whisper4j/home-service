@@ -6,8 +6,9 @@ import type { Schema } from '../../api/types'
 import { sessions } from '../../stores/session'
 import { useTask } from '../../composables/useTask'
 import { dateOf, DAY, iso, money } from '../../utils/format'
-import { offerReason, quoteReason, suggestedPrice, timeReason } from '../../utils/booking'
+import { offerReason, suggestedPrice, timeReason } from '../../utils/booking'
 import Feedback from '../../components/CustomerFeedback.vue'
+import QuoteEditor from '../../components/QuoteEditor.vue'
 import SceneImageUpload from '../../components/SceneImageUpload.vue'
 const route = useRoute(),
   router = useRouter(),
@@ -16,6 +17,7 @@ const route = useRoute(),
 const sku = ref<Schema['SkuVO']>(),
   rules = ref<Schema['BookingRulesVO']>(),
   addresses = ref<Schema['AddressVO'][]>([])
+const quoteEditor = ref<InstanceType<typeof QuoteEditor>>()
 const now = ref(Date.now()),
   pendingImages = ref(false),
   initialized = ref(false)
@@ -75,9 +77,6 @@ const offerError = computed(() =>
     ? offerReason(start.value, now.value, sku.value, rules.value)
     : '',
 )
-const priceError = computed(() =>
-  form.bookingType === 'OFFER' && sku.value ? quoteReason(form.offerPrice, sku.value) : '',
-)
 const amount = computed(() =>
   form.bookingType === 'OFFER' ? form.offerPrice : sku.value?.standardPrice || '0.00',
 )
@@ -90,7 +89,6 @@ const blocked = computed(
   () =>
     timeError.value ||
     offerError.value ||
-    priceError.value ||
     (!address.value ? '请先添加或选择服务地址' : '') ||
     (pendingImages.value ? '请完成上传或移除失败图片' : ''),
 )
@@ -157,19 +155,12 @@ function changeDate() {
 function switchStandard() {
   form.bookingType = 'STANDARD'
 }
-function stepPrice(delta: number) {
-  if (!sku.value) return
-  const value =
-    Math.round(Number(form.offerPrice || sku.value.minimumOfferPrice) * 100) + delta * 100
-  if (!Number.isSafeInteger(value) || value < 0) return
-  const candidate = money(value)
-  if (!quoteReason(candidate, sku.value)) form.offerPrice = candidate
-}
 function setPending(value: boolean) {
   pendingImages.value = value
 }
 async function submit() {
   await updateNow()
+  if (form.bookingType === 'OFFER' && !quoteEditor.value?.validate()) return
   if (blocked.value || !sku.value) return
   const body: Schema['CreateOrderDTO'] = {
     skuId: sku.value.id,
@@ -227,7 +218,7 @@ onUnmounted(() => clearInterval(timer))
       <div class="fields">
         <label v-if="addresses.length">
           选择地址
-          <select v-model="form.addressId" @change="selectAddress">
+          <select name="addressId" v-model="form.addressId" @change="selectAddress">
             <option v-for="item in addresses" :key="item.id" :value="item.id">
               {{ item.isDefault ? '默认 · ' : '' }}{{ item.districtName }} {{ item.detail }}
             </option>
@@ -247,11 +238,18 @@ onUnmounted(() => clearInterval(timer))
       <div class="fields">
         <label>
           本次联系人
-          <input v-model.trim="form.contactName" required maxlength="40" autocomplete="name" />
+          <input
+            name="contactName"
+            v-model.trim="form.contactName"
+            required
+            maxlength="40"
+            autocomplete="name"
+          />
         </label>
         <label>
           本次联系电话
           <input
+            name="contactPhone"
             v-model.trim="form.contactPhone"
             type="tel"
             required
@@ -267,13 +265,13 @@ onUnmounted(() => clearInterval(timer))
       <div class="fields">
         <label>
           预约日期
-          <select v-model="form.date" required @change="changeDate">
+          <select name="date" v-model="form.date" required @change="changeDate">
             <option v-for="date in dates" :key="date" :value="date">{{ date }}</option>
           </select>
         </label>
         <label>
           开始时间
-          <select v-model="form.time" required>
+          <select name="time" v-model="form.time" required>
             <option value="" disabled>请选择半小时粒度的开始时间</option>
             <option
               v-for="slot in times"
@@ -302,25 +300,14 @@ onUnmounted(() => clearInterval(timer))
     </section>
     <section v-if="form.bookingType === 'OFFER'" class="booking-section">
       <h2>设置优惠报价</h2>
-      <p>最低 ¥{{ sku.minimumOfferPrice }} · 建议 ¥{{ suggestedPrice(sku) }}</p>
-      <p class="muted">
-        建议价取最低价与标准价的中点，再向下对齐5元步长。仅帮助选择，不是接单预测。
-      </p>
-      <div class="quote-controls">
-        <button type="button" @click="stepPrice(-5)">－5元</button>
-        <label>
-          当前报价
-          <input v-model="form.offerPrice" inputmode="decimal" required />
-        </label>
-        <button type="button" @click="stepPrice(5)">＋5元</button>
-      </div>
-      <p v-if="priceError" role="alert">{{ priceError }}</p>
+      <QuoteEditor ref="quoteEditor" v-model="form.offerPrice" :range="sku" />
       <p class="muted">需低于标准价。不承诺有人接单，不会自动加价或转标准预约。</p>
     </section>
     <section class="booking-section">
       <label>
         额外要求（可选）
         <textarea
+          name="remark"
           v-model="form.remark"
           maxlength="300"
           placeholder="例如重点清洁厨房、家中有宠物、请提前联系"

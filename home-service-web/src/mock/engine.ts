@@ -330,12 +330,12 @@ export class MockEngine extends MockContext {
       }
       return { success: true }
     }
-    if (op === 'getWorkerProfile') return this.db.workers.find((w) => w.accountId === actor)
+    if (op === 'getWorkerProfile') return this.workerProfile(actor)
     if (op === 'updateWorkerContact') {
       const worker = this.db.workers.find((w) => w.accountId === actor)!
       worker.phone = (body as Schema['WorkerContactDTO']).phone
       account!.phone = worker.phone
-      return worker
+      return this.workerProfile(actor)
     }
     if (op === 'getWorkerStatistics') return workerStatistics(this, actor)
     if (op === 'getWorkerCalendar') return workerCalendar(this, actor, String(q.month))
@@ -567,5 +567,9 @@ export class MockEngine extends MockContext {
       this.db.items.find((i) => i.id === sku.itemId)?.status === 'ON_SHELF' &&
       this.db.categories.find((c) => c.id === sku.categoryId)?.status === 'ON_SHELF'
     )
+  }
+  private workerProfile(accountId: string): Schema['WorkerProfileVO'] {
+    const worker = this.db.workers.find((w) => w.accountId === accountId)!
+    return { ...worker, skills: this.db.skills.filter((s) => worker.skillIds.includes(s.id)) }
   }
 }

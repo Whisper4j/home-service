@@ -134,15 +134,20 @@ function makeDefault(address: Schema['AddressVO']) {
       <div class="form-grid">
         <label>
           联系人
-          <input v-model.trim="form.contactName" required maxlength="40" />
+          <input name="contactName" v-model.trim="form.contactName" required maxlength="40" />
         </label>
         <label>
           联系电话
-          <input v-model.trim="form.contactPhone" required pattern="1[0-9]{10}" />
+          <input
+            name="contactPhone"
+            v-model.trim="form.contactPhone"
+            required
+            pattern="1[0-9]{10}"
+          />
         </label>
         <label>
           服务区域
-          <select v-model="form.districtCode">
+          <select name="districtCode" v-model="form.districtCode">
             <option
               v-for="district in regions[0]?.districts"
               :key="district.code"
@@ -154,7 +159,7 @@ function makeDefault(address: Schema['AddressVO']) {
         </label>
         <label>
           详细地址
-          <input v-model.trim="form.detail" required maxlength="200" />
+          <input name="detail" v-model.trim="form.detail" required maxlength="200" />
         </label>
         <label>
           经度（可空）
@@ -180,7 +185,7 @@ function makeDefault(address: Schema['AddressVO']) {
         </label>
       </div>
       <label class="inline">
-        <input v-model="form.isDefault" type="checkbox" />
+        <input name="isDefault" v-model="form.isDefault" type="checkbox" />
         设为默认地址
       </label>
       <div class="actions">

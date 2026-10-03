@@ -3,6 +3,8 @@ import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { request } from '../../api/client'
 import type { Schema } from '../../api/types'
+import { quoteBounds } from '../../utils/quote'
+import { money } from '../../utils/format'
 import { clientEntries } from '../../utils/clientEntries'
 import { useTask } from '../../composables/useTask'
 import { useRefresh } from '../../composables/useRefresh'
@@ -66,9 +68,19 @@ useRefresh(load)
     </section>
     <Teleport to="#customer-actions" defer>
       <div :class="sku.supportsOffer ? 'action-pair' : ''">
-        <button v-if="sku.supportsOffer" @click="book('OFFER')">
+        <button
+          :disabled="quoteBounds(sku).high < quoteBounds(sku).low"
+          v-if="sku.supportsOffer"
+          @click="book('OFFER')"
+        >
           <strong>优惠预约</strong>
-          <small>最低 ¥{{ sku.minimumOfferPrice }}</small>
+          <small>
+            {{
+              quoteBounds(sku).high < quoteBounds(sku).low
+                ? '暂无合法优惠报价'
+                : `最低 ¥${money(quoteBounds(sku).low)}`
+            }}
+          </small>
         </button>
         <button class="primary wide-button" @click="book('STANDARD')">
           <strong>标准预约</strong>

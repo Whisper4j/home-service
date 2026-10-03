@@ -84,6 +84,11 @@ export const router = createRouter({
           meta: { public: true, title: '演示工具' },
         },
         {
+          path: 'result/:id',
+          component: () => import('../views/customer/PaymentResultView.vue'),
+          meta: { title: '支付结果' },
+        },
+        {
           path: 'pay/:id',
           component: () => import('../views/customer/PaymentView.vue'),
           meta: { title: '确认模拟支付' },
@@ -104,20 +109,49 @@ export const router = createRouter({
       path: '/worker',
       component: () => import('../layouts/WorkerLayout.vue'),
       meta: { role: 'worker' },
-      redirect: '/worker/orders',
+      redirect: '/worker/home',
       children: [
         {
           path: 'orders',
-          component: () => import('../views/shared/OrdersView.vue'),
-          props: { role: 'worker' },
+          component: () => import('../views/worker/OrdersView.vue'),
+          meta: { title: '我的订单' },
         },
         {
           path: 'orders/:id',
-          component: () => import('../views/shared/OrderDetailView.vue'),
-          props: { role: 'worker' },
+          component: () => import('../views/worker/OrderDetailView.vue'),
+          meta: { title: '任务详情' },
         },
-        { path: 'offers', component: () => import('../views/worker/OffersView.vue') },
-        { path: 'schedule', component: () => import('../views/worker/ScheduleView.vue') },
+        { path: 'offers', redirect: '/worker/home' },
+        {
+          path: 'home',
+          component: () => import('../views/worker/HomeView.vue'),
+          meta: { title: '人员首页' },
+        },
+        {
+          path: 'me',
+          component: () => import('../views/worker/MyView.vue'),
+          meta: { title: '我的' },
+        },
+        {
+          path: 'profile',
+          component: () => import('../views/worker/ProfileView.vue'),
+          meta: { title: '个人资料' },
+        },
+        {
+          path: 'statistics',
+          component: () => import('../views/worker/StatisticsView.vue'),
+          meta: { title: '服务数据' },
+        },
+        {
+          path: 'rules',
+          component: () => import('../views/worker/RulesView.vue'),
+          meta: { title: '服务规则' },
+        },
+        {
+          path: 'schedule',
+          component: () => import('../views/worker/ScheduleView.vue'),
+          meta: { title: '工作时间与请假' },
+        },
       ],
     },
     {

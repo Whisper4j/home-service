@@ -2,6 +2,7 @@
 import { onUnmounted, ref, watch } from 'vue'
 import { request } from '../api/client'
 import type { RolePath, Schema } from '../api/types'
+import { showError } from '../stores/feedback'
 const props = defineProps<{
   images: Schema['SceneImageVO'][]
   role: RolePath
@@ -40,8 +41,10 @@ async function load(id: string, current = generation) {
     if (urls.value[id]) URL.revokeObjectURL(urls.value[id])
     urls.value[id] = URL.createObjectURL(blob)
   } catch (error) {
-    if (current === generation)
+    if (current === generation) {
       errors.value[id] = error instanceof Error ? error.message : '图片加载失败'
+      showError(errors.value[id])
+    }
   } finally {
     if (current === generation) loading.value[id] = false
   }
@@ -83,7 +86,7 @@ onUnmounted(() => {
       </button>
       <p v-if="loading[image.id]" class="muted">图片加载中…</p>
       <template v-if="errors[image.id]">
-        <p role="alert" class="muted">{{ errors[image.id] }}</p>
+        <p role="status" class="muted">{{ errors[image.id] }}</p>
         <button type="button" @click="load(image.id)">重试查看</button>
       </template>
       <button

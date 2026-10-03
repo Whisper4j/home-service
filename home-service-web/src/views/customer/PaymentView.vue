@@ -31,7 +31,7 @@ function pay() {
       }
       const paid = await request('payOrder', { id, idempotencyKey: key })
       order.value = paid
-      await router.replace(`/customer/orders/${id}`)
+      await router.replace(`/customer/result/${id}`)
     },
     '',
     'pay:' + id,
@@ -66,8 +66,11 @@ useRefresh(load)
       </p>
       <p v-else>当前订单：{{ label(order.status) }}，请查看最新进度。</p>
     </section>
-    <Feedback :busy="payment.busy.value" :error="payment.error.value" />
-    <RouterLink :to="`/customer/orders/${id}`">稍后处理 / 查看订单</RouterLink>
+    <Feedback :busy="payment.busy.value" :error="payment.error.value" persistent />
+    <p v-if="payment.error.value">
+      支付结果尚未确认，请查询订单状态或使用原操作重试，勿重复创建预约。
+    </p>
+    <RouterLink replace :to="`/customer/orders/${id}`">稍后处理 / 查看订单</RouterLink>
     <Teleport to="#customer-actions" defer>
       <div v-if="order.status === 'PENDING_PAYMENT'" class="amount-bar">
         <strong>¥{{ order.currentPrice }}</strong>

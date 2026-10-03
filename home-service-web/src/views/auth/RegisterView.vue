@@ -22,6 +22,7 @@ function submit() {
       <label>
         用户名
         <input
+          name="username"
           v-model.trim="form.username"
           required
           pattern="[A-Za-z][A-Za-z0-9_]{2,31}"
@@ -31,6 +32,7 @@ function submit() {
       <label>
         密码
         <input
+          name="password"
           v-model="form.password"
           type="password"
           required
@@ -41,11 +43,11 @@ function submit() {
       </label>
       <label>
         称呼
-        <input v-model.trim="form.displayName" required maxlength="40" />
+        <input name="displayName" v-model.trim="form.displayName" required maxlength="40" />
       </label>
       <label>
         联系电话
-        <input v-model.trim="form.phone" required pattern="1[0-9]{10}" />
+        <input name="phone" v-model.trim="form.phone" required pattern="1[0-9]{10}" />
       </label>
       <button :disabled="busy">注册</button>
     </form>

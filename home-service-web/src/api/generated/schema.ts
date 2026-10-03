@@ -1832,7 +1832,7 @@ export interface components {
             reason: string;
             status: components["schemas"]["LeaveStatus"];
         };
-        /** @description 只有 SERVICE/BUFFER 包含 bookingType、assignmentId、orderId。每天 08:00—22:00，未来 30 天，不包含窗口末日。 */
+        /** @description 半小时槽查询返回单个30分钟区间；月历segments返回相邻同类合并区间。区间均左闭右开，时间使用Asia/Shanghai。 */
         SlotVO: {
             startTime: components["schemas"]["DateTime"];
             endTime: components["schemas"]["DateTime"];
@@ -1862,7 +1862,7 @@ export interface components {
             autoConfirmHours: number;
             /**
              * @description 人民币元，两位小数字符串。服务端 BigDecimal/decimal；前端比较和计算使用整数分。
-             * @example 128.00
+             * @example 5.00
              * @enum {string}
              */
             priceStep: "5.00";
@@ -2535,6 +2535,26 @@ export interface components {
             code: "SUCCESS";
             message: string;
             data: components["schemas"]["WorkerCalendarVO"];
+        };
+        WorkerProfileVO: {
+            id: components["schemas"]["Id"];
+            accountId: components["schemas"]["Id"];
+            username: string;
+            status: components["schemas"]["AccountStatus"];
+            displayName: string;
+            phone: string;
+            /** @enum {string} */
+            cityCode: "440100";
+            skillIds: components["schemas"]["Id"][];
+            dispatchEnabled: boolean;
+            /** @description 当前人员实际拥有的技能详情，与skillIds逐一对应；只读，由平台维护。 */
+            skills: components["schemas"]["SkillVO"][];
+        };
+        WorkerProfileVOResponse: {
+            /** @enum {string} */
+            code: "SUCCESS";
+            message: string;
+            data: components["schemas"]["WorkerProfileVO"];
         };
     };
     responses: {
@@ -3717,7 +3737,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["WorkerVOResponse"];
+                    "application/json": components["schemas"]["WorkerProfileVOResponse"];
                 };
             };
             400: components["responses"]["Error400"];
@@ -5439,7 +5459,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["WorkerVOResponse"];
+                    "application/json": components["schemas"]["WorkerProfileVOResponse"];
                 };
             };
             400: components["responses"]["Error400"];

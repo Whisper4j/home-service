@@ -1398,7 +1398,7 @@
   "SlotVO": {
     "type": "object",
     "additionalProperties": false,
-    "description": "只有 SERVICE/BUFFER 包含 bookingType、assignmentId、orderId。每天 08:00—22:00，未来 30 天，不包含窗口末日。",
+    "description": "半小时槽查询返回单个30分钟区间；月历segments返回相邻同类合并区间。区间均左闭右开，时间使用Asia/Shanghai。",
     "required": [
       "startTime",
       "endTime",
@@ -1536,7 +1536,7 @@
         "minLength": 1,
         "maxLength": 12,
         "pattern": "^(0|[1-9][0-9]{0,8})\\.[0-9]{2}$",
-        "example": "128.00",
+        "example": "5.00",
         "description": "人民币元，两位小数字符串。服务端 BigDecimal/decimal；前端比较和计算使用整数分。",
         "enum": [
           "5.00"
@@ -4125,6 +4125,98 @@
       },
       "data": {
         "$ref": "#/components/schemas/WorkerCalendarVO"
+      }
+    }
+  },
+  "WorkerProfileVO": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "id",
+      "accountId",
+      "username",
+      "status",
+      "displayName",
+      "phone",
+      "cityCode",
+      "skillIds",
+      "dispatchEnabled",
+      "skills"
+    ],
+    "properties": {
+      "id": {
+        "$ref": "#/components/schemas/Id"
+      },
+      "accountId": {
+        "$ref": "#/components/schemas/Id"
+      },
+      "username": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 32
+      },
+      "status": {
+        "$ref": "#/components/schemas/AccountStatus"
+      },
+      "displayName": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 40
+      },
+      "phone": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 11,
+        "pattern": "^1[0-9]{10}$"
+      },
+      "cityCode": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 6,
+        "enum": [
+          "440100"
+        ]
+      },
+      "skillIds": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/Id"
+        },
+        "minItems": 1,
+        "uniqueItems": true
+      },
+      "dispatchEnabled": {
+        "type": "boolean"
+      },
+      "skills": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/SkillVO"
+        },
+        "description": "当前人员实际拥有的技能详情，与skillIds逐一对应；只读，由平台维护。"
+      }
+    }
+  },
+  "WorkerProfileVOResponse": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "code",
+      "message",
+      "data"
+    ],
+    "properties": {
+      "code": {
+        "type": "string",
+        "enum": [
+          "SUCCESS"
+        ]
+      },
+      "message": {
+        "type": "string"
+      },
+      "data": {
+        "$ref": "#/components/schemas/WorkerProfileVO"
       }
     }
   }

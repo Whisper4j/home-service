@@ -191,13 +191,7 @@ export function createOrder(
     fail('OFFER_NOT_SUPPORTED', '本规格或预约提前量不支持优惠预约', 422)
   if (dto.bookingType === 'STANDARD' && dto.offerPrice !== undefined)
     fail('VALIDATION_ERROR', '标准预约不接受优惠报价', 400)
-  if (
-    dto.bookingType === 'OFFER' &&
-    (!dto.offerPrice ||
-      cents(dto.offerPrice) < cents(sku.minimumOfferPrice) ||
-      cents(dto.offerPrice) >= cents(sku.standardPrice) ||
-      cents(dto.offerPrice) % 500)
-  )
+  if (dto.bookingType === 'OFFER' && (!dto.offerPrice || quoteReason(dto.offerPrice, sku)))
     fail('PRICE_OUT_OF_RANGE', '报价须为5元整数倍，不低于最低价且低于标准价', 422)
   const { id: _id, customerId: _customerId, ...addressSnapshot } = address
   const order: Schema['OrderVO'] = {

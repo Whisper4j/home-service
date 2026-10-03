@@ -13,6 +13,57 @@ async function setup() {
     ).accessToken
   return { engine, token: await login('worker'), customer: await login('customer') }
 }
+it('历史订单保持非整数倍锚点快照，目录价格修改不改变其调价与流水', async () => {
+  const { engine, customer } = await setup()
+  const order = engine.db.orders[1].order
+  order.service.minimumOfferPrice = '132.50'
+  order.currentPrice = '132.50'
+  engine.db.histories[order.id].payments[0].amount = '132.50'
+  engine.db.skus[0].minimumOfferPrice = '145.00'
+  const result = await engine.handle('changeOffer', {
+    token: customer,
+    id: order.id,
+    body: {
+      expectedPrice: '132.50',
+      priceVersion: 1,
+      newPrice: '137.50',
+      confirmSimulatedPayment: true,
+    },
+    idempotencyKey: 'legacy_snapshot',
+  })
+  expect(result.data).toMatchObject({
+    currentPrice: '137.50',
+    offerPriceRule: 'MINIMUM_ANCHORED',
+    priceVersion: 2,
+  })
+  expect(engine.db.histories[order.id].payments.at(-1)).toMatchObject({
+    type: 'TOP_UP',
+    amount: '5.00',
+  })
+})
+it('月历区分未设置、休息与工作范围内空闲，不扩展客户预约窗口', async () => {
+  const { engine, token } = await setup()
+  engine.db.schedules['201'] = { configured: false, intervals: [], restWeekdays: [] }
+  const getCalendar = async () =>
+    (await engine.handle('getWorkerCalendar', { token, query: { month: '2026-10' } }))
+      .data as Schema['WorkerCalendarVO']
+  expect((await getCalendar()).days[0].status).toBe('UNCONFIGURED')
+  engine.db.schedules['201'] = {
+    configured: true,
+    intervals: [{ start: '10:00', end: '18:00' }],
+    restWeekdays: [6],
+  }
+  const calendar = await getCalendar()
+  expect(calendar.days[0].status).toBe('REST')
+  expect(calendar.days[1].segments.filter((s) => s.status === 'AVAILABLE')).toEqual([
+    {
+      status: 'AVAILABLE',
+      startTime: '2026-10-04T10:00:00+08:00',
+      endTime: '2026-10-04T18:00:00+08:00',
+    },
+  ])
+  expect(engine.db.settings.latestDays).toBe(7)
+})
 it('新报价向上取合法最低值，空区间不可优惠；历史快照仍按原锚点', async () => {
   const range = { minimumOfferPrice: '132.50', standardPrice: '160.00' }
   expect(quoteBounds(range)).toEqual({ low: 13500, high: 15500 })

@@ -1,4 +1,4 @@
 <script setup lang="ts">
-import RoleLayout from './RoleLayout.vue'
+import PortraitLayout from './PortraitLayout.vue'
 </script>
-<template><RoleLayout role="worker" /></template>
+<template><PortraitLayout role="worker" /></template>

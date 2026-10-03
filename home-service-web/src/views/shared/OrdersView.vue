@@ -68,11 +68,11 @@ function resizePage(value: number) {
   <form class="filters" @submit.prevent="search">
     <label>
       订单号 / 服务
-      <input v-model.trim="query.keyword" maxlength="100" />
+      <input name="keyword" v-model.trim="query.keyword" maxlength="100" />
     </label>
     <label>
       履约状态
-      <select v-model="query.status">
+      <select name="status" v-model="query.status">
         <option value="">全部</option>
         <option v-for="(text, status) in orderLabels" :key="status" :value="status">
           {{ text }}
@@ -81,7 +81,7 @@ function resizePage(value: number) {
     </label>
     <label>
       预约方式
-      <select v-model="query.bookingType">
+      <select name="bookingType" v-model="query.bookingType">
         <option value="">全部</option>
         <option value="STANDARD">标准预约</option>
         <option value="OFFER">优惠预约</option>
@@ -89,11 +89,11 @@ function resizePage(value: number) {
     </label>
     <label>
       开始日期
-      <input v-model="query.from" type="date" />
+      <input name="from" v-model="query.from" type="date" />
     </label>
     <label>
       结束日期
-      <input v-model="query.to" type="date" />
+      <input name="to" v-model="query.to" type="date" />
     </label>
     <button :disabled="busy">筛选 / 刷新</button>
   </form>

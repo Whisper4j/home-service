@@ -31,11 +31,18 @@ onMounted(load)
   <form id="profile-form" @submit.prevent="save">
     <label>
       称呼
-      <input v-model.trim="form.displayName" required maxlength="40" />
+      <input name="displayName" v-model.trim="form.displayName" required maxlength="40" />
     </label>
     <label>
       个人联系电话
-      <input v-model.trim="form.phone" type="tel" required pattern="1[0-9]{10}" maxlength="11" />
+      <input
+        name="phone"
+        v-model.trim="form.phone"
+        type="tel"
+        required
+        pattern="1[0-9]{10}"
+        maxlength="11"
+      />
     </label>
     <p class="muted">
       个人联系电话用于您的资料。地址簿联系人和每次预约联系人可以不同，不会自动覆盖。

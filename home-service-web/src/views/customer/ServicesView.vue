@@ -30,10 +30,12 @@ useRefresh(load)
 </script>
 <template>
   <div v-if="cleaning" class="segmented" aria-label="清洁类型">
-    <RouterLink to="/customer/cleaning/daily" :aria-current="group === 'daily'">
+    <RouterLink replace to="/customer/cleaning/daily" :aria-current="group === 'daily'">
       日常清洁
     </RouterLink>
-    <RouterLink to="/customer/cleaning/deep" :aria-current="group === 'deep'">深度清洁</RouterLink>
+    <RouterLink replace to="/customer/cleaning/deep" :aria-current="group === 'deep'">
+      深度清洁
+    </RouterLink>
   </div>
   <template v-if="!cleaning && !group">
     <h2>需要哪一类维修？</h2>

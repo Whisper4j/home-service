@@ -73,11 +73,11 @@ function resizePage(value: number) {
   <form class="filters" @submit.prevent="search">
     <label>
       {{ resource === 'audits' ? '目标 ID' : '订单 ID' }}
-      <input v-model.trim="query.orderId" pattern="[1-9][0-9]{0,18}" />
+      <input name="orderId" v-model.trim="query.orderId" pattern="[1-9][0-9]{0,18}" />
     </label>
     <label>
       关键字
-      <input v-model.trim="query.keyword" />
+      <input name="keyword" v-model.trim="query.keyword" />
     </label>
     <button :disabled="busy">查询</button>
   </form>

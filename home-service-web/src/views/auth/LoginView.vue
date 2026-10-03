@@ -55,6 +55,7 @@ async function submit() {
       <label>
         用户名
         <input
+          name="username"
           v-model.trim="form.username"
           required
           minlength="3"
@@ -65,6 +66,7 @@ async function submit() {
       <label>
         密码
         <input
+          name="password"
           v-model="form.password"
           type="password"
           required

@@ -5,6 +5,7 @@ import type { Schema } from '../api/types'
 import SceneImages from './SceneImages.vue'
 import { useTask } from '../composables/useTask'
 import Feedback from './CustomerFeedback.vue'
+import { showError } from '../stores/feedback'
 const model = defineModel<Schema['SceneImageVO'][]>({ required: true })
 const emit = defineEmits<{ pending: [value: boolean] }>()
 type PendingImage = {
@@ -60,6 +61,7 @@ async function upload(row: PendingImage) {
     removePending(row.key)
   } catch (err) {
     row.error = err instanceof Error ? err.message : '上传失败，请重试'
+    showError(row.error)
   } finally {
     row.busy = false
   }
@@ -71,6 +73,7 @@ async function select(event: Event) {
   error.value = ''
   if (files.length + pending.value.length + model.value.length > 3) {
     error.value = '最多上传 3 张现场图片，请删除后再选择'
+    showError(error.value)
     return
   }
   for (const file of files) {
@@ -120,7 +123,7 @@ onUnmounted(() => {
     每张不超过5
     MB。请避免拍入个人隐私；上传前清除照片元数据。图片不保证接单、不扩大套餐范围，也不允许现场议价。
   </p>
-  <p v-if="error" role="alert">{{ error }}</p>
+  <p v-if="error" role="status">{{ error }}</p>
   <SceneImages
     :images="model"
     role="customer"
@@ -132,7 +135,7 @@ onUnmounted(() => {
   <div v-for="row in pending" :key="row.key" class="panel">
     <img :src="row.url" alt="待上传现场图片" style="width: 80px; height: 80px; object-fit: cover" />
     <p v-if="row.busy" role="status">正在上传…</p>
-    <p v-if="row.error" role="alert">上传失败：{{ row.error }}</p>
+    <p v-if="row.error" role="status">上传失败：{{ row.error }}</p>
     <div class="actions">
       <button v-if="row.error" type="button" @click="upload(row)">重试上传</button>
       <button :disabled="row.busy" type="button" @click="removePending(row.key)">

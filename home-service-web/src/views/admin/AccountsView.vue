@@ -87,11 +87,11 @@ function editAccount(account: Schema['AccountVO']) {
   <form class="filters" @submit.prevent="search">
     <label>
       用户名 / 姓名
-      <input v-model.trim="query.keyword" />
+      <input name="keyword" v-model.trim="query.keyword" />
     </label>
     <label>
       角色
-      <select v-model="query.role">
+      <select name="role" v-model="query.role">
         <option value="">全部</option>
         <option value="CUSTOMER">客户</option>
         <option value="WORKER">服务人员</option>
@@ -100,7 +100,7 @@ function editAccount(account: Schema['AccountVO']) {
     </label>
     <label>
       状态
-      <select v-model="query.status">
+      <select name="status" v-model="query.status">
         <option value="">全部</option>
         <option value="ENABLED">启用</option>
         <option value="DISABLED">禁用</option>
@@ -113,11 +113,11 @@ function editAccount(account: Schema['AccountVO']) {
     <h2>编辑账号 {{ editing }}</h2>
     <label>
       姓名
-      <input v-model.trim="form.displayName" required maxlength="40" />
+      <input name="displayName" v-model.trim="form.displayName" required maxlength="40" />
     </label>
     <label>
       联系电话
-      <input v-model.trim="form.phone" required pattern="1[0-9]{10}" />
+      <input name="phone" v-model.trim="form.phone" required pattern="1[0-9]{10}" />
     </label>
     <div class="actions">
       <button :disabled="busy">保存资料</button>

@@ -166,6 +166,101 @@
   max-height: min(90dvh, 100%);
   padding: 1rem;
 }
+.flow-dialog[open] {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  position: fixed;
+  top: calc(var(--viewport-offset, 0px) + 0.75rem);
+  bottom: auto;
+  margin-block: 0;
+  max-height: calc(var(--viewport-height, 100dvh) - 1.5rem);
+}
+.task-dialog {
+  height: calc(var(--viewport-height, 100dvh) - 1.5rem);
+}
+.flow-dialog > header,
+.flow-dialog > footer {
+  flex: none;
+  padding: 0.8rem 1rem;
+  border-bottom: 1px solid #bbb;
+  display: flex;
+  gap: 0.8rem;
+  align-items: center;
+  background: white;
+}
+.flow-dialog > header h2 {
+  flex: 1;
+  margin: 0;
+}
+.flow-dialog > footer {
+  border-top: 1px solid #bbb;
+  border-bottom: 0;
+}
+.flow-dialog > footer button {
+  width: 100%;
+}
+.flow-dialog .dialog-body {
+  min-height: 0;
+  overflow-y: auto;
+  padding: 1rem;
+  overscroll-behavior: contain;
+}
+.flow-dialog button,
+.flow-dialog input:not([type='checkbox']) {
+  min-height: 44px;
+}
+.flow-dialog input {
+  max-width: 100%;
+}
+.task-summary {
+  position: sticky;
+  top: -1rem;
+  background: white;
+  border-bottom: 2px solid #999;
+  padding: 0.5rem 0 0.8rem;
+  z-index: 1;
+  margin-bottom: 1rem;
+}
+.task-summary h2 {
+  margin: 0.3rem 0;
+}
+.task-summary p {
+  font-size: 0.85rem;
+}
+.worker-shell .order-card {
+  margin-block: 0.8rem;
+}
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.25rem;
+  text-align: center;
+}
+.calendar-grid button {
+  padding: 0.3rem 0.05rem;
+  font-size: 0.85rem;
+}
+.calendar-grid small {
+  display: block;
+  font-size: 0.6rem;
+}
+.calendar-grid [aria-pressed='true'] {
+  outline: 2px solid #333;
+}
+@media (max-height: 550px) {
+  .task-summary {
+    position: static;
+  }
+  .customer-dialog {
+    width: calc(100vw - 1rem);
+  }
+}
+@media (max-width: 600px) {
+  .customer-dialog {
+    width: calc(100vw - 1.5rem);
+  }
+}
 .customer-dialog::backdrop {
   background: #0006;
 }

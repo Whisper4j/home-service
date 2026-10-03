@@ -35,11 +35,25 @@ useRefresh(load)
       <div class="form-grid">
         <label>
           最早提前小时数
-          <input v-model.number="form.earliestHours" type="number" min="2" max="24" required />
+          <input
+            name="earliestHours"
+            v-model.number="form.earliestHours"
+            type="number"
+            min="2"
+            max="24"
+            required
+          />
         </label>
         <label>
           最远预约天数
-          <input v-model.number="form.latestDays" type="number" min="1" max="7" required />
+          <input
+            name="latestDays"
+            v-model.number="form.latestDays"
+            type="number"
+            min="1"
+            max="7"
+            required
+          />
         </label>
       </div>
       <button :disabled="busy">保存预约窗口</button>

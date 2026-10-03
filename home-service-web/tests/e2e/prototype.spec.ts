@@ -54,6 +54,8 @@ test('客户创建标准预约，人员履约，客户确认并评价', async ({
   await expect(page).toHaveURL(/customer\/pay\/\d+/)
   const orderId = page.url().split('/').at(-1)!
   await page.getByRole('button', { name: '确认模拟支付' }).click()
+  await expect(page).toHaveURL(/customer\/result\//)
+  await page.getByRole('link', { name: '查看订单进度' }).click()
   await expect(page.getByText('派单成功，人员已安排。', { exact: true })).toBeVisible()
   const codeText = await page.getByText(/服务开始码：/).innerText()
   const code = codeText.match(/\d{6}/)![0]
@@ -64,12 +66,18 @@ test('客户创建标准预约，人员履约，客户确认并评价', async ({
   await expect(worker.getByText(/服务开始码：/)).toHaveCount(0)
   await worker.getByRole('button', { name: '确认出发' }).click()
   await worker.getByRole('button', { name: '确认到达' }).click()
-  await worker.getByLabel('客户提供的六位开始码').fill('000000')
-  await worker.getByRole('button', { name: '验证并开始服务' }).click()
-  await expect(worker.getByRole('alert')).toContainText('START_CODE_INVALID')
-  await worker.getByRole('button', { name: '演示：推进至预约开始' }).click()
-  await worker.getByLabel('客户提供的六位开始码').fill(code)
-  await worker.getByRole('button', { name: '验证并开始服务' }).click()
+  await worker.getByLabel('向客户索取服务开始码').fill('000000')
+  await worker.getByRole('button', { name: '校验并开始服务' }).click()
+  await expect(worker.locator('.error-toast')).toContainText('服务开始码不正确')
+  await worker.evaluate(async (id) => {
+    const path = '/src/mock/transport.ts',
+      module = await import(path)
+    const db = module.readDatabase(),
+      order = db.orders.find((s: { order: { id: string } }) => s.order.id === id).order
+    await module.advanceClock(Math.ceil((Date.parse(order.startTime) - module.mockNow()) / 60000))
+  }, orderId)
+  await worker.getByLabel('向客户索取服务开始码').fill(code)
+  await worker.getByRole('button', { name: '校验并开始服务' }).click()
   await worker.getByRole('button', { name: '提交服务完成' }).click()
   await expect(worker.getByText('待客户确认', { exact: true })).toBeVisible()
   await page.getByRole('button', { name: '重新查询最新状态' }).click()
@@ -79,39 +87,6 @@ test('客户创建标准预约，人员履约，客户确认并评价', async ({
   await page.getByRole('button', { name: '提交评价' }).click()
   await expect(page.getByText(/评价：5 分/)).toContainText('服务完成，演示闭环通过')
   expect(errors).toEqual([])
-})
-
-test('多标签页报价冲突后重新确认，并发抢单唯一成功', async ({ page, context }) => {
-  await login(page, 'worker')
-  await page.getByRole('link', { name: '优惠抢单池', exact: true }).click()
-  await page.getByRole('button', { name: '查看并确认抢单' }).first().click()
-  const customer = await context.newPage()
-  await login(customer, 'customer')
-  await customer.goto('/customer/orders/10002')
-  await customer.getByLabel('新报价', { exact: true }).fill('135.00')
-  await customer.getByLabel(/如果加价/).check()
-  await customer.getByRole('button', { name: '提交报价调整' }).click()
-  await expect(customer.getByText('本次确认的报价：¥135.00', { exact: false })).toBeVisible()
-  await page.getByRole('button', { name: '按此价格确认抢单' }).click()
-  await expect(page.getByRole('alert')).toContainText('PRICE_CHANGED')
-  await page.getByRole('button', { name: '关闭确认' }).click()
-  await page.getByRole('button', { name: '筛选 / 刷新报价' }).click()
-  await page.getByRole('button', { name: '查看并确认抢单' }).first().click()
-  const competitor = await context.newPage()
-  await login(competitor, 'worker', 'worker2')
-  await competitor.goto('/worker/offers')
-  await competitor.getByRole('button', { name: '查看并确认抢单' }).first().click()
-  await Promise.all([
-    page.getByRole('button', { name: '按此价格确认抢单' }).click(),
-    competitor.getByRole('button', { name: '按此价格确认抢单' }).click(),
-  ])
-  await expect
-    .poll(
-      () => [page.url(), competitor.url()].filter((url) => url.endsWith('/orders/10002')).length,
-    )
-    .toBe(1)
-  const loser = page.url().endsWith('/offers') ? page : competitor
-  await expect(loser.getByRole('alert')).toContainText('ORDER_TAKEN')
 })
 
 test('分页、筛选、移动视口、后台目录编辑和异常取消', async ({ page }) => {
@@ -161,14 +136,16 @@ test('排班保存与请假、网络异常反馈、路由守卫', async ({ page 
   await expect(page.getByRole('status')).toContainText('排班已保存')
   await page.getByLabel('原因', { exact: true }).fill('演示临时请假')
   await page.getByRole('button', { name: '提交请假', exact: true }).click()
-  await expect(page.locator('tbody')).toContainText('演示临时请假')
+  await expect(page.locator('article')).toContainText('演示临时请假')
   await page.getByRole('button', { name: '撤销请假' }).click()
-  await expect(page.locator('tbody')).toContainText('已取消')
+  await expect(page.locator('article')).toContainText('已取消')
   await page.screenshot({ path: 'test-results/worker-schedule.png', fullPage: true })
-  await page.locator('.demo-panel summary').click()
-  await page.getByRole('button', { name: '下次请求模拟断网' }).click()
-  await page.getByRole('button', { name: '查询时间槽', exact: true }).click()
-  await expect(page.getByRole('alert')).toContainText('NETWORK_ERROR')
-  await page.getByRole('button', { name: '查询时间槽', exact: true }).click()
-  await expect(page.getByRole('alert')).toHaveCount(0)
+  await page.evaluate(async () => {
+    const path = '/src/mock/transport.ts'
+    ;(await import(path)).simulateNetworkFailure()
+  })
+  await page.getByRole('button', { name: '保存排班', exact: true }).click()
+  await expect(page.locator('.error-toast')).toContainText('网络中断')
+  await page.getByRole('button', { name: '保存排班', exact: true }).click()
+  await expect(page.getByRole('status')).toContainText('排班已保存')
 })

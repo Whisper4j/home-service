@@ -5,9 +5,10 @@ import { request, useMock } from '../../api/client'
 import type { Schema } from '../../api/types'
 import { useTask } from '../../composables/useTask'
 import { useRefresh } from '../../composables/useRefresh'
-import { displayTime, money } from '../../utils/format'
+import { displayTime } from '../../utils/format'
 import { label } from '../../utils/labels'
 import Feedback from '../../components/CustomerFeedback.vue'
+import QuoteDialog from '../../components/QuoteDialog.vue'
 import SceneImages from '../../components/SceneImages.vue'
 const id = String(useRoute().params.id),
   order = ref<Schema['OrderVO']>(),
@@ -16,12 +17,7 @@ const id = String(useRoute().params.id),
   reason = ref('')
 const loader = useTask(),
   action = useTask(),
-  price = reactive({
-    newPrice: '',
-    expectedPrice: '',
-    priceVersion: 0,
-    confirmSimulatedPayment: false,
-  })
+  quoteOpen = ref(false)
 const review = reactive<Schema['ReviewDTO']>({ score: 5, tags: [], content: '' })
 const canCancel = computed(
   () =>
@@ -30,23 +26,13 @@ const canCancel = computed(
       order.value.status,
     ),
 )
-const changed = computed(
-  () => order.value?.bookingType === 'OFFER' && price.priceVersion !== order.value.priceVersion,
-)
-async function refreshData(resetPrice = false) {
+async function refreshData() {
   const [detail, records] = await Promise.all([
     request('customerGetOrder', { id }),
     request('customerGetOrderHistory', { id }),
   ])
   order.value = detail
   history.value = records
-  if (!price.priceVersion || resetPrice)
-    Object.assign(price, {
-      newPrice: detail.currentPrice,
-      expectedPrice: detail.currentPrice,
-      priceVersion: detail.priceVersion,
-      confirmSimulatedPayment: false,
-    })
   startCode.value = ''
   if (['PENDING_SERVICE', 'DEPARTED', 'ARRIVED', 'IN_SERVICE'].includes(detail.status))
     startCode.value = (await request('getStartCode', { id })).startCode
@@ -55,26 +41,20 @@ function load() {
   return loader.run(() => refreshData())
 }
 function reloadLatest() {
-  return loader.run(() => refreshData(true))
+  return loader.run(() => refreshData())
 }
-function act(operation: 'price' | 'cancel' | 'confirm' | 'review') {
+function act(operation: 'cancel' | 'confirm' | 'review') {
   return action.run(
     async (key) => {
       const common = { id, idempotencyKey: key }
-      if (operation === 'price') {
-        if (!/^\d+(\.\d{1,2})?$/.test(price.newPrice)) throw Error('请输入有效报价，最多两位小数')
-        await request('changeOffer', {
-          ...common,
-          body: { ...price, newPrice: money(Math.round(Number(price.newPrice) * 100)) },
-        })
-      } else if (operation === 'cancel')
+      if (operation === 'cancel')
         await request('cancelCustomerOrder', { ...common, body: { reason: reason.value } })
       else if (operation === 'confirm') await request('confirmOrder', common)
       else await request('createReview', { ...common, body: { ...review, tags: [...review.tags] } })
-      await refreshData(true)
+      await refreshData()
     },
     '操作成功，已查询最新结果',
-    JSON.stringify({ operation, id, price, reason: reason.value, review }),
+    JSON.stringify({ operation, id, reason: reason.value, review }),
   )
 }
 useRefresh(load)
@@ -143,36 +123,21 @@ useRefresh(load)
       :error="action.error.value"
       :success="action.success.value"
     />
-    <section v-if="order.status === 'WAITING_ACCEPTANCE'" class="booking-section">
-      <h3>调整优惠报价</h3>
-      <p>本次确认的报价：¥{{ price.expectedPrice }}</p>
-      <p v-if="changed" role="alert">
-        报价已变化。当前确认金额保留不变，请点击“重新查询最新状态”查看最新价格后重新确认。
-      </p>
-      <form @submit.prevent="act('price')">
-        <label>
-          新报价
-          <input v-model="price.newPrice" inputmode="decimal" required />
-        </label>
-        <p class="muted">
-          最低 ¥{{ order.service.minimumOfferPrice }}，低于 ¥{{
-            order.service.standardPrice
-          }}，按5元步长变化；接单后锁价。
-        </p>
-        <label class="inline">
-          <input v-model="price.confirmSimulatedPayment" type="checkbox" />
-          如果加价，我确认模拟支付差额；降价自动记录部分退款
-        </label>
-        <button :disabled="action.busy.value">提交报价调整</button>
-      </form>
-    </section>
+    <button
+      v-if="order.status === 'WAITING_ACCEPTANCE'"
+      class="wide-button"
+      @click="quoteOpen = true"
+    >
+      调整报价
+    </button>
+    <QuoteDialog v-if="quoteOpen" :order="order" @close="quoteOpen = false" @saved="load" />
     <section v-if="canCancel" class="booking-section">
       <details>
         <summary>需要取消预约？</summary>
         <form @submit.prevent="act('cancel')">
           <label>
             取消原因
-            <input v-model.trim="reason" required maxlength="300" />
+            <input name="reason" v-model.trim="reason" required maxlength="300" />
           </label>
           <p class="muted">已支付部分会全额退回净收款，取消后重新预约可修改地址或时间。</p>
           <button :disabled="action.busy.value">取消预约</button>
@@ -187,7 +152,7 @@ useRefresh(load)
       <form @submit.prevent="act('review')">
         <label>
           评分
-          <select v-model.number="review.score">
+          <select name="score" v-model.number="review.score">
             <option v-for="score in 5" :key="score" :value="score">{{ score }} 分</option>
           </select>
         </label>
@@ -197,13 +162,13 @@ useRefresh(load)
             :key="tag"
             class="inline"
           >
-            <input v-model="review.tags" type="checkbox" :value="tag" />
+            <input name="tags" v-model="review.tags" type="checkbox" :value="tag" />
             {{ label(tag) }}
           </label>
         </div>
         <label>
           评价内容
-          <textarea v-model.trim="review.content" maxlength="500" />
+          <textarea name="content" v-model.trim="review.content" maxlength="500" />
         </label>
         <button :disabled="action.busy.value">提交评价</button>
       </form>

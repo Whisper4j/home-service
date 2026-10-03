@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { request } from '../../api/client'
 import type { Schema } from '../../api/types'
 import { useTask } from '../../composables/useTask'
 import { useRefresh } from '../../composables/useRefresh'
 import { displayTime } from '../../utils/format'
 import { label } from '../../utils/labels'
+import { sessions } from '../../stores/session'
+import QuoteDialog from '../../components/QuoteDialog.vue'
 import Feedback from '../../components/CustomerFeedback.vue'
 const groups: { name: string; statuses?: Schema['OrderStatus'][] }[] = [
   { name: '全部' },
@@ -15,10 +17,16 @@ const groups: { name: string; statuses?: Schema['OrderStatus'][] }[] = [
   { name: '待确认', statuses: ['PENDING_CONFIRMATION'] },
   { name: '已结束', statuses: ['COMPLETED', 'CANCELLED'] },
 ]
-const group = ref(0),
-  pageNo = ref(1),
+const storageKey = `customer.orders.${sessions.customer?.account.id}`
+const saved = JSON.parse(sessionStorage.getItem(storageKey) || '{}')
+const quoteOrder = ref<Schema['OrderVO']>()
+const group = ref(Number(saved.group) || 0),
+  pageNo = ref(Number(saved.pageNo) || 1),
   page = ref<Schema['OrderPageDTO']>({ list: [], total: 0, pages: 0 }),
   { busy, error, run } = useTask()
+watch([group, pageNo], () =>
+  sessionStorage.setItem(storageKey, JSON.stringify({ group: group.value, pageNo: pageNo.value })),
+)
 function load() {
   return run(async () => {
     page.value = await request('customerListOrders', {
@@ -48,7 +56,7 @@ function action(order: Schema['OrderVO']) {
       : order.status === 'COMPLETED' && !order.reviewed
         ? '去评价'
         : order.status === 'WAITING_ACCEPTANCE'
-          ? '查看 / 调价'
+          ? '查看进度'
           : '查看进度'
 }
 useRefresh(load)
@@ -85,7 +93,20 @@ useRefresh(load)
     >
       {{ action(order) }}
     </RouterLink>
+    <button
+      v-if="order.status === 'WAITING_ACCEPTANCE'"
+      class="wide-button"
+      @click="quoteOrder = order"
+    >
+      调整报价
+    </button>
   </article>
+  <QuoteDialog
+    v-if="quoteOrder"
+    :order="page.list.find((o) => o.id === quoteOrder?.id) || quoteOrder"
+    @close="quoteOrder = undefined"
+    @saved="load"
+  />
   <p v-if="!busy && !error && !page.list.length" class="empty">
     这里还没有订单。
     <RouterLink to="/customer/home">去选择服务</RouterLink>
