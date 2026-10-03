@@ -12,10 +12,15 @@ export type Query<K extends OperationId> = operations[K] extends { parameters: {
   : never
 type SuccessResponse<T> = T extends { 200: infer R } ? R : T extends { 201: infer R } ? R : never
 export type Output<K extends OperationId> =
-  JsonBody<SuccessResponse<operations[K]['responses']>> extends { data: infer D } ? D : never
+  SuccessResponse<operations[K]['responses']> extends { content: { 'image/jpeg': string } }
+    ? Blob
+    : JsonBody<SuccessResponse<operations[K]['responses']>> extends { data: infer D }
+      ? D
+      : never
 export type RequestOptions<K extends OperationId> = {
   id?: string
   body?: Input<K>
+  file?: K extends 'uploadSceneImage' ? File : never
   query?: Query<K>
   idempotencyKey?: string
   signal?: AbortSignal

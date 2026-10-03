@@ -5,6 +5,8 @@ import { DAY, HOUR, iso } from '../utils/format'
 import { MockContext } from './context'
 import { bookingRules, createDatabase, regions } from './database'
 import { validateSchema } from './validation'
+import { clientEntries, matchesEntry } from '../utils/clientEntries'
+import { authorizeImage, inspectImage, uploadImage } from './images'
 import { canAssign, createLeave, daySlots, updateSchedule } from './scheduling'
 import {
   assertPrice,
@@ -28,6 +30,7 @@ import {
 export interface MockRequest {
   id?: string
   body?: unknown
+  file?: File
   query?: Record<string, unknown>
   token?: string
   idempotencyKey?: string
@@ -86,7 +89,9 @@ export class MockEngine extends MockContext {
     )
       fail('VALIDATION_ERROR', '缺少有效的 Idempotency-Key', 400)
     const key = `${account?.id || 'anonymous'}:${route.method}:${route.path}:${request.id || ''}:${request.idempotencyKey}`
-    const fingerprint = JSON.stringify(request.body || {})
+    const fingerprint = route.upload
+      ? `${request.file?.type}:${await inspectImage(request.file)}`
+      : JSON.stringify(request.body || {})
     const cached = this.db.idempotency[key]
     if (route.idempotent && cached) {
       if (cached.fingerprint !== fingerprint)
@@ -109,7 +114,7 @@ export class MockEngine extends MockContext {
         message: '操作成功',
         data: structuredClone(data),
       }
-      validateSchema(route.output, response)
+      if (route.output) validateSchema(route.output, response)
       if (route.idempotent)
         this.db.idempotency[key] = { fingerprint, response: structuredClone(response) }
       return response
@@ -216,6 +221,35 @@ export class MockEngine extends MockContext {
       body = r.body
     const actor = account?.id || '1'
     if (op.endsWith('CurrentAccount')) return account
+    if (op === 'updateCustomerProfile') {
+      Object.assign(account!, body)
+      return account
+    }
+    if (op === 'listClientEntries')
+      return clientEntries.map((entry) => {
+        const sku = this.db.skus.find((s) => s.clientEntryCode === entry.code)
+        const item = this.db.items.find((i) => i.id === sku?.itemId)
+        return sku &&
+          item &&
+          this.visibleSku(sku) &&
+          matchesEntry(entry.code, item.serviceKind, sku.durationMinutes)
+          ? { code: entry.code, available: true, sku }
+          : {
+              code: entry.code,
+              available: false,
+              unavailableReason: '该服务暂不可预约，请稍后再来',
+            }
+      })
+    if (op === 'uploadSceneImage') return uploadImage(this, actor, r.file!)
+    if (op.endsWith('GetSceneImage'))
+      return authorizeImage(this, account!, id, q.orderId as string | undefined)
+    if (op === 'deleteSceneImage') {
+      authorizeImage(this, account!, id)
+      if (this.db.orders.some((s) => s.order.sceneImages.some((i) => i.id === id)))
+        fail('RESOURCE_IN_USE', '历史订单图片不能删除')
+      this.db.images = this.db.images.filter((i) => i.id !== id)
+      return { success: true }
+    }
     if (op === 'listServiceRegions') return regions
     if (op === 'getBookingRules' || op === 'getSettings') return bookingRules(this.db)
     if (op === 'updateSettings') {
@@ -281,6 +315,8 @@ export class MockEngine extends MockContext {
       const address = { id: existing?.id || this.nextId(), ...dto, isDefault }
       if (existing) Object.assign(existing, address)
       else this.db.addresses.push({ ...address, customerId: actor })
+      const owned = this.db.addresses.filter((a) => a.customerId === actor)
+      if (!owned.some((a) => a.isDefault)) owned.find((a) => a.id !== address.id)!.isDefault = true
       return address
     }
     if (op === 'deleteAddress') {
@@ -319,6 +355,7 @@ export class MockEngine extends MockContext {
     }
     if (op === 'createOrder') return createOrder(this, actor, body as Schema['CreateOrderDTO'])
     if (op.endsWith('ListOrders')) {
+      if (q.status && q.statuses) fail('VALIDATION_ERROR', 'status 与 statuses 不能同时提供', 400)
       const rows = this.db.orders
         .map((s) => s.order)
         .filter(
@@ -329,6 +366,7 @@ export class MockEngine extends MockContext {
               o.id.includes(String(q.keyword)) ||
               o.service.skuName.includes(String(q.keyword))) &&
             (!q.status || o.status === q.status) &&
+            (!q.statuses || (q.statuses as string[]).includes(o.status)) &&
             (!q.bookingType || o.bookingType === q.bookingType) &&
             (!q.from || o.startTime.slice(0, 10) >= String(q.from)) &&
             (!q.to || o.startTime.slice(0, 10) <= String(q.to)),

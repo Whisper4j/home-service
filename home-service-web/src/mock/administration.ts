@@ -2,6 +2,7 @@ import type { Schema } from '../api/types'
 import { fail } from '../api/errors'
 import { cents } from '../utils/format'
 import type { MockContext } from './context'
+import { matchesEntry } from '../utils/clientEntries'
 
 export type CatalogResource = 'categories' | 'service-items' | 'skus' | 'skills'
 export type CatalogEntry =
@@ -34,6 +35,14 @@ export function writeCatalog(
     const sku = data as Schema['SkuVO']
     const item = context.db.items.find((i) => i.id === sku.itemId)
     if (!item) fail('NOT_FOUND', '服务项目不存在', 404)
+    if (sku.clientEntryCode === undefined)
+      sku.clientEntryCode = context.db.skus.find((s) => s.id === id)?.clientEntryCode ?? null
+    if (sku.clientEntryCode) {
+      if (context.db.skus.some((s) => s.id !== id && s.clientEntryCode === sku.clientEntryCode))
+        fail('CONFIG_CONFLICT', '该客户端入口已绑定其他规格')
+      if (!matchesEntry(sku.clientEntryCode, item.serviceKind, sku.durationMinutes))
+        fail('CONFIG_CONFLICT', '入口与服务性质或固定套餐时长不匹配')
+    }
     if (sku.skillIds.some((s) => !context.db.skills.some((k) => k.id === s)))
       fail('NOT_FOUND', '技能不存在', 404)
     const category = context.db.categories.find((c) => c.id === item.categoryId)!

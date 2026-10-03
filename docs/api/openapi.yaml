@@ -614,7 +614,7 @@ paths:
       summary: 新增地址
       description: |-
         
-        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循 Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循 Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。 首个地址自动设为默认；默认地址始终唯一。
       parameters:
         - $ref: "#/components/parameters/IdempotencyKey"
       requestBody:
@@ -650,9 +650,10 @@ paths:
         - customer
       operationId: updateAddress
       summary: 修改地址与默认标记
-      description: |-
+      description: >-
         
         校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循 Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。
+        设置默认时原默认自动取消；若把当前默认设为非默认且有其他地址，则自动选择最早创建的剩余地址为默认。
       parameters:
         - name: id
           in: path
@@ -692,9 +693,11 @@ paths:
         - customer
       operationId: deleteAddress
       summary: 删除地址
-      description: |-
+      description: >-
         不影响历史订单地址快照；删除默认地址后自动选最早剩余地址为默认。
+
         校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循 Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。
+        删除默认地址时最早创建的剩余地址成为默认，无剩余地址则无默认地址。
       parameters:
         - name: id
           in: path
@@ -813,6 +816,18 @@ paths:
           required: false
           schema:
             $ref: "#/components/schemas/LocalDate"
+        - name: statuses
+          in: query
+          required: false
+          style: form
+          explode: false
+          schema: &a1
+            type: array
+            items:
+              $ref: "#/components/schemas/OrderStatus"
+            minItems: 1
+            maxItems: 10
+            uniqueItems: true
       x-query-schema: OrderQuery
       responses:
         "200":
@@ -960,6 +975,12 @@ paths:
           required: false
           schema:
             $ref: "#/components/schemas/LocalDate"
+        - name: statuses
+          in: query
+          required: false
+          style: form
+          explode: false
+          schema: *a1
       x-query-schema: OrderQuery
       responses:
         "200":
@@ -1107,6 +1128,12 @@ paths:
           required: false
           schema:
             $ref: "#/components/schemas/LocalDate"
+        - name: statuses
+          in: query
+          required: false
+          style: form
+          explode: false
+          schema: *a1
       x-query-schema: OrderQuery
       responses:
         "200":
@@ -3334,6 +3361,340 @@ paths:
           $ref: "#/components/responses/Error422"
         "500":
           $ref: "#/components/responses/Error500"
+  /customer/service-entries:
+    get:
+      tags:
+        - customer
+      operationId: listClientEntries
+      summary: 获取固定客户端入口与正式 SKU 的可预约关系
+      description: 始终返回全部固定入口。available=true 时提供 sku；缺失、未绑定、下架或业务性质/时长不符时 available=false，仅提供不可预约原因。价格和能力来自关联的同一个正式 SKU。
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClientEntryListResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+      security: []
+  /customer/profile:
+    put:
+      tags:
+        - customer
+      operationId: updateCustomerProfile
+      summary: 客户编辑本人称呼和联系电话
+      description: 只允许修改登录客户本人的 displayName 和 phone；username 不可修改。不自动更新地址簿或任何历史订单联系人。幂等写入。
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AccountProfileDTO"
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccountVOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /customer/scene-images:
+    post:
+      tags:
+        - customer
+      operationId: uploadSceneImage
+      summary: 上传一张预约现场图片
+      description: multipart/form-data，字段 file。仅客户上传本人图片，单张不超过5 MiB，仅JPEG/PNG/WebP且验证真实内容并清理EXIF。相同 Idempotency-Key
+        的指纹包含文件内容摘要和 MIME，重试返回相同引用，不重复存储；不同内容返回
+        IDEMPOTENCY_CONFLICT。上传成功并不创建订单，创建订单最多关联3张。原型仅浏览器存储，正式服务端存储和鉴权待实现。
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/SceneImageUploadDTO"
+      responses:
+        "201":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SceneImageVOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "413":
+          $ref: "#/components/responses/Error413"
+        "415":
+          $ref: "#/components/responses/Error415"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /customer/scene-images/{id}:
+    delete:
+      tags:
+        - customer
+      operationId: deleteSceneImage
+      summary: 删除本人未关联订单的临时图片
+      description: 只能删除本人尚未关联任何订单的图片；已关联返回 RESOURCE_IN_USE，历史订单附件永不随移除预约草稿而删除。幂等重试返回首次结果。
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MutationVOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /customer/scene-images/{id}/content:
+    get:
+      tags:
+        - customer
+      operationId: customerGetSceneImage
+      summary: 鉴权读取现场图片内容
+      description: "图片流成功响应是统一 JSON 响应的唯一例外：返回二进制图片、准确 Content-Type、Cache-Control: private, no-store 和
+        X-Content-Type-Options: nosniff。失败仍返回统一 ErrorResponse。必须 JWT/角色/账号启用校验，禁止公开 URL
+        和无权限列表。客户仅本人图片；服务人员必须为当前订单已分配人员，或订单仍待抢单且当前满足全部接单资格；管理员仅可读取指定订单已关联图片。人员/管理员必须提供
+        orderId，图片必须属于该订单。每次读取重新判权（接单、取消、排班变化后不再有抢单资格即拒绝）。不存在或无权均404。前端通过 Bearer fetch 得到 Blob 后创建临时对象
+        URL，退出/离页撤销。"
+      responses:
+        "200":
+          description: 授权图片内容（无 JSON 包裹）
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                enum:
+                  - private, no-store
+            X-Content-Type-Options:
+              schema:
+                type: string
+                enum:
+                  - nosniff
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+            image/png:
+              schema:
+                type: string
+                format: binary
+            image/webp:
+              schema:
+                type: string
+                format: binary
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: orderId
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/Id"
+      x-query-schema: SceneImageQuery
+  /worker/scene-images/{id}/content:
+    get:
+      tags:
+        - worker
+      operationId: workerGetSceneImage
+      summary: 鉴权读取现场图片内容
+      description: "图片流成功响应是统一 JSON 响应的唯一例外：返回二进制图片、准确 Content-Type、Cache-Control: private, no-store 和
+        X-Content-Type-Options: nosniff。失败仍返回统一 ErrorResponse。必须 JWT/角色/账号启用校验，禁止公开 URL
+        和无权限列表。客户仅本人图片；服务人员必须为当前订单已分配人员，或订单仍待抢单且当前满足全部接单资格；管理员仅可读取指定订单已关联图片。人员/管理员必须提供
+        orderId，图片必须属于该订单。每次读取重新判权（接单、取消、排班变化后不再有抢单资格即拒绝）。不存在或无权均404。前端通过 Bearer fetch 得到 Blob 后创建临时对象
+        URL，退出/离页撤销。"
+      responses:
+        "200":
+          description: 授权图片内容（无 JSON 包裹）
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                enum:
+                  - private, no-store
+            X-Content-Type-Options:
+              schema:
+                type: string
+                enum:
+                  - nosniff
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+            image/png:
+              schema:
+                type: string
+                format: binary
+            image/webp:
+              schema:
+                type: string
+                format: binary
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: orderId
+          in: query
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+      x-query-schema: SceneImageQuery
+  /admin/scene-images/{id}/content:
+    get:
+      tags:
+        - admin
+      operationId: adminGetSceneImage
+      summary: 鉴权读取现场图片内容
+      description: "图片流成功响应是统一 JSON 响应的唯一例外：返回二进制图片、准确 Content-Type、Cache-Control: private, no-store 和
+        X-Content-Type-Options: nosniff。失败仍返回统一 ErrorResponse。必须 JWT/角色/账号启用校验，禁止公开 URL
+        和无权限列表。客户仅本人图片；服务人员必须为当前订单已分配人员，或订单仍待抢单且当前满足全部接单资格；管理员仅可读取指定订单已关联图片。人员/管理员必须提供
+        orderId，图片必须属于该订单。每次读取重新判权（接单、取消、排班变化后不再有抢单资格即拒绝）。不存在或无权均404。前端通过 Bearer fetch 得到 Blob 后创建临时对象
+        URL，退出/离页撤销。"
+      responses:
+        "200":
+          description: 授权图片内容（无 JSON 包裹）
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                enum:
+                  - private, no-store
+            X-Content-Type-Options:
+              schema:
+                type: string
+                enum:
+                  - nosniff
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+            image/png:
+              schema:
+                type: string
+                format: binary
+            image/webp:
+              schema:
+                type: string
+                format: binary
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: orderId
+          in: query
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+      x-query-schema: SceneImageQuery
 components:
   securitySchemes:
     bearerAuth:
@@ -3441,6 +3802,18 @@ components:
                 code: INTERNAL_ERROR
                 message: 内部错误；事务已回滚
                 data: {}
+    Error413:
+      description: 文件超过大小限制
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Error415:
+      description: 不支持的图片类型或内容
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
   schemas:
     Id:
       type: string
@@ -3614,6 +3987,9 @@ components:
         - RESOURCE_IN_USE
         - CONFIG_CONFLICT
         - INTERNAL_ERROR
+        - IMAGE_TOO_LARGE
+        - IMAGE_TYPE_UNSUPPORTED
+        - IMAGE_NOT_AVAILABLE
     PageQuery:
       type: object
       additionalProperties: false
@@ -4138,6 +4514,26 @@ components:
           maxLength: 1000
         customerSuppliesParts:
           type: boolean
+        clientEntryCode: &a2
+          type: string
+          nullable: true
+          enum:
+            - DAILY_2H
+            - DAILY_3H
+            - DAILY_4H
+            - DEEP_60
+            - DEEP_100
+            - TOILET_UNBLOCK
+            - TOILET_VALVE
+            - TAP_REPAIR
+            - TAP_REPLACE
+            - BULB_REPLACE
+            - LIGHT_REPLACE
+            - FUSE_REPLACE
+            - AC_CLEAN
+            - null
+          description: 显式绑定的客户端入口；同一入口最多绑定一个 SKU（含已下架 SKU），null 为不绑定。更新时省略保持已有绑定；解除须显式 null。日常套餐时长须匹配入口，清洁入口只能绑定
+            CLEANING，维修入口只能绑定 REPAIR。删除/下架后入口不可预约，不自动回退其他 SKU。
     SkuVO:
       type: object
       additionalProperties: false
@@ -4215,6 +4611,7 @@ components:
           maxLength: 1000
         customerSuppliesParts:
           type: boolean
+        clientEntryCode: *a2
     CatalogQuery:
       type: object
       additionalProperties: false
@@ -4625,7 +5022,8 @@ components:
       type: object
       additionalProperties: false
       description: OFFER 必须提供 offerPrice；STANDARD 不提供。数量固定 1。开始时间按半小时对齐，至少提前 earliestHours、最多 latestDays。OFFER 需 SKU
-        支持且至少提前 12 小时。服务及尾部缓冲均在 08:00—22:00 内。
+        支持且至少提前 12 小时。服务及尾部缓冲均在 08:00—22:00 内。 contactName/contactPhone
+        必须同时提供或同时省略，省略时使用地址联系人。图片至多3张，不影响价格和服务范围，不保证有人接单。
       required:
         - skuId
         - addressId
@@ -4646,6 +5044,24 @@ components:
           type: string
           minLength: 0
           maxLength: 300
+        contactName: &a3
+          type: string
+          minLength: 1
+          maxLength: 40
+          description: 本次订单联系人；省略则取所选地址联系人，仅写订单快照。
+        contactPhone: &a4
+          type: string
+          minLength: 1
+          maxLength: 11
+          pattern: ^1[0-9]{10}$
+          description: 本次订单联系电话；与 contactName 同时提供或同时省略。仅写订单快照。
+        sceneImageIds:
+          type: array
+          items:
+            $ref: "#/components/schemas/Id"
+          maxItems: 3
+          uniqueItems: true
+          description: 可选，默认空。必须均属于当前客户且上传成功；在创建订单事务中校验并保存不可变引用，不因地址/套餐修改变化。
       example:
         skuId: "301"
         addressId: "401"
@@ -4653,6 +5069,10 @@ components:
         startTime: 2026-10-04T09:00:00+08:00
         offerPrice: "130.00"
         remark: 请提前联系
+        contactName: 家人联系人
+        contactPhone: "13800000009"
+        sceneImageIds:
+          - "701"
     ServiceSnapshotVO:
       type: object
       additionalProperties: false
@@ -4716,6 +5136,8 @@ components:
       type: object
       additionalProperties: false
       description: 客户仅自己的订单；人员仅分配给自己的订单；管理员可查看全部。未发生的可选时间/人员/成交字段省略，不传 null。已支付订单禁止修改 SKU、地址和预约时间。开始码单独返回，不泄漏给人员。
+        contactName/contactPhone 为本次履约使用的订单联系人，address 内联系人为创建时地址簿快照，两者职责独立。sceneImages
+        为客户自愿提交的现场图片，附件不可替换或删除历史关联。
       required:
         - id
         - customerId
@@ -4735,6 +5157,9 @@ components:
         - priceVersion
         - remark
         - reviewed
+        - sceneImages
+        - contactName
+        - contactPhone
       properties:
         id:
           $ref: "#/components/schemas/Id"
@@ -4794,10 +5219,18 @@ components:
           maxLength: 300
         reviewed:
           type: boolean
+        sceneImages:
+          type: array
+          items:
+            $ref: "#/components/schemas/SceneImageVO"
+          maxItems: 3
+        contactName: *a3
+        contactPhone: *a4
     OrderQuery:
       type: object
       additionalProperties: false
-      description: 日期按预约开始时间在 Asia/Shanghai 的自然日闭区间筛选；from 不得晚于 to。keyword 搜索订单 ID 或服务名称。
+      description: 日期按预约开始时间在 Asia/Shanghai 的自然日闭区间筛选；from 不得晚于 to。keyword 搜索订单 ID 或服务名称。 statuses
+        以逗号分隔传输，可筛选多个精确状态；与 status 互斥。仅用于页面浏览分组，不改变正式状态。
       properties:
         pageNo:
           type: integer
@@ -4821,6 +5254,7 @@ components:
           $ref: "#/components/schemas/LocalDate"
         to:
           $ref: "#/components/schemas/LocalDate"
+        statuses: *a1
     OfferQuery:
       type: object
       additionalProperties: false
@@ -4846,7 +5280,8 @@ components:
     OfferVO:
       type: object
       additionalProperties: false
-      description: 抢单前最小信息集，无客户 ID、门牌、电话、联系人或开始码。仅符合条件的人员可见。
+      description: 抢单前最小信息集，无客户 ID、门牌、电话、联系人或开始码。仅符合条件的人员可见。 sceneImages
+        仅允许当前符合接单资格的人员通过鉴权接口查看。提示客户避免拍入隐私；不得在抢单池暴露结构化门牌、联系方式或开始码。
       required:
         - id
         - skuName
@@ -4863,6 +5298,7 @@ components:
         - included
         - excluded
         - customerSuppliesParts
+        - sceneImages
       properties:
         id:
           $ref: "#/components/schemas/Id"
@@ -4910,6 +5346,11 @@ components:
           maxLength: 1000
         customerSuppliesParts:
           type: boolean
+        sceneImages:
+          type: array
+          items:
+            $ref: "#/components/schemas/SceneImageVO"
+          maxItems: 3
     ChangeOfferDTO:
       type: object
       additionalProperties: false
@@ -6171,3 +6612,111 @@ components:
           maxLength: 200
         data:
           $ref: "#/components/schemas/AuditPageDTO"
+    ClientEntryCode:
+      type: string
+      enum:
+        - DAILY_2H
+        - DAILY_3H
+        - DAILY_4H
+        - DEEP_60
+        - DEEP_100
+        - TOILET_UNBLOCK
+        - TOILET_VALVE
+        - TAP_REPAIR
+        - TAP_REPLACE
+        - BULB_REPLACE
+        - LIGHT_REPLACE
+        - FUSE_REPLACE
+        - AC_CLEAN
+      description: 固定客户端入口标识，不能从分类名称、列表顺序或 SKU 名称推断。增加后台分类不会自动增加客户端入口。
+    ClientEntryVO:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - available
+      properties:
+        code:
+          $ref: "#/components/schemas/ClientEntryCode"
+        available:
+          type: boolean
+        sku:
+          $ref: "#/components/schemas/SkuVO"
+        unavailableReason:
+          type: string
+      description: 始终返回全部固定入口。available=true 时提供 sku；缺失、未绑定、下架或业务性质/时长不符时 available=false，仅提供不可预约原因。价格和能力来自关联的同一个正式 SKU。
+    ClientEntryListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - message
+        - data
+      properties:
+        code:
+          type: string
+          enum:
+            - SUCCESS
+        message:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/ClientEntryVO"
+    SceneImageVO:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - mimeType
+        - size
+        - createdAt
+      properties:
+        id:
+          $ref: "#/components/schemas/Id"
+        mimeType:
+          type: string
+          enum:
+            - image/jpeg
+            - image/png
+            - image/webp
+        size:
+          type: integer
+          minimum: 1
+          maximum: 5242880
+        createdAt:
+          $ref: "#/components/schemas/DateTime"
+      description: 现场图片不可变引用元数据，无公开 URL、客户身份或原始文件名。通过当前角色的鉴权内容接口读取；订单保存这些引用快照。
+    SceneImageUploadDTO:
+      type: object
+      additionalProperties: false
+      required:
+        - file
+      properties:
+        file:
+          type: string
+          format: binary
+          description: 单张 JPEG/PNG/WebP，1 字节至 5 MiB。服务端验证真实图片内容和 MIME，移除 EXIF 等元数据，不接受 SVG 或其他可执行内容。
+    SceneImageVOResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - message
+        - data
+      properties:
+        code:
+          type: string
+          enum:
+            - SUCCESS
+        message:
+          type: string
+        data:
+          $ref: "#/components/schemas/SceneImageVO"
+    SceneImageQuery:
+      type: object
+      additionalProperties: false
+      properties:
+        orderId:
+          $ref: "#/components/schemas/Id"
+      description: 客户读取本人上传图片可省略 orderId；人员和管理员必须指定包含该图片的订单 ID，每次读取重新校验访问资格。

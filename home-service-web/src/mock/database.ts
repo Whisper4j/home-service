@@ -27,6 +27,7 @@ export interface Database {
   sessions: Record<string, { accountId: string; expiresAt: number }>
   idempotency: Record<string, { fingerprint: string; response: unknown }>
   settings: Schema['SettingsDTO']
+  images: (Schema['SceneImageVO'] & { ownerId: string })[]
   archivedCatalog?: { resource: string; record: unknown }[]
 }
 export const regions: Schema['RegionVO'][] = [
@@ -181,6 +182,23 @@ export function createDatabase(now = Date.now()): Database {
       return {
         id,
         itemId,
+        clientEntryCode: (
+          {
+            '301': 'DAILY_2H',
+            '302': 'DAILY_3H',
+            '303': 'DAILY_4H',
+            '304': 'DEEP_60',
+            '305': 'DEEP_100',
+            '306': 'TOILET_UNBLOCK',
+            '307': 'TOILET_VALVE',
+            '308': 'TAP_REPAIR',
+            '309': 'TAP_REPLACE',
+            '310': 'BULB_REPLACE',
+            '311': 'LIGHT_REPLACE',
+            '312': 'FUSE_REPLACE',
+            '313': 'AC_CLEAN',
+          } as const
+        )[id],
         categoryId: item.categoryId,
         categoryName: categories.find((c) => c.id === item.categoryId)!.name,
         itemName: item.name,
@@ -217,6 +235,7 @@ export function createDatabase(now = Date.now()): Database {
     isDefault: true,
   }
   const db: Database = {
+    images: [],
     version: 1,
     sequence: 20000,
     clockOffset: 0,
@@ -282,6 +301,9 @@ export function createDatabase(now = Date.now()): Database {
       dispatchStatus: active ? 'NOT_REQUIRED' : 'SUCCEEDED',
       service: serviceSnapshot(sku),
       address: snapshot,
+      contactName: snapshot.contactName,
+      contactPhone: snapshot.contactPhone,
+      sceneImages: [],
       startTime: iso(start),
       endTime: iso(start + 2 * HOUR),
       bufferEndTime: iso(start + (offer ? 3 : 4) * HOUR),

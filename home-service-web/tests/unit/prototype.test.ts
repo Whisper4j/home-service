@@ -39,7 +39,7 @@ describe('契约与基础页面', () => {
     await call('claimOffer', worker, { expectedPrice: '130.00', priceVersion: 1 }, '10002')
     const tokens = { customer, worker, admin }
     for (const [id, route] of Object.entries(routes)) {
-      if (route.method !== 'GET') continue
+      if (route.method !== 'GET' || route.binary) continue
       const role = route.path.split('/')[1] as keyof typeof tokens
       const query = route.query === 'SlotQuery' ? { date: '2026-10-04' } : {}
       const resourceId =

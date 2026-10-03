@@ -23,6 +23,7 @@ export async function request<K extends OperationId>(
       const result = await mockRequest(operation, {
         id: options.id,
         body: options.body,
+        file: options.file,
         query: options.query as Record<string, unknown>,
         token,
         idempotencyKey,
@@ -36,6 +37,8 @@ export async function request<K extends OperationId>(
     for (const [key, value] of Object.entries(options.query || {}))
       if (value !== '' && value !== undefined && value !== null) query.set(key, String(value))
     const controller = new AbortController()
+    const multipart = options.file ? new FormData() : undefined
+    if (multipart && options.file) multipart.append('file', options.file)
     const timeout = setTimeout(() => controller.abort(), 15_000)
     const abort = () => controller.abort()
     options.signal?.addEventListener('abort', abort, { once: true })
@@ -47,9 +50,10 @@ export async function request<K extends OperationId>(
           ...(token && !route.anonymous ? { Authorization: `Bearer ${token}` } : {}),
           ...(idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}),
         },
-        body: options.body ? JSON.stringify(options.body) : undefined,
+        body: multipart || (options.body ? JSON.stringify(options.body) : undefined),
         signal: controller.signal,
       })
+      if (response.ok && route.binary) return (await response.blob()) as Output<K>
       const envelope = (await response.json()) as {
         code: string
         message: string

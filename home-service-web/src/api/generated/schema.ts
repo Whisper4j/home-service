@@ -280,7 +280,7 @@ export interface paths {
         put?: never;
         /**
          * 新增地址
-         * @description 校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循 Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。
+         * @description 校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循 Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。 首个地址自动设为默认；默认地址始终唯一。
          */
         post: operations["createAddress"];
         delete?: never;
@@ -299,14 +299,14 @@ export interface paths {
         get?: never;
         /**
          * 修改地址与默认标记
-         * @description 校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循 Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。
+         * @description 校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循 Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。 设置默认时原默认自动取消；若把当前默认设为非默认且有其他地址，则自动选择最早创建的剩余地址为默认。
          */
         put: operations["updateAddress"];
         post?: never;
         /**
          * 删除地址
          * @description 不影响历史订单地址快照；删除默认地址后自动选最早剩余地址为默认。
-         *     校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循 Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。
+         *     校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循 Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。 删除默认地址时最早创建的剩余地址成为默认，无剩余地址则无默认地址。
          */
         delete: operations["deleteAddress"];
         options?: never;
@@ -1295,6 +1295,146 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/customer/service-entries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 获取固定客户端入口与正式 SKU 的可预约关系
+         * @description 始终返回全部固定入口。available=true 时提供 sku；缺失、未绑定、下架或业务性质/时长不符时 available=false，仅提供不可预约原因。价格和能力来自关联的同一个正式 SKU。
+         */
+        get: operations["listClientEntries"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/customer/profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * 客户编辑本人称呼和联系电话
+         * @description 只允许修改登录客户本人的 displayName 和 phone；username 不可修改。不自动更新地址簿或任何历史订单联系人。幂等写入。
+         */
+        put: operations["updateCustomerProfile"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/customer/scene-images": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 上传一张预约现场图片
+         * @description multipart/form-data，字段 file。仅客户上传本人图片，单张不超过5 MiB，仅JPEG/PNG/WebP且验证真实内容并清理EXIF。相同 Idempotency-Key 的指纹包含文件内容摘要和 MIME，重试返回相同引用，不重复存储；不同内容返回 IDEMPOTENCY_CONFLICT。上传成功并不创建订单，创建订单最多关联3张。原型仅浏览器存储，正式服务端存储和鉴权待实现。
+         */
+        post: operations["uploadSceneImage"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/customer/scene-images/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * 删除本人未关联订单的临时图片
+         * @description 只能删除本人尚未关联任何订单的图片；已关联返回 RESOURCE_IN_USE，历史订单附件永不随移除预约草稿而删除。幂等重试返回首次结果。
+         */
+        delete: operations["deleteSceneImage"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/customer/scene-images/{id}/content": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 鉴权读取现场图片内容
+         * @description 图片流成功响应是统一 JSON 响应的唯一例外：返回二进制图片、准确 Content-Type、Cache-Control: private, no-store 和 X-Content-Type-Options: nosniff。失败仍返回统一 ErrorResponse。必须 JWT/角色/账号启用校验，禁止公开 URL 和无权限列表。客户仅本人图片；服务人员必须为当前订单已分配人员，或订单仍待抢单且当前满足全部接单资格；管理员仅可读取指定订单已关联图片。人员/管理员必须提供 orderId，图片必须属于该订单。每次读取重新判权（接单、取消、排班变化后不再有抢单资格即拒绝）。不存在或无权均404。前端通过 Bearer fetch 得到 Blob 后创建临时对象 URL，退出/离页撤销。
+         */
+        get: operations["customerGetSceneImage"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/worker/scene-images/{id}/content": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 鉴权读取现场图片内容
+         * @description 图片流成功响应是统一 JSON 响应的唯一例外：返回二进制图片、准确 Content-Type、Cache-Control: private, no-store 和 X-Content-Type-Options: nosniff。失败仍返回统一 ErrorResponse。必须 JWT/角色/账号启用校验，禁止公开 URL 和无权限列表。客户仅本人图片；服务人员必须为当前订单已分配人员，或订单仍待抢单且当前满足全部接单资格；管理员仅可读取指定订单已关联图片。人员/管理员必须提供 orderId，图片必须属于该订单。每次读取重新判权（接单、取消、排班变化后不再有抢单资格即拒绝）。不存在或无权均404。前端通过 Bearer fetch 得到 Blob 后创建临时对象 URL，退出/离页撤销。
+         */
+        get: operations["workerGetSceneImage"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/scene-images/{id}/content": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 鉴权读取现场图片内容
+         * @description 图片流成功响应是统一 JSON 响应的唯一例外：返回二进制图片、准确 Content-Type、Cache-Control: private, no-store 和 X-Content-Type-Options: nosniff。失败仍返回统一 ErrorResponse。必须 JWT/角色/账号启用校验，禁止公开 URL 和无权限列表。客户仅本人图片；服务人员必须为当前订单已分配人员，或订单仍待抢单且当前满足全部接单资格；管理员仅可读取指定订单已关联图片。人员/管理员必须提供 orderId，图片必须属于该订单。每次读取重新判权（接单、取消、排班变化后不再有抢单资格即拒绝）。不存在或无权均404。前端通过 Bearer fetch 得到 Blob 后创建临时对象 URL，退出/离页撤销。
+         */
+        get: operations["adminGetSceneImage"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1355,7 +1495,7 @@ export interface components {
         /** @enum {string} */
         WsEventType: "OFFER_CREATED" | "OFFER_PRICE_CHANGED" | "ORDER_CLAIMED" | "ORDER_CLOSED" | "DISPATCH_SUCCEEDED" | "DISPATCH_FAILED" | "ORDER_STATUS_CHANGED";
         /** @enum {string} */
-        ErrorCode: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "TOKEN_EXPIRED" | "FORBIDDEN" | "ACCOUNT_DISABLED" | "INVALID_CREDENTIALS" | "USERNAME_EXISTS" | "NOT_FOUND" | "IDEMPOTENCY_CONFLICT" | "REQUEST_IN_PROGRESS" | "STATE_CONFLICT" | "PRICE_CHANGED" | "PRICE_OUT_OF_RANGE" | "SLOT_CONFLICT" | "SCHEDULE_CONFLICT" | "OUTSIDE_SERVICE_AREA" | "BOOKING_WINDOW_INVALID" | "OFFER_NOT_SUPPORTED" | "OFFER_CLOSED" | "ORDER_TAKEN" | "WORKER_INELIGIBLE" | "START_CODE_INVALID" | "REVIEW_EXISTS" | "CATALOG_UNAVAILABLE" | "RESOURCE_IN_USE" | "CONFIG_CONFLICT" | "INTERNAL_ERROR";
+        ErrorCode: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "TOKEN_EXPIRED" | "FORBIDDEN" | "ACCOUNT_DISABLED" | "INVALID_CREDENTIALS" | "USERNAME_EXISTS" | "NOT_FOUND" | "IDEMPOTENCY_CONFLICT" | "REQUEST_IN_PROGRESS" | "STATE_CONFLICT" | "PRICE_CHANGED" | "PRICE_OUT_OF_RANGE" | "SLOT_CONFLICT" | "SCHEDULE_CONFLICT" | "OUTSIDE_SERVICE_AREA" | "BOOKING_WINDOW_INVALID" | "OFFER_NOT_SUPPORTED" | "OFFER_CLOSED" | "ORDER_TAKEN" | "WORKER_INELIGIBLE" | "START_CODE_INVALID" | "REVIEW_EXISTS" | "CATALOG_UNAVAILABLE" | "RESOURCE_IN_USE" | "CONFIG_CONFLICT" | "INTERNAL_ERROR" | "IMAGE_TOO_LARGE" | "IMAGE_TYPE_UNSUPPORTED" | "IMAGE_NOT_AVAILABLE";
         PageQuery: {
             /** @default 1 */
             pageNo: number;
@@ -1504,6 +1644,11 @@ export interface components {
             included: string;
             excluded: string;
             customerSuppliesParts: boolean;
+            /**
+             * @description 显式绑定的客户端入口；同一入口最多绑定一个 SKU（含已下架 SKU），null 为不绑定。更新时省略保持已有绑定；解除须显式 null。日常套餐时长须匹配入口，清洁入口只能绑定 CLEANING，维修入口只能绑定 REPAIR。删除/下架后入口不可预约，不自动回退其他 SKU。
+             * @enum {string|null}
+             */
+            clientEntryCode?: "DAILY_2H" | "DAILY_3H" | "DAILY_4H" | "DEEP_60" | "DEEP_100" | "TOILET_UNBLOCK" | "TOILET_VALVE" | "TAP_REPAIR" | "TAP_REPLACE" | "BULB_REPLACE" | "LIGHT_REPLACE" | "FUSE_REPLACE" | "AC_CLEAN" | null;
         };
         SkuVO: {
             id: components["schemas"]["Id"];
@@ -1523,6 +1668,11 @@ export interface components {
             included: string;
             excluded: string;
             customerSuppliesParts: boolean;
+            /**
+             * @description 显式绑定的客户端入口；同一入口最多绑定一个 SKU（含已下架 SKU），null 为不绑定。更新时省略保持已有绑定；解除须显式 null。日常套餐时长须匹配入口，清洁入口只能绑定 CLEANING，维修入口只能绑定 REPAIR。删除/下架后入口不可预约，不自动回退其他 SKU。
+             * @enum {string|null}
+             */
+            clientEntryCode?: "DAILY_2H" | "DAILY_3H" | "DAILY_4H" | "DEEP_60" | "DEEP_100" | "TOILET_UNBLOCK" | "TOILET_VALVE" | "TAP_REPAIR" | "TAP_REPLACE" | "BULB_REPLACE" | "LIGHT_REPLACE" | "FUSE_REPLACE" | "AC_CLEAN" | null;
         };
         CatalogQuery: {
             /** @default 1 */
@@ -1663,14 +1813,19 @@ export interface components {
             latestDays: number;
         };
         /**
-         * @description OFFER 必须提供 offerPrice；STANDARD 不提供。数量固定 1。开始时间按半小时对齐，至少提前 earliestHours、最多 latestDays。OFFER 需 SKU 支持且至少提前 12 小时。服务及尾部缓冲均在 08:00—22:00 内。
+         * @description OFFER 必须提供 offerPrice；STANDARD 不提供。数量固定 1。开始时间按半小时对齐，至少提前 earliestHours、最多 latestDays。OFFER 需 SKU 支持且至少提前 12 小时。服务及尾部缓冲均在 08:00—22:00 内。 contactName/contactPhone 必须同时提供或同时省略，省略时使用地址联系人。图片至多3张，不影响价格和服务范围，不保证有人接单。
          * @example {
          *       "skuId": "301",
          *       "addressId": "401",
          *       "bookingType": "OFFER",
          *       "startTime": "2026-10-04T09:00:00+08:00",
          *       "offerPrice": "130.00",
-         *       "remark": "请提前联系"
+         *       "remark": "请提前联系",
+         *       "contactName": "家人联系人",
+         *       "contactPhone": "13800000009",
+         *       "sceneImageIds": [
+         *         "701"
+         *       ]
          *     }
          */
         CreateOrderDTO: {
@@ -1680,6 +1835,12 @@ export interface components {
             startTime: components["schemas"]["DateTime"];
             offerPrice?: components["schemas"]["Money"];
             remark?: string;
+            /** @description 本次订单联系人；省略则取所选地址联系人，仅写订单快照。 */
+            contactName?: string;
+            /** @description 本次订单联系电话；与 contactName 同时提供或同时省略。仅写订单快照。 */
+            contactPhone?: string;
+            /** @description 可选，默认空。必须均属于当前客户且上传成功；在创建订单事务中校验并保存不可变引用，不因地址/套餐修改变化。 */
+            sceneImageIds?: components["schemas"]["Id"][];
         };
         ServiceSnapshotVO: {
             categoryName: string;
@@ -1695,7 +1856,7 @@ export interface components {
             excluded: string;
             customerSuppliesParts: boolean;
         };
-        /** @description 客户仅自己的订单；人员仅分配给自己的订单；管理员可查看全部。未发生的可选时间/人员/成交字段省略，不传 null。已支付订单禁止修改 SKU、地址和预约时间。开始码单独返回，不泄漏给人员。 */
+        /** @description 客户仅自己的订单；人员仅分配给自己的订单；管理员可查看全部。未发生的可选时间/人员/成交字段省略，不传 null。已支付订单禁止修改 SKU、地址和预约时间。开始码单独返回，不泄漏给人员。 contactName/contactPhone 为本次履约使用的订单联系人，address 内联系人为创建时地址簿快照，两者职责独立。sceneImages 为客户自愿提交的现场图片，附件不可替换或删除历史关联。 */
         OrderVO: {
             id: components["schemas"]["Id"];
             customerId: components["schemas"]["Id"];
@@ -1722,8 +1883,13 @@ export interface components {
             cancellationReason?: string;
             remark: string;
             reviewed: boolean;
+            sceneImages: components["schemas"]["SceneImageVO"][];
+            /** @description 本次订单联系人；省略则取所选地址联系人，仅写订单快照。 */
+            contactName: string;
+            /** @description 本次订单联系电话；与 contactName 同时提供或同时省略。仅写订单快照。 */
+            contactPhone: string;
         };
-        /** @description 日期按预约开始时间在 Asia/Shanghai 的自然日闭区间筛选；from 不得晚于 to。keyword 搜索订单 ID 或服务名称。 */
+        /** @description 日期按预约开始时间在 Asia/Shanghai 的自然日闭区间筛选；from 不得晚于 to。keyword 搜索订单 ID 或服务名称。 statuses 以逗号分隔传输，可筛选多个精确状态；与 status 互斥。仅用于页面浏览分组，不改变正式状态。 */
         OrderQuery: {
             /** @default 1 */
             pageNo: number;
@@ -1734,6 +1900,7 @@ export interface components {
             bookingType?: components["schemas"]["BookingType"];
             from?: components["schemas"]["LocalDate"];
             to?: components["schemas"]["LocalDate"];
+            statuses?: components["schemas"]["OrderStatus"][];
         };
         OfferQuery: {
             /** @default 1 */
@@ -1744,7 +1911,7 @@ export interface components {
             from?: components["schemas"]["LocalDate"];
             to?: components["schemas"]["LocalDate"];
         };
-        /** @description 抢单前最小信息集，无客户 ID、门牌、电话、联系人或开始码。仅符合条件的人员可见。 */
+        /** @description 抢单前最小信息集，无客户 ID、门牌、电话、联系人或开始码。仅符合条件的人员可见。 sceneImages 仅允许当前符合接单资格的人员通过鉴权接口查看。提示客户避免拍入隐私；不得在抢单池暴露结构化门牌、联系方式或开始码。 */
         OfferVO: {
             id: components["schemas"]["Id"];
             skuName: string;
@@ -1761,6 +1928,7 @@ export interface components {
             included: string;
             excluded: string;
             customerSuppliesParts: boolean;
+            sceneImages: components["schemas"]["SceneImageVO"][];
         };
         /**
          * @description 只有 WAITING_ACCEPTANCE 且未截止可调价。newPrice 与旧价相差非零 5 元整数倍且在订单快照范围内；涨价需 confirmSimulatedPayment=true。涨价补差或降价退款、报价历史、版本递增在同一事务提交，失败全部回滚。
@@ -2185,6 +2353,49 @@ export interface components {
             message: string;
             data: components["schemas"]["AuditPageDTO"];
         };
+        /**
+         * @description 固定客户端入口标识，不能从分类名称、列表顺序或 SKU 名称推断。增加后台分类不会自动增加客户端入口。
+         * @enum {string}
+         */
+        ClientEntryCode: "DAILY_2H" | "DAILY_3H" | "DAILY_4H" | "DEEP_60" | "DEEP_100" | "TOILET_UNBLOCK" | "TOILET_VALVE" | "TAP_REPAIR" | "TAP_REPLACE" | "BULB_REPLACE" | "LIGHT_REPLACE" | "FUSE_REPLACE" | "AC_CLEAN";
+        /** @description 始终返回全部固定入口。available=true 时提供 sku；缺失、未绑定、下架或业务性质/时长不符时 available=false，仅提供不可预约原因。价格和能力来自关联的同一个正式 SKU。 */
+        ClientEntryVO: {
+            code: components["schemas"]["ClientEntryCode"];
+            available: boolean;
+            sku?: components["schemas"]["SkuVO"];
+            unavailableReason?: string;
+        };
+        ClientEntryListResponse: {
+            /** @enum {string} */
+            code: "SUCCESS";
+            message: string;
+            data: components["schemas"]["ClientEntryVO"][];
+        };
+        /** @description 现场图片不可变引用元数据，无公开 URL、客户身份或原始文件名。通过当前角色的鉴权内容接口读取；订单保存这些引用快照。 */
+        SceneImageVO: {
+            id: components["schemas"]["Id"];
+            /** @enum {string} */
+            mimeType: "image/jpeg" | "image/png" | "image/webp";
+            size: number;
+            createdAt: components["schemas"]["DateTime"];
+        };
+        SceneImageUploadDTO: {
+            /**
+             * Format: binary
+             * @description 单张 JPEG/PNG/WebP，1 字节至 5 MiB。服务端验证真实图片内容和 MIME，移除 EXIF 等元数据，不接受 SVG 或其他可执行内容。
+             */
+            file: string;
+        };
+        SceneImageVOResponse: {
+            /** @enum {string} */
+            code: "SUCCESS";
+            message: string;
+            data: components["schemas"]["SceneImageVO"];
+        };
+        /** @description 客户读取本人上传图片可省略 orderId；人员和管理员必须指定包含该图片的订单 ID，每次读取重新校验访问资格。 */
+        SceneImageQuery: {
+            orderId?: components["schemas"]["Id"];
+        };
     };
     responses: {
         /** @description 请求格式或参数无效 */
@@ -2243,6 +2454,24 @@ export interface components {
         };
         /** @description 内部错误；事务已回滚 */
         Error500: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["ErrorResponse"];
+            };
+        };
+        /** @description 文件超过大小限制 */
+        Error413: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["ErrorResponse"];
+            };
+        };
+        /** @description 不支持的图片类型或内容 */
+        Error415: {
             headers: {
                 [name: string]: unknown;
             };
@@ -2808,6 +3037,7 @@ export interface operations {
                 bookingType?: components["schemas"]["BookingType"];
                 from?: components["schemas"]["LocalDate"];
                 to?: components["schemas"]["LocalDate"];
+                statuses?: components["schemas"]["OrderStatus"][];
             };
             header?: never;
             path?: never;
@@ -2938,6 +3168,7 @@ export interface operations {
                 bookingType?: components["schemas"]["BookingType"];
                 from?: components["schemas"]["LocalDate"];
                 to?: components["schemas"]["LocalDate"];
+                statuses?: components["schemas"]["OrderStatus"][];
             };
             header?: never;
             path?: never;
@@ -3031,6 +3262,7 @@ export interface operations {
                 bookingType?: components["schemas"]["BookingType"];
                 from?: components["schemas"]["LocalDate"];
                 to?: components["schemas"]["LocalDate"];
+                statuses?: components["schemas"]["OrderStatus"][];
             };
             header?: never;
             path?: never;
@@ -4787,6 +5019,249 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BookingRulesVOResponse"];
+                };
+            };
+            400: components["responses"]["Error400"];
+            401: components["responses"]["Error401"];
+            403: components["responses"]["Error403"];
+            404: components["responses"]["Error404"];
+            409: components["responses"]["Error409"];
+            422: components["responses"]["Error422"];
+            500: components["responses"]["Error500"];
+        };
+    };
+    listClientEntries: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClientEntryListResponse"];
+                };
+            };
+            400: components["responses"]["Error400"];
+            401: components["responses"]["Error401"];
+            403: components["responses"]["Error403"];
+            404: components["responses"]["Error404"];
+            409: components["responses"]["Error409"];
+            422: components["responses"]["Error422"];
+            500: components["responses"]["Error500"];
+        };
+    };
+    updateCustomerProfile: {
+        parameters: {
+            query?: never;
+            header: {
+                /**
+                 * @description 以账号+方法+路径+Key为作用域。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
+                 * @example request_20261003_0001
+                 */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AccountProfileDTO"];
+            };
+        };
+        responses: {
+            /** @description 成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountVOResponse"];
+                };
+            };
+            400: components["responses"]["Error400"];
+            401: components["responses"]["Error401"];
+            403: components["responses"]["Error403"];
+            404: components["responses"]["Error404"];
+            409: components["responses"]["Error409"];
+            422: components["responses"]["Error422"];
+            500: components["responses"]["Error500"];
+        };
+    };
+    uploadSceneImage: {
+        parameters: {
+            query?: never;
+            header: {
+                /**
+                 * @description 以账号+方法+路径+Key为作用域。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
+                 * @example request_20261003_0001
+                 */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["SceneImageUploadDTO"];
+            };
+        };
+        responses: {
+            /** @description 成功 */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SceneImageVOResponse"];
+                };
+            };
+            400: components["responses"]["Error400"];
+            401: components["responses"]["Error401"];
+            403: components["responses"]["Error403"];
+            404: components["responses"]["Error404"];
+            409: components["responses"]["Error409"];
+            413: components["responses"]["Error413"];
+            415: components["responses"]["Error415"];
+            422: components["responses"]["Error422"];
+            500: components["responses"]["Error500"];
+        };
+    };
+    deleteSceneImage: {
+        parameters: {
+            query?: never;
+            header: {
+                /**
+                 * @description 以账号+方法+路径+Key为作用域。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
+                 * @example request_20261003_0001
+                 */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                id: components["schemas"]["Id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MutationVOResponse"];
+                };
+            };
+            400: components["responses"]["Error400"];
+            401: components["responses"]["Error401"];
+            403: components["responses"]["Error403"];
+            404: components["responses"]["Error404"];
+            409: components["responses"]["Error409"];
+            422: components["responses"]["Error422"];
+            500: components["responses"]["Error500"];
+        };
+    };
+    customerGetSceneImage: {
+        parameters: {
+            query?: {
+                orderId?: components["schemas"]["Id"];
+            };
+            header?: never;
+            path: {
+                id: components["schemas"]["Id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 授权图片内容（无 JSON 包裹） */
+            200: {
+                headers: {
+                    "Cache-Control"?: "private, no-store";
+                    "X-Content-Type-Options"?: "nosniff";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/jpeg": string;
+                    "image/png": string;
+                    "image/webp": string;
+                };
+            };
+            400: components["responses"]["Error400"];
+            401: components["responses"]["Error401"];
+            403: components["responses"]["Error403"];
+            404: components["responses"]["Error404"];
+            409: components["responses"]["Error409"];
+            422: components["responses"]["Error422"];
+            500: components["responses"]["Error500"];
+        };
+    };
+    workerGetSceneImage: {
+        parameters: {
+            query: {
+                orderId: components["schemas"]["Id"];
+            };
+            header?: never;
+            path: {
+                id: components["schemas"]["Id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 授权图片内容（无 JSON 包裹） */
+            200: {
+                headers: {
+                    "Cache-Control"?: "private, no-store";
+                    "X-Content-Type-Options"?: "nosniff";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/jpeg": string;
+                    "image/png": string;
+                    "image/webp": string;
+                };
+            };
+            400: components["responses"]["Error400"];
+            401: components["responses"]["Error401"];
+            403: components["responses"]["Error403"];
+            404: components["responses"]["Error404"];
+            409: components["responses"]["Error409"];
+            422: components["responses"]["Error422"];
+            500: components["responses"]["Error500"];
+        };
+    };
+    adminGetSceneImage: {
+        parameters: {
+            query: {
+                orderId: components["schemas"]["Id"];
+            };
+            header?: never;
+            path: {
+                id: components["schemas"]["Id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 授权图片内容（无 JSON 包裹） */
+            200: {
+                headers: {
+                    "Cache-Control"?: "private, no-store";
+                    "X-Content-Type-Options"?: "nosniff";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/jpeg": string;
+                    "image/png": string;
+                    "image/webp": string;
                 };
             };
             400: components["responses"]["Error400"];

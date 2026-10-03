@@ -6,6 +6,8 @@ export const routes = {
     "status": 200,
     "anonymous": true,
     "input": "LoginDTO",
+    "upload": false,
+    "binary": false,
     "output": "LoginVOResponse",
     "query": "",
     "idempotent": false
@@ -16,6 +18,8 @@ export const routes = {
     "status": 200,
     "anonymous": false,
     "input": "",
+    "upload": false,
+    "binary": false,
     "output": "AccountVOResponse",
     "query": "",
     "idempotent": false
@@ -26,6 +30,8 @@ export const routes = {
     "status": 200,
     "anonymous": true,
     "input": "LoginDTO",
+    "upload": false,
+    "binary": false,
     "output": "LoginVOResponse",
     "query": "",
     "idempotent": false
@@ -36,6 +42,8 @@ export const routes = {
     "status": 200,
     "anonymous": false,
     "input": "",
+    "upload": false,
+    "binary": false,
     "output": "AccountVOResponse",
     "query": "",
     "idempotent": false
@@ -46,6 +54,8 @@ export const routes = {
     "status": 200,
     "anonymous": true,
     "input": "LoginDTO",
+    "upload": false,
+    "binary": false,
     "output": "LoginVOResponse",
     "query": "",
     "idempotent": false
@@ -56,6 +66,8 @@ export const routes = {
     "status": 200,
     "anonymous": false,
     "input": "",
+    "upload": false,
+    "binary": false,
     "output": "AccountVOResponse",
     "query": "",
     "idempotent": false
@@ -66,6 +78,8 @@ export const routes = {
     "status": 201,
     "anonymous": true,
     "input": "RegisterDTO",
+    "upload": false,
+    "binary": false,
     "output": "AccountVOResponse",
     "query": "",
     "idempotent": true
@@ -76,6 +90,8 @@ export const routes = {
     "status": 200,
     "anonymous": true,
     "input": "",
+    "upload": false,
+    "binary": false,
     "output": "RegionListResponse",
     "query": "",
     "idempotent": false
@@ -86,6 +102,8 @@ export const routes = {
     "status": 200,
     "anonymous": true,
     "input": "",
+    "upload": false,
+    "binary": false,
     "output": "BookingRulesVOResponse",
     "query": "",
     "idempotent": false
@@ -96,6 +114,8 @@ export const routes = {
     "status": 200,
     "anonymous": true,
     "input": "",
+    "upload": false,
+    "binary": false,
     "output": "CategoryPageDTOResponse",
     "query": "CatalogQuery",
     "idempotent": false
@@ -106,6 +126,8 @@ export const routes = {
     "status": 200,
     "anonymous": true,
     "input": "",
+    "upload": false,
+    "binary": false,
     "output": "ServiceItemPageDTOResponse",
     "query": "CatalogQuery",
     "idempotent": false
@@ -116,6 +138,8 @@ export const routes = {
     "status": 200,
     "anonymous": true,
     "input": "",
+    "upload": false,
+    "binary": false,
     "output": "SkuPageDTOResponse",
     "query": "CatalogQuery",
     "idempotent": false
@@ -126,6 +150,8 @@ export const routes = {
     "status": 200,
     "anonymous": true,
     "input": "",
+    "upload": false,
+    "binary": false,
     "output": "SkuVOResponse",
     "query": "",
     "idempotent": false
@@ -136,6 +162,8 @@ export const routes = {
     "status": 200,
     "anonymous": false,
     "input": "",
+    "upload": false,
+    "binary": false,
     "output": "AddressListResponse",
     "query": "",
     "idempotent": false
@@ -146,6 +174,8 @@ export const routes = {
     "status": 201,
     "anonymous": false,
     "input": "AddressDTO",
+    "upload": false,
+    "binary": false,
     "output": "AddressVOResponse",
     "query": "",
     "idempotent": true
@@ -156,6 +186,8 @@ export const routes = {
     "status": 200,
     "anonymous": false,
     "input": "AddressDTO",
+    "upload": false,
+    "binary": false,
     "output": "AddressVOResponse",
     "query": "",
     "idempotent": true
@@ -166,6 +198,8 @@ export const routes = {
     "status": 200,
     "anonymous": false,
     "input": "",
+    "upload": false,
+    "binary": false,
     "output": "MutationVOResponse",
     "query": "",
     "idempotent": true
@@ -176,6 +210,8 @@ export const routes = {
     "status": 201,
     "anonymous": false,
     "input": "CreateOrderDTO",
+    "upload": false,
+    "binary": false,
     "output": "OrderVOResponse",
     "query": "",
     "idempotent": true
@@ -186,6 +222,8 @@ export const routes = {
     "status": 200,
     "anonymous": false,
     "input": "",
+    "upload": false,
+    "binary": false,
     "output": "OrderPageDTOResponse",
     "query": "OrderQuery",
     "idempotent": false
@@ -196,6 +234,8 @@ export const routes = {
     "status": 200,
     "anonymous": false,
     "input": "",
+    "upload": false,
+    "binary": false,
     "output": "OrderVOResponse",
     "query": "",
     "idempotent": false
@@ -206,6 +246,8 @@ export const routes = {
     "status": 200,
     "anonymous": false,
     "input": "",
+    "upload": false,
+    "binary": false,
     "output": "OrderHistoryVOResponse",
     "query": "",
     "idempotent": false
@@ -216,6 +258,8 @@ export const routes = {
     "status": 200,
     "anonymous": false,
     "input": "",
+    "upload": false,
+    "binary": false,
     "output": "OrderPageDTOResponse",
     "query": "OrderQuery",
     "idempotent": false
@@ -226,6 +270,8 @@ export const routes = {
     "status": 200,
     "anonymous": false,
     "input": "",
+    "upload": false,
+    "binary": false,
     "output": "OrderVOResponse",
     "query": "",
     "idempotent": false
@@ -236,6 +282,8 @@ export const routes = {
     "status": 200,
     "anonymous": false,
     "input": "",
+    "upload": false,
+    "binary": false,
     "output": "OrderHistoryVOResponse",
     "query": "",
     "idempotent": false
@@ -246,6 +294,8 @@ export const routes = {
     "status": 200,
     "anonymous": false,
     "input": "",
+    "upload": false,
+    "binary": false,
     "output": "OrderPageDTOResponse",
     "query": "OrderQuery",
     "idempotent": false
@@ -256,6 +306,8 @@ export const routes = {
     "status": 200,
     "anonymous": false,
     "input": "",
+    "upload": false,
+    "binary": false,
     "output": "OrderVOResponse",
     "query": "",
     "idempotent": false
@@ -266,6 +318,8 @@ export const routes = {
     "status": 200,
     "anonymous": false,
     "input": "",
+    "upload": false,
+    "binary": false,
     "output": "OrderHistoryVOResponse",
     "query": "",
     "idempotent": false
@@ -276,6 +330,8 @@ export const routes = {
     "status": 200,
     "anonymous": false,
     "input": "",
+    "upload": false,
+    "binary": false,
     "output": "OrderVOResponse",
     "query": "",
     "idempotent": true
@@ -286,6 +342,8 @@ export const routes = {
     "status": 200,
     "anonymous": false,
     "input": "ChangeOfferDTO",
+    "upload": false,
+    "binary": false,
     "output": "OrderVOResponse",
     "query": "",
     "idempotent": true
@@ -296,6 +354,8 @@ export const routes = {
     "status": 200,
     "anonymous": false,
     "input": "CancelOrderDTO",
+    "upload": false,
+    "binary": false,
     "output": "OrderVOResponse",
     "query": "",
     "idempotent": true
@@ -306,6 +366,8 @@ export const routes = {
     "status": 200,
     "anonymous": false,
     "input": "",
+    "upload": false,
+    "binary": false,
     "output": "StartCodeVOResponse",
     "query": "",
     "idempotent": false
@@ -316,6 +378,8 @@ export const routes = {
     "status": 200,
     "anonymous": false,
     "input": "",
+    "upload": false,
+    "binary": false,
     "output": "OrderVOResponse",
     "query": "",
     "idempotent": true
@@ -326,6 +390,8 @@ export const routes = {
     "status": 201,
     "anonymous": false,
     "input": "ReviewDTO",
+    "upload": false,
+    "binary": false,
     "output": "ReviewVOResponse",
     "query": "",
     "idempotent": true
@@ -336,6 +402,8 @@ export const routes = {
     "status": 200,
     "anonymous": false,
     "input": "",
+    "upload": false,
+    "binary": false,
     "output": "WorkerVOResponse",
     "query": "",
     "idempotent": false
@@ -346,6 +414,8 @@ export const routes = {
     "status": 200,
     "anonymous": false,
     "input": "",
+    "upload": false,
+    "binary": false,
     "output": "ScheduleVOResponse",
     "query": "",
     "idempotent": false
@@ -356,6 +426,8 @@ export const routes = {
     "status": 200,
     "anonymous": false,
     "input": "ScheduleDTO",
+    "upload": false,
+    "binary": false,
     "output": "ScheduleVOResponse",
     "query": "",
     "idempotent": true
@@ -366,6 +438,8 @@ export const routes = {
     "status": 200,
     "anonymous": false,
     "input": "",
+    "upload": false,
+    "binary": false,
     "output": "SlotListResponse",
     "query": "SlotQuery",
     "idempotent": false
@@ -376,6 +450,8 @@ export const routes = {
     "status": 200,
     "anonymous": false,
     "input": "",
+    "upload": false,
+    "binary": false,
     "output": "LeavePageDTOResponse",
     "query": "PageQuery",
     "idempotent": false
@@ -386,6 +462,8 @@ export const routes = {
     "status": 201,
     "anonymous": false,
     "input": "LeaveDTO",
+    "upload": false,
+    "binary": false,
     "output": "LeaveVOResponse",
     "query": "",
     "idempotent": true
@@ -396,6 +474,8 @@ export const routes = {
     "status": 200,
     "anonymous": false,
     "input": "",
+    "upload": false,
+    "binary": false,
     "output": "MutationVOResponse",
     "query": "",
     "idempotent": true
@@ -406,6 +486,8 @@ export const routes = {
     "status": 200,
     "anonymous": false,
     "input": "",
+    "upload": false,
+    "binary": false,
     "output": "OfferPageDTOResponse",
     "query": "OfferQuery",
     "idempotent": false
@@ -416,6 +498,8 @@ export const routes = {
     "status": 200,
     "anonymous": false,
     "input": "ClaimOfferDTO",
+    "upload": false,
+    "binary": false,
     "output": "OrderVOResponse",
     "query": "",
     "idempotent": true
@@ -426,6 +510,8 @@ export const routes = {
     "status": 200,
     "anonymous": false,
     "input": "",
+    "upload": false,
+    "binary": false,
     "output": "OrderVOResponse",
     "query": "",
     "idempotent": true
@@ -436,6 +522,8 @@ export const routes = {
     "status": 200,
     "anonymous": false,
     "input": "",
+    "upload": false,
+    "binary": false,
     "output": "OrderVOResponse",
     "query": "",
     "idempotent": true
@@ -446,6 +534,8 @@ export const routes = {
     "status": 200,
     "anonymous": false,
     "input": "StartServiceDTO",
+    "upload": false,
+    "binary": false,
     "output": "OrderVOResponse",
     "query": "",
     "idempotent": true
@@ -456,6 +546,8 @@ export const routes = {
     "status": 200,
     "anonymous": false,
     "input": "",
+    "upload": false,
+    "binary": false,
     "output": "OrderVOResponse",
     "query": "",
     "idempotent": true
@@ -466,6 +558,8 @@ export const routes = {
     "status": 200,
     "anonymous": false,
     "input": "",
+    "upload": false,
+    "binary": false,
     "output": "CategoryPageDTOResponse",
     "query": "CatalogQuery",
     "idempotent": false
@@ -476,6 +570,8 @@ export const routes = {
     "status": 201,
     "anonymous": false,
     "input": "CategoryDTO",
+    "upload": false,
+    "binary": false,
     "output": "CategoryVOResponse",
     "query": "",
     "idempotent": true
@@ -486,6 +582,8 @@ export const routes = {
     "status": 200,
     "anonymous": false,
     "input": "CategoryDTO",
+    "upload": false,
+    "binary": false,
     "output": "CategoryVOResponse",
     "query": "",
     "idempotent": true
@@ -496,6 +594,8 @@ export const routes = {
     "status": 200,
     "anonymous": false,
     "input": "",
+    "upload": false,
+    "binary": false,
     "output": "MutationVOResponse",
     "query": "",
     "idempotent": true
@@ -506,6 +606,8 @@ export const routes = {
     "status": 200,
     "anonymous": false,
     "input": "",
+    "upload": false,
+    "binary": false,
     "output": "ServiceItemPageDTOResponse",
     "query": "CatalogQuery",
     "idempotent": false
@@ -516,6 +618,8 @@ export const routes = {
     "status": 201,
     "anonymous": false,
     "input": "ServiceItemDTO",
+    "upload": false,
+    "binary": false,
     "output": "ServiceItemVOResponse",
     "query": "",
     "idempotent": true
@@ -526,6 +630,8 @@ export const routes = {
     "status": 200,
     "anonymous": false,
     "input": "ServiceItemDTO",
+    "upload": false,
+    "binary": false,
     "output": "ServiceItemVOResponse",
     "query": "",
     "idempotent": true
@@ -536,6 +642,8 @@ export const routes = {
     "status": 200,
     "anonymous": false,
     "input": "",
+    "upload": false,
+    "binary": false,
     "output": "MutationVOResponse",
     "query": "",
     "idempotent": true
@@ -546,6 +654,8 @@ export const routes = {
     "status": 200,
     "anonymous": false,
     "input": "",
+    "upload": false,
+    "binary": false,
     "output": "SkuPageDTOResponse",
     "query": "CatalogQuery",
     "idempotent": false
@@ -556,6 +666,8 @@ export const routes = {
     "status": 201,
     "anonymous": false,
     "input": "SkuDTO",
+    "upload": false,
+    "binary": false,
     "output": "SkuVOResponse",
     "query": "",
     "idempotent": true
@@ -566,6 +678,8 @@ export const routes = {
     "status": 200,
     "anonymous": false,
     "input": "SkuDTO",
+    "upload": false,
+    "binary": false,
     "output": "SkuVOResponse",
     "query": "",
     "idempotent": true
@@ -576,6 +690,8 @@ export const routes = {
     "status": 200,
     "anonymous": false,
     "input": "",
+    "upload": false,
+    "binary": false,
     "output": "MutationVOResponse",
     "query": "",
     "idempotent": true
@@ -586,6 +702,8 @@ export const routes = {
     "status": 200,
     "anonymous": false,
     "input": "",
+    "upload": false,
+    "binary": false,
     "output": "SkillPageDTOResponse",
     "query": "CatalogQuery",
     "idempotent": false
@@ -596,6 +714,8 @@ export const routes = {
     "status": 201,
     "anonymous": false,
     "input": "SkillDTO",
+    "upload": false,
+    "binary": false,
     "output": "SkillVOResponse",
     "query": "",
     "idempotent": true
@@ -606,6 +726,8 @@ export const routes = {
     "status": 200,
     "anonymous": false,
     "input": "SkillDTO",
+    "upload": false,
+    "binary": false,
     "output": "SkillVOResponse",
     "query": "",
     "idempotent": true
@@ -616,6 +738,8 @@ export const routes = {
     "status": 200,
     "anonymous": false,
     "input": "",
+    "upload": false,
+    "binary": false,
     "output": "MutationVOResponse",
     "query": "",
     "idempotent": true
@@ -626,6 +750,8 @@ export const routes = {
     "status": 200,
     "anonymous": false,
     "input": "",
+    "upload": false,
+    "binary": false,
     "output": "AccountPageDTOResponse",
     "query": "AccountQuery",
     "idempotent": false
@@ -636,6 +762,8 @@ export const routes = {
     "status": 200,
     "anonymous": false,
     "input": "AccountStatusDTO",
+    "upload": false,
+    "binary": false,
     "output": "AccountVOResponse",
     "query": "",
     "idempotent": true
@@ -646,6 +774,8 @@ export const routes = {
     "status": 200,
     "anonymous": false,
     "input": "AccountProfileDTO",
+    "upload": false,
+    "binary": false,
     "output": "AccountVOResponse",
     "query": "",
     "idempotent": true
@@ -656,6 +786,8 @@ export const routes = {
     "status": 200,
     "anonymous": false,
     "input": "",
+    "upload": false,
+    "binary": false,
     "output": "WorkerPageDTOResponse",
     "query": "WorkerQuery",
     "idempotent": false
@@ -666,6 +798,8 @@ export const routes = {
     "status": 201,
     "anonymous": false,
     "input": "WorkerCreateDTO",
+    "upload": false,
+    "binary": false,
     "output": "WorkerVOResponse",
     "query": "",
     "idempotent": true
@@ -676,6 +810,8 @@ export const routes = {
     "status": 200,
     "anonymous": false,
     "input": "WorkerDTO",
+    "upload": false,
+    "binary": false,
     "output": "WorkerVOResponse",
     "query": "",
     "idempotent": true
@@ -686,6 +822,8 @@ export const routes = {
     "status": 200,
     "anonymous": false,
     "input": "",
+    "upload": false,
+    "binary": false,
     "output": "SlotListResponse",
     "query": "SlotQuery",
     "idempotent": false
@@ -696,6 +834,8 @@ export const routes = {
     "status": 200,
     "anonymous": false,
     "input": "CancelOrderDTO",
+    "upload": false,
+    "binary": false,
     "output": "OrderVOResponse",
     "query": "",
     "idempotent": true
@@ -706,6 +846,8 @@ export const routes = {
     "status": 200,
     "anonymous": false,
     "input": "",
+    "upload": false,
+    "binary": false,
     "output": "DispatchAttemptPageDTOResponse",
     "query": "RecordQuery",
     "idempotent": false
@@ -716,6 +858,8 @@ export const routes = {
     "status": 200,
     "anonymous": false,
     "input": "",
+    "upload": false,
+    "binary": false,
     "output": "PaymentPageDTOResponse",
     "query": "RecordQuery",
     "idempotent": false
@@ -726,6 +870,8 @@ export const routes = {
     "status": 200,
     "anonymous": false,
     "input": "",
+    "upload": false,
+    "binary": false,
     "output": "AuditPageDTOResponse",
     "query": "RecordQuery",
     "idempotent": false
@@ -736,6 +882,8 @@ export const routes = {
     "status": 200,
     "anonymous": false,
     "input": "",
+    "upload": false,
+    "binary": false,
     "output": "BookingRulesVOResponse",
     "query": "",
     "idempotent": false
@@ -746,8 +894,94 @@ export const routes = {
     "status": 200,
     "anonymous": false,
     "input": "SettingsDTO",
+    "upload": false,
+    "binary": false,
     "output": "BookingRulesVOResponse",
     "query": "",
     "idempotent": true
+  },
+  "listClientEntries": {
+    "method": "GET",
+    "path": "/customer/service-entries",
+    "status": 200,
+    "anonymous": true,
+    "input": "",
+    "upload": false,
+    "binary": false,
+    "output": "ClientEntryListResponse",
+    "query": "",
+    "idempotent": false
+  },
+  "updateCustomerProfile": {
+    "method": "PUT",
+    "path": "/customer/profile",
+    "status": 200,
+    "anonymous": false,
+    "input": "AccountProfileDTO",
+    "upload": false,
+    "binary": false,
+    "output": "AccountVOResponse",
+    "query": "",
+    "idempotent": true
+  },
+  "uploadSceneImage": {
+    "method": "POST",
+    "path": "/customer/scene-images",
+    "status": 201,
+    "anonymous": false,
+    "input": "",
+    "upload": true,
+    "binary": false,
+    "output": "SceneImageVOResponse",
+    "query": "",
+    "idempotent": true
+  },
+  "deleteSceneImage": {
+    "method": "DELETE",
+    "path": "/customer/scene-images/{id}",
+    "status": 200,
+    "anonymous": false,
+    "input": "",
+    "upload": false,
+    "binary": false,
+    "output": "MutationVOResponse",
+    "query": "",
+    "idempotent": true
+  },
+  "customerGetSceneImage": {
+    "method": "GET",
+    "path": "/customer/scene-images/{id}/content",
+    "status": 200,
+    "anonymous": false,
+    "input": "",
+    "upload": false,
+    "binary": true,
+    "output": "",
+    "query": "SceneImageQuery",
+    "idempotent": false
+  },
+  "workerGetSceneImage": {
+    "method": "GET",
+    "path": "/worker/scene-images/{id}/content",
+    "status": 200,
+    "anonymous": false,
+    "input": "",
+    "upload": false,
+    "binary": true,
+    "output": "",
+    "query": "SceneImageQuery",
+    "idempotent": false
+  },
+  "adminGetSceneImage": {
+    "method": "GET",
+    "path": "/admin/scene-images/{id}/content",
+    "status": 200,
+    "anonymous": false,
+    "input": "",
+    "upload": false,
+    "binary": true,
+    "output": "",
+    "query": "SceneImageQuery",
+    "idempotent": false
   }
 } as const

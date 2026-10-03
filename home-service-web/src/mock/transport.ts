@@ -4,6 +4,8 @@ import { MockEngine, type MockRequest } from './engine'
 import { createDatabase, type Database } from './database'
 import { runDueJobs } from './orders'
 import { canAssign } from './scheduling'
+import { imageStore } from './images'
+import { routes } from '../api/generated/routes'
 
 const key = 'home-service.mock.v1'
 const channel =
@@ -15,7 +17,34 @@ channel?.addEventListener('message', (event) => subscribers.forEach((fn) => fn(e
 export function readDatabase(): Database {
   try {
     const saved = JSON.parse(localStorage.getItem(key) || 'null')
-    if (saved?.version === 1) return saved
+    if (saved?.version === 1) {
+      // 为已有原型数据补足新增快照；仅按明确的初始化 SKU ID 迁移入口，不按名称猜测。
+      if (!saved.images) {
+        saved.images = []
+        const seeds = createDatabase().skus
+        for (const sku of saved.skus)
+          sku.clientEntryCode = seeds.find((s) => s.id === sku.id)?.clientEntryCode ?? null
+        for (const { order } of saved.orders)
+          Object.assign(order, {
+            contactName: order.address.contactName,
+            contactPhone: order.address.contactPhone,
+            sceneImages: [],
+          })
+        // 旧响应不含新快照字段，保留写入记录但清除只读模拟响应缓存由新版本重新验证。
+        for (const cached of Object.values(saved.idempotency) as {
+          response: { data: unknown }
+        }[]) {
+          const data = cached.response.data as Schema['OrderVO']
+          if (data?.service && data.address)
+            Object.assign(data, {
+              contactName: data.address.contactName,
+              contactPhone: data.address.contactPhone,
+              sceneImages: [],
+            })
+        }
+      }
+      return saved
+    }
   } catch {
     /* 损坏数据由重置恢复 */
   }
@@ -57,7 +86,31 @@ export async function mockRequest(
     failNext = false
     throw new ApiError('NETWORK_ERROR', '演示网络中断，操作尚未发送；请重试', 0)
   }
-  return transaction((engine) => engine.handle(operationId, request))
+  return transaction(async (engine) => {
+    const before = structuredClone(engine.db)
+    try {
+      const result = await engine.handle(operationId, request)
+      if (routes[operationId].upload)
+        await imageStore((store) =>
+          store.put(request.file!, (result.data as Schema['SceneImageVO']).id),
+        )
+      if (operationId === 'deleteSceneImage') await imageStore((store) => store.delete(request.id!))
+      if (routes[operationId].binary) {
+        const blob = (await imageStore((store) => store.get(request.id!))) as Blob | undefined
+        if (!blob)
+          throw new ApiError(
+            'IMAGE_NOT_AVAILABLE',
+            '本地图片内容不可用，请重新上传；订单引用仍保留',
+            404,
+          )
+        result.data = blob
+      }
+      return result
+    } catch (error) {
+      if (routes[operationId].upload) engine.db = before
+      throw error
+    }
+  })
 }
 export function mockNow(): number {
   return Date.now() + readDatabase().clockOffset

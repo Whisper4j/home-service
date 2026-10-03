@@ -21,8 +21,10 @@ for (const [path, methods] of Object.entries(spec.paths)) {
       path,
       status: Number(status),
       anonymous: operation.security?.length === 0,
-      input: schemaName(operation.requestBody?.content['application/json'].schema) || '',
-      output: schemaName(operation.responses[status].content['application/json'].schema),
+      input: schemaName(operation.requestBody?.content['application/json']?.schema) || '',
+      upload: Boolean(operation.requestBody?.content['multipart/form-data']),
+      binary: !operation.responses[status].content['application/json'],
+      output: schemaName(operation.responses[status].content['application/json']?.schema) || '',
       query: operation['x-query-schema'] || '',
       idempotent: (operation.parameters || []).some((p) => p.$ref?.endsWith('/IdempotencyKey')),
     }

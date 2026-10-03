@@ -160,6 +160,14 @@ export function createOrder(
     (a) => a.id === dto.addressId && a.customerId === accountId,
   )
   if (!address) fail('NOT_FOUND', '地址不存在', 404)
+  if ((dto.contactName === undefined) !== (dto.contactPhone === undefined))
+    fail('VALIDATION_ERROR', '请同时提供本次联系人和联系电话', 400)
+  const sceneImages = (dto.sceneImageIds || []).map((id) => {
+    const image = context.db.images.find((i) => i.id === id && i.ownerId === accountId)
+    if (!image) fail('IMAGE_NOT_AVAILABLE', '现场图片已失效或不属于当前账号，请重新上传', 422)
+    const { ownerId: _owner, ...view } = image
+    return structuredClone(view)
+  })
   const start = Date.parse(dto.startTime),
     end = start + sku.durationMinutes * 60_000,
     bufferEnd = end + (dto.bookingType === 'STANDARD' ? 2 : 1) * HOUR
@@ -199,6 +207,9 @@ export function createOrder(
     dispatchStatus: 'NOT_REQUIRED',
     service: serviceSnapshot(sku),
     address: structuredClone(addressSnapshot),
+    contactName: dto.contactName ?? address.contactName,
+    contactPhone: dto.contactPhone ?? address.contactPhone,
+    sceneImages,
     startTime: iso(start),
     endTime: iso(end),
     bufferEndTime: iso(bufferEnd),
@@ -288,6 +299,7 @@ export function offerView(order: Schema['OrderVO']): Schema['OfferVO'] {
   return {
     id: order.id,
     skuName: order.service.skuName,
+    sceneImages: structuredClone(order.sceneImages),
     districtName: order.address.districtName,
     cityCode: order.address.cityCode,
     durationMinutes: order.service.durationMinutes,
