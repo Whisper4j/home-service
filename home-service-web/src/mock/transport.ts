@@ -43,6 +43,18 @@ export function readDatabase(): Database {
             })
         }
       }
+      const migrateOrder = (order: Schema['OrderVO']) => {
+        order.offerPriceRule ||= 'MINIMUM_ANCHORED'
+        if (order.offerDeadline) order.offerPublishedAt ||= order.createdAt
+        if (['COMPLETED', 'CANCELLED'].includes(order.status)) order.closedAt ||= order.endTime
+      }
+      saved.orders.forEach((stored: { order: Schema['OrderVO'] }) => migrateOrder(stored.order))
+      for (const cached of Object.values(saved.idempotency) as {
+        response: { data: Schema['OrderVO'] }
+      }[]) {
+        if (cached.response.data?.service && cached.response.data.address)
+          migrateOrder(cached.response.data)
+      }
       return saved
     }
   } catch {

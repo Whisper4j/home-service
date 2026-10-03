@@ -983,5 +983,41 @@ export const routes = {
     "output": "",
     "query": "OrderSceneImageQuery",
     "idempotent": false
+  },
+  "updateWorkerContact": {
+    "method": "PUT",
+    "path": "/worker/profile/contact",
+    "status": 200,
+    "anonymous": false,
+    "input": "WorkerContactDTO",
+    "upload": false,
+    "binary": false,
+    "output": "WorkerVOResponse",
+    "query": "",
+    "idempotent": true
+  },
+  "getWorkerStatistics": {
+    "method": "GET",
+    "path": "/worker/statistics",
+    "status": 200,
+    "anonymous": false,
+    "input": "",
+    "upload": false,
+    "binary": false,
+    "output": "WorkerStatisticsVOResponse",
+    "query": "",
+    "idempotent": false
+  },
+  "getWorkerCalendar": {
+    "method": "GET",
+    "path": "/worker/calendar",
+    "status": 200,
+    "anonymous": false,
+    "input": "",
+    "upload": false,
+    "binary": false,
+    "output": "WorkerCalendarVOResponse",
+    "query": "WorkerMonthQuery",
+    "idempotent": false
   }
 } as const

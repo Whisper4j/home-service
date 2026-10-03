@@ -35,6 +35,7 @@ export interface MockRequest {
   token?: string
   idempotencyKey?: string
 }
+import { compareIds, compareWorkerOrders, workerCalendar, workerStatistics } from './worker'
 const terminal = ['COMPLETED', 'CANCELLED']
 function normalize(value: unknown, field = ''): unknown {
   if (typeof value === 'string') return field === 'password' ? value : value.trim()
@@ -330,6 +331,14 @@ export class MockEngine extends MockContext {
       return { success: true }
     }
     if (op === 'getWorkerProfile') return this.db.workers.find((w) => w.accountId === actor)
+    if (op === 'updateWorkerContact') {
+      const worker = this.db.workers.find((w) => w.accountId === actor)!
+      worker.phone = (body as Schema['WorkerContactDTO']).phone
+      account!.phone = worker.phone
+      return worker
+    }
+    if (op === 'getWorkerStatistics') return workerStatistics(this, actor)
+    if (op === 'getWorkerCalendar') return workerCalendar(this, actor, String(q.month))
     if (op === 'getSchedule') return this.db.schedules[actor]
     if (op === 'updateSchedule') return updateSchedule(this, actor, body as Schema['ScheduleDTO'])
     if (op === 'listWorkerSlots' || op === 'getAdminWorkerSlots') {
@@ -371,6 +380,7 @@ export class MockEngine extends MockContext {
             (!q.from || o.startTime.slice(0, 10) >= String(q.from)) &&
             (!q.to || o.startTime.slice(0, 10) <= String(q.to)),
         )
+      if (account!.role === 'WORKER') rows.sort(compareWorkerOrders)
       return this.page(rows, q)
     }
     if (op === 'listEligibleOffers' || op === 'claimOffer') {
@@ -387,7 +397,14 @@ export class MockEngine extends MockContext {
                 (!q.from || o.startTime.slice(0, 10) >= String(q.from)) &&
                 (!q.to || o.startTime.slice(0, 10) <= String(q.to)),
             )
-            .map(offerView),
+            .map(offerView)
+            .sort(
+              (a, b) =>
+                (q.sort === 'LATEST'
+                  ? b.publishedAt.localeCompare(a.publishedAt)
+                  : a.offerDeadline.localeCompare(b.offerDeadline) ||
+                    a.publishedAt.localeCompare(b.publishedAt)) || compareIds(a.id, b.id),
+            ),
           q,
         )
       const order = this.db.orders.find((s) => s.order.id === id)?.order

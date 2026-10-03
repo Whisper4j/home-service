@@ -3,6 +3,7 @@ import { fail } from '../api/errors'
 import { cents, dateOf, DAY, HOUR, iso, money, SLOT } from '../utils/format'
 import type { MockContext } from './context'
 import { serviceSnapshot } from './database'
+import { quoteReason } from '../utils/quote'
 import { canAssign } from './scheduling'
 
 export function addPayment(
@@ -42,6 +43,7 @@ export function cancelOrder(
     order.paymentStatus = 'REFUNDED'
   }
   order.status = 'CANCELLED'
+  order.closedAt = iso(context.now)
   order.cancellationReason = reason
   if (order.dispatchStatus === 'PENDING') order.dispatchStatus = 'FAILED'
   context.db.histories[order.id].assignments.forEach((a) => {
@@ -138,6 +140,7 @@ export function runDueJobs(context: MockContext): void {
 }
 export function completeOrder(context: MockContext, order: Schema['OrderVO']): void {
   order.status = 'COMPLETED'
+  order.closedAt = iso(context.now)
   context.db.histories[order.id].assignments.forEach((a) => {
     if (a.status === 'ACTIVE') a.status = 'FINISHED'
   })
@@ -193,15 +196,16 @@ export function createOrder(
     (!dto.offerPrice ||
       cents(dto.offerPrice) < cents(sku.minimumOfferPrice) ||
       cents(dto.offerPrice) >= cents(sku.standardPrice) ||
-      (cents(dto.offerPrice) - cents(sku.minimumOfferPrice)) % 500)
+      cents(dto.offerPrice) % 500)
   )
-    fail('PRICE_OUT_OF_RANGE', '报价须在最低价至标准价之间，按最低价起每5元递增且低于标准价', 422)
+    fail('PRICE_OUT_OF_RANGE', '报价须为5元整数倍，不低于最低价且低于标准价', 422)
   const { id: _id, customerId: _customerId, ...addressSnapshot } = address
   const order: Schema['OrderVO'] = {
     id: context.nextId(),
     customerId: accountId,
     skuId: sku.id,
     bookingType: dto.bookingType,
+    offerPriceRule: 'MULTIPLE_OF_FIVE',
     status: 'PENDING_PAYMENT',
     paymentStatus: 'UNPAID',
     dispatchStatus: 'NOT_REQUIRED',
@@ -238,6 +242,7 @@ export function payOrder(context: MockContext, order: Schema['OrderVO']): Schema
     tryDispatch(context, order)
   } else {
     order.status = 'WAITING_ACCEPTANCE'
+    order.offerPublishedAt = iso(context.now)
     order.offerDeadline = iso(
       Math.min(context.now + 2 * HOUR, Date.parse(order.startTime) - 6 * HOUR),
     )
@@ -267,7 +272,7 @@ export function changeOffer(
   const diff = cents(dto.newPrice) - cents(order.currentPrice)
   if (
     !diff ||
-    diff % 500 ||
+    quoteReason(dto.newPrice, order.service, order.offerPriceRule) ||
     cents(dto.newPrice) < cents(order.service.minimumOfferPrice) ||
     cents(dto.newPrice) >= cents(order.service.standardPrice)
   )
@@ -309,6 +314,7 @@ export function offerView(order: Schema['OrderVO']): Schema['OfferVO'] {
     currentPrice: order.currentPrice,
     priceVersion: order.priceVersion,
     offerDeadline: order.offerDeadline!,
+    publishedAt: order.offerPublishedAt!,
     description: order.service.description,
     included: order.service.included,
     excluded: order.service.excluded,

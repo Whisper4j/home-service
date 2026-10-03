@@ -41,7 +41,12 @@ describe('契约与基础页面', () => {
     for (const [id, route] of Object.entries(routes)) {
       if (route.method !== 'GET' || route.binary) continue
       const role = route.path.split('/')[1] as keyof typeof tokens
-      const query = route.query === 'SlotQuery' ? { date: '2026-10-04' } : {}
+      const query =
+        route.query === 'SlotQuery'
+          ? { date: '2026-10-04' }
+          : route.query === 'WorkerMonthQuery'
+            ? { month: '2026-10' }
+            : {}
       const resourceId =
         id === 'getCustomerSku' ? '301' : id === 'getAdminWorkerSlots' ? '201' : '10002'
       const response = await engine.handle(id as OperationId, {

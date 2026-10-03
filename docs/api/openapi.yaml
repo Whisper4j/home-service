@@ -31,8 +31,10 @@ paths:
         - customer
       operationId: customerLogin
       summary: 用户名密码登录
-      description: |-
-        三端独立入口，拒绝非对应角色。密码 BCrypt；HS256 JWT 至少包含 accountId、role、exp。有效期/密钥配置化。不实现刷新令牌、黑名单或服务端退出，退出仅删除客户端令牌。
+      description: >-
+        三端独立入口，拒绝非对应角色。密码 BCrypt；HS256 JWT 至少包含
+        accountId、role、exp。有效期/密钥配置化。不实现刷新令牌、黑名单或服务端退出，退出仅删除客户端令牌。
+
         无需登录。
       security: []
       requestBody:
@@ -98,8 +100,10 @@ paths:
         - worker
       operationId: workerLogin
       summary: 用户名密码登录
-      description: |-
-        三端独立入口，拒绝非对应角色。密码 BCrypt；HS256 JWT 至少包含 accountId、role、exp。有效期/密钥配置化。不实现刷新令牌、黑名单或服务端退出，退出仅删除客户端令牌。
+      description: >-
+        三端独立入口，拒绝非对应角色。密码 BCrypt；HS256 JWT 至少包含
+        accountId、role、exp。有效期/密钥配置化。不实现刷新令牌、黑名单或服务端退出，退出仅删除客户端令牌。
+
         无需登录。
       security: []
       requestBody:
@@ -165,8 +169,10 @@ paths:
         - admin
       operationId: adminLogin
       summary: 用户名密码登录
-      description: |-
-        三端独立入口，拒绝非对应角色。密码 BCrypt；HS256 JWT 至少包含 accountId、role、exp。有效期/密钥配置化。不实现刷新令牌、黑名单或服务端退出，退出仅删除客户端令牌。
+      description: >-
+        三端独立入口，拒绝非对应角色。密码 BCrypt；HS256 JWT 至少包含
+        accountId、role、exp。有效期/密钥配置化。不实现刷新令牌、黑名单或服务端退出，退出仅删除客户端令牌。
+
         无需登录。
       security: []
       requestBody:
@@ -612,9 +618,10 @@ paths:
         - customer
       operationId: createAddress
       summary: 新增地址
-      description: |-
+      description: >-
         
-        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循 Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。 首个地址自动设为默认；默认地址始终唯一。
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循 Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。
+        首个地址自动设为默认；默认地址始终唯一。
       parameters:
         - $ref: "#/components/parameters/IdempotencyKey"
       requestBody:
@@ -734,7 +741,7 @@ paths:
       summary: 创建预约
       description: |-
         保存服务/地址/价格范围快照。待支付15分钟；支付前不占槽、不承诺人员可用性。不提供修改规格/地址/时间接口，取消重下。
-        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循 Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循 Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。 新订单优惠报价必须为5元整数倍、不低于最低价且严格低于标准价；最低价非5元倍数则向上取首个合法报价，不存在合法报价时不可优惠预约。建议价取价格中点向下对齐5元，再限制在合法区间；不静默修正用户输入。历史订单遵守 offerPriceRule 快照。
       parameters:
         - $ref: "#/components/parameters/IdempotencyKey"
       requestBody:
@@ -930,7 +937,7 @@ paths:
       summary: 分页查询订单
       description: |-
         
-        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。 全量过滤后排序再分页：IN_SERVICE、ARRIVED、DEPARTED（进行中），PENDING_SERVICE，PENDING_CONFIRMATION，COMPLETED/CANCELLED；同组预约时间升序，终态按closedAt降序，最终数值ID升序。
       parameters:
         - name: pageNo
           in: query
@@ -1236,7 +1243,8 @@ paths:
       summary: 模拟支付
       description: >-
         仅 PENDING_PAYMENT 且未过期。STANDARD 支付后同步按当天已分配服务分钟数、订单数、人员ID排序，有限候选尝试；无可用人员
-        WAITING_DISPATCH，每30秒扫描，5分钟超时取消全额退款。OFFER 进入 WAITING_ACCEPTANCE，截止 min(支付成功+2小时,开始-6小时)。支付成功与分配成功分别表达。
+        WAITING_DISPATCH，每30秒扫描，5分钟超时取消全额退款。OFFER 进入 WAITING_ACCEPTANCE，截止
+        min(支付成功+2小时,开始-6小时)。支付成功与分配成功分别表达。
 
         校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循 Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。
       parameters:
@@ -1735,7 +1743,7 @@ paths:
       summary: 符合资格的优惠抢单池
       description: |-
         账号启用、允许派单、技能覆盖、城市匹配、服务及全部缓冲槽可用才可见。不泄漏详细地址/电话。
-        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。 全量资格过滤后排序再分页。DEADLINE：截止时间升序、发布时间升序、数值ID升序；LATEST：发布时间降序、数值ID升序。仅为本项目规则。通知不替代HTTP结果；重连重新查询；确认期间不得静默更换报价。
       parameters:
         - name: pageNo
           in: query
@@ -1770,6 +1778,14 @@ paths:
           required: false
           schema:
             $ref: "#/components/schemas/LocalDate"
+        - name: sort
+          in: query
+          schema: &a5
+            type: string
+            enum:
+              - DEADLINE
+              - LATEST
+            default: DEADLINE
       x-query-schema: OfferQuery
       responses:
         "200":
@@ -3367,7 +3383,8 @@ paths:
         - customer
       operationId: listClientEntries
       summary: 获取固定客户端入口与正式 SKU 的可预约关系
-      description: 始终返回全部固定入口。available=true 时提供 sku；缺失、未绑定、下架或业务性质/时长不符时 available=false，仅提供不可预约原因。价格和能力来自关联的同一个正式 SKU。
+      description: 始终返回全部固定入口。available=true 时提供 sku；缺失、未绑定、下架或业务性质/时长不符时
+        available=false，仅提供不可预约原因。价格和能力来自关联的同一个正式 SKU。
       responses:
         "200":
           description: 成功
@@ -3432,8 +3449,8 @@ paths:
         - customer
       operationId: uploadSceneImage
       summary: 上传一张预约现场图片
-      description: multipart/form-data，字段 file。仅客户上传本人图片，单张不超过5 MiB，仅JPEG/PNG/WebP且验证真实内容并清理EXIF。相同 Idempotency-Key
-        的指纹包含文件内容摘要和 MIME，重试返回相同引用，不重复存储；不同内容返回
+      description: multipart/form-data，字段 file。仅客户上传本人图片，单张不超过5 MiB，仅JPEG/PNG/WebP且验证真实内容并清理EXIF。相同
+        Idempotency-Key 的指纹包含文件内容摘要和 MIME，重试返回相同引用，不重复存储；不同内容返回
         IDEMPOTENCY_CONFLICT。上传成功并不创建订单，创建订单最多关联3张。原型仅浏览器存储，正式服务端存储和鉴权待实现。
       parameters:
         - $ref: "#/components/parameters/IdempotencyKey"
@@ -3512,8 +3529,8 @@ paths:
       description: "图片流成功响应是统一 JSON 响应的唯一例外：返回二进制图片、准确 Content-Type、Cache-Control: private, no-store 和
         X-Content-Type-Options: nosniff。失败仍返回统一 ErrorResponse。必须 JWT/角色/账号启用校验，禁止公开 URL
         和无权限列表。客户仅本人图片；服务人员必须为当前订单已分配人员，或订单仍待抢单且当前满足全部接单资格；管理员仅可读取指定订单已关联图片。人员/管理员必须提供
-        orderId，图片必须属于该订单。每次读取重新判权（接单、取消、排班变化后不再有抢单资格即拒绝）。不存在或无权均404。前端通过 Bearer fetch 得到 Blob 后创建临时对象
-        URL，退出/离页撤销。"
+        orderId，图片必须属于该订单。每次读取重新判权（接单、取消、排班变化后不再有抢单资格即拒绝）。不存在或无权均404。前端通过 Bearer fetch 得到 Blob
+        后创建临时对象 URL，退出/离页撤销。"
       responses:
         "200":
           description: 授权图片内容（无 JSON 包裹）
@@ -3576,8 +3593,8 @@ paths:
       description: "图片流成功响应是统一 JSON 响应的唯一例外：返回二进制图片、准确 Content-Type、Cache-Control: private, no-store 和
         X-Content-Type-Options: nosniff。失败仍返回统一 ErrorResponse。必须 JWT/角色/账号启用校验，禁止公开 URL
         和无权限列表。客户仅本人图片；服务人员必须为当前订单已分配人员，或订单仍待抢单且当前满足全部接单资格；管理员仅可读取指定订单已关联图片。人员/管理员必须提供
-        orderId，图片必须属于该订单。每次读取重新判权（接单、取消、排班变化后不再有抢单资格即拒绝）。不存在或无权均404。前端通过 Bearer fetch 得到 Blob 后创建临时对象
-        URL，退出/离页撤销。"
+        orderId，图片必须属于该订单。每次读取重新判权（接单、取消、排班变化后不再有抢单资格即拒绝）。不存在或无权均404。前端通过 Bearer fetch 得到 Blob
+        后创建临时对象 URL，退出/离页撤销。"
       responses:
         "200":
           description: 授权图片内容（无 JSON 包裹）
@@ -3640,8 +3657,8 @@ paths:
       description: "图片流成功响应是统一 JSON 响应的唯一例外：返回二进制图片、准确 Content-Type、Cache-Control: private, no-store 和
         X-Content-Type-Options: nosniff。失败仍返回统一 ErrorResponse。必须 JWT/角色/账号启用校验，禁止公开 URL
         和无权限列表。客户仅本人图片；服务人员必须为当前订单已分配人员，或订单仍待抢单且当前满足全部接单资格；管理员仅可读取指定订单已关联图片。人员/管理员必须提供
-        orderId，图片必须属于该订单。每次读取重新判权（接单、取消、排班变化后不再有抢单资格即拒绝）。不存在或无权均404。前端通过 Bearer fetch 得到 Blob 后创建临时对象
-        URL，退出/离页撤销。"
+        orderId，图片必须属于该订单。每次读取重新判权（接单、取消、排班变化后不再有抢单资格即拒绝）。不存在或无权均404。前端通过 Bearer fetch 得到 Blob
+        后创建临时对象 URL，退出/离页撤销。"
       responses:
         "200":
           description: 授权图片内容（无 JSON 包裹）
@@ -3695,6 +3712,106 @@ paths:
           schema:
             $ref: "#/components/schemas/Id"
       x-query-schema: OrderSceneImageQuery
+  /worker/profile/contact:
+    put:
+      tags:
+        - worker
+      operationId: updateWorkerContact
+      summary: 修改本人联系电话
+      description: 校验JWT、人员角色与启用账号；只操作/统计本人。 写操作必须携带Idempotency-Key，校验、变更和幂等结果在同一事务内。
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkerVOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WorkerContactDTO"
+  /worker/statistics:
+    get:
+      tags:
+        - worker
+      operationId: getWorkerStatistics
+      summary: 本人完整服务数据聚合
+      description: 校验JWT、人员角色与启用账号；只操作/统计本人。
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkerStatisticsVOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /worker/calendar:
+    get:
+      tags:
+        - worker
+      operationId: getWorkerCalendar
+      summary: 月历与合并后的工作安排
+      description: 校验JWT、人员角色与启用账号；只操作/统计本人。
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkerCalendarVOResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+      x-query-schema: WorkerMonthQuery
+      parameters:
+        - name: month
+          in: query
+          required: true
+          schema: &a7
+            type: string
+            pattern: ^[0-9]{4}-(0[1-9]|1[0-2])$
 components:
   securitySchemes:
     bearerAuth:
@@ -4455,7 +4572,7 @@ components:
     SkuDTO:
       type: object
       additionalProperties: false
-      description: 价格必须大于 0；支持优惠时 0 < 最低价 < 标准价，报价以最低价为锚点步进 5 元。不支持优惠时最低价等于标准价。维修不开放优惠。上下架和价格变更仅影响后续订单，历史订单保留快照。
+      description: 价格必须大于 0；支持优惠时 0 < 最低价 < 标准价。新订单须为5元整数倍；合法报价区间为空时不可优惠预约。不支持优惠时最低价等于标准价。维修不开放优惠。上下架和价格变更仅影响后续订单，历史订单保留报价规则快照。
       required:
         - itemId
         - name
@@ -4532,8 +4649,8 @@ components:
             - FUSE_REPLACE
             - AC_CLEAN
             - null
-          description: 显式绑定的客户端入口；同一入口最多绑定一个 SKU（含已下架 SKU），null 为不绑定。更新时省略保持已有绑定；解除须显式 null。日常套餐时长须匹配入口，清洁入口只能绑定
-            CLEANING，维修入口只能绑定 REPAIR。删除/下架后入口不可预约，不自动回退其他 SKU。
+          description: 显式绑定的客户端入口；同一入口最多绑定一个 SKU（含已下架 SKU），null 为不绑定。更新时省略保持已有绑定；解除须显式
+            null。日常套餐时长须匹配入口，清洁入口只能绑定 CLEANING，维修入口只能绑定 REPAIR。删除/下架后入口不可预约，不自动回退其他 SKU。
     SkuVO:
       type: object
       additionalProperties: false
@@ -4744,7 +4861,7 @@ components:
           type: string
           minLength: 1
           maxLength: 40
-        phone:
+        phone: &a6
           type: string
           minLength: 1
           maxLength: 11
@@ -4936,6 +5053,7 @@ components:
         - offerBufferMinutes
         - autoConfirmHours
         - priceStep
+        - offerPriceRule
       properties:
         cityCode:
           type: string
@@ -5002,6 +5120,10 @@ components:
           description: 人民币元，两位小数字符串。服务端 BigDecimal/decimal；前端比较和计算使用整数分。
           enum:
             - "5.00"
+        offerPriceRule:
+          type: string
+          enum:
+            - MULTIPLE_OF_FIVE
     SettingsDTO:
       type: object
       additionalProperties: false
@@ -5021,9 +5143,8 @@ components:
     CreateOrderDTO:
       type: object
       additionalProperties: false
-      description: OFFER 必须提供 offerPrice；STANDARD 不提供。数量固定 1。开始时间按半小时对齐，至少提前 earliestHours、最多 latestDays。OFFER 需 SKU
-        支持且至少提前 12 小时。服务及尾部缓冲均在 08:00—22:00 内。 contactName/contactPhone
-        必须同时提供或同时省略，省略时使用地址联系人。图片至多3张，不影响价格和服务范围，不保证有人接单。
+      description: 新订单优惠报价必须为5元整数倍、不低于最低价且严格低于标准价；最低价非5元倍数则向上取首个合法报价，不存在合法报价时不可优惠预约。建议价取价格中点向下对齐5元，再限制在合法区间；不静默修正用户输入。历史订单遵守
+        offerPriceRule 快照。
       required:
         - skuId
         - addressId
@@ -5135,9 +5256,10 @@ components:
     OrderVO:
       type: object
       additionalProperties: false
-      description: 客户仅自己的订单；人员仅分配给自己的订单；管理员可查看全部。未发生的可选时间/人员/成交字段省略，不传 null。已支付订单禁止修改 SKU、地址和预约时间。开始码单独返回，不泄漏给人员。
-        contactName/contactPhone 为本次履约使用的订单联系人，address 内联系人为创建时地址簿快照，两者职责独立。sceneImages
-        为客户自愿提交的现场图片，附件不可替换或删除历史关联。
+      description: 客户仅自己的订单；人员仅分配给自己的订单；管理员可查看全部。未发生的可选时间/人员/成交字段省略，不传 null。已支付订单禁止修改
+        SKU、地址和预约时间。开始码单独返回，不泄漏给人员。 contactName/contactPhone 为本次履约使用的订单联系人，address
+        内联系人为创建时地址簿快照，两者职责独立。sceneImages 为客户自愿提交的现场图片，附件不可替换或删除历史关联。 offerPublishedAt
+        为优惠支付成功进入抢单池的首次发布时间。closedAt 为完成确认（含自动完成）或取消的实际时间；终态必须返回，用于历史排序及完成统计。预约 endTime 不等同于完成时间。
       required:
         - id
         - customerId
@@ -5160,6 +5282,7 @@ components:
         - sceneImages
         - contactName
         - contactPhone
+        - offerPriceRule
       properties:
         id:
           $ref: "#/components/schemas/Id"
@@ -5226,6 +5349,12 @@ components:
           maxItems: 3
         contactName: *a3
         contactPhone: *a4
+        offerPriceRule:
+          $ref: "#/components/schemas/OfferPriceRule"
+        offerPublishedAt:
+          $ref: "#/components/schemas/DateTime"
+        closedAt:
+          $ref: "#/components/schemas/DateTime"
     OrderQuery:
       type: object
       additionalProperties: false
@@ -5277,6 +5406,7 @@ components:
           $ref: "#/components/schemas/LocalDate"
         to:
           $ref: "#/components/schemas/LocalDate"
+        sort: *a5
     OfferVO:
       type: object
       additionalProperties: false
@@ -5299,6 +5429,7 @@ components:
         - excluded
         - customerSuppliesParts
         - sceneImages
+        - publishedAt
       properties:
         id:
           $ref: "#/components/schemas/Id"
@@ -5351,11 +5482,14 @@ components:
           items:
             $ref: "#/components/schemas/SceneImageVO"
           maxItems: 3
+        publishedAt:
+          $ref: "#/components/schemas/DateTime"
     ChangeOfferDTO:
       type: object
       additionalProperties: false
       description: 只有 WAITING_ACCEPTANCE 且未截止可调价。newPrice 与旧价相差非零 5 元整数倍且在订单快照范围内；涨价需
-        confirmSimulatedPayment=true。涨价补差或降价退款、报价历史、版本递增在同一事务提交，失败全部回滚。
+        confirmSimulatedPayment=true。涨价补差或降价退款、报价历史、版本递增在同一事务提交，失败全部回滚。 调价遵守订单 offerPriceRule
+        与价格范围快照；报价不变不可提交。涨价须明确确认模拟补付，降价明确退款。冲突须保留原报价并展示最新报价，用户重新确认后发起新请求。
       required:
         - newPrice
         - expectedPrice
@@ -5702,6 +5836,12 @@ components:
           maximum: 2147483647
         currentStatus:
           $ref: "#/components/schemas/OrderStatus"
+        conflictingOrderIds:
+          type: array
+          items:
+            $ref: "#/components/schemas/Id"
+          uniqueItems: true
+          description: 人员排班/请假与本人已分配订单冲突时返回对应订单ID；不返回他人订单。
     ErrorResponse:
       type: object
       additionalProperties: false
@@ -6194,8 +6334,6 @@ components:
             - SUCCESS
         message:
           type: string
-          minLength: 1
-          maxLength: 200
         data:
           $ref: "#/components/schemas/WorkerVO"
     ScheduleVOResponse:
@@ -6644,7 +6782,8 @@ components:
           $ref: "#/components/schemas/SkuVO"
         unavailableReason:
           type: string
-      description: 始终返回全部固定入口。available=true 时提供 sku；缺失、未绑定、下架或业务性质/时长不符时 available=false，仅提供不可预约原因。价格和能力来自关联的同一个正式 SKU。
+      description: 始终返回全部固定入口。available=true 时提供 sku；缺失、未绑定、下架或业务性质/时长不符时
+        available=false，仅提供不可预约原因。价格和能力来自关联的同一个正式 SKU。
       example:
         code: DAILY_2H
         available: false
@@ -6705,8 +6844,8 @@ components:
         file:
           type: string
           format: binary
-          description: 单张 JPEG/PNG/WebP，1 字节至 5 MiB。服务端验证真实图片内容和 MIME，移除 EXIF 等元数据，不接受 SVG 或其他可执行内容。 解码后最多4000万像素，超过按
-            IMAGE_TOO_LARGE 返回413；客户端可在上传前进行同样校验和元数据清理，服务端仍须独立验证。
+          description: 单张 JPEG/PNG/WebP，1 字节至 5 MiB。服务端验证真实图片内容和 MIME，移除 EXIF 等元数据，不接受 SVG 或其他可执行内容。
+            解码后最多4000万像素，超过按 IMAGE_TOO_LARGE 返回413；客户端可在上传前进行同样校验和元数据清理，服务端仍须独立验证。
     SceneImageVOResponse:
       type: object
       additionalProperties: false
@@ -6739,3 +6878,126 @@ components:
       description: 客户读取本人上传图片可省略 orderId；人员和管理员必须指定包含该图片的订单 ID，每次读取重新校验访问资格。
       required:
         - orderId
+    OfferPriceRule:
+      type: string
+      enum:
+        - MULTIPLE_OF_FIVE
+        - MINIMUM_ANCHORED
+      description: 新订单 MULTIPLE_OF_FIVE：金额为5元整数倍，向上取不低于最低价的首个合法值，且严格低于标准价。旧订单
+        MINIMUM_ANCHORED：以创建时最低价为锚点每5元递增。规则与价格范围随订单永久快照，不随配置迁移。
+    WorkerContactDTO:
+      type: object
+      additionalProperties: false
+      required:
+        - phone
+      properties:
+        phone: *a6
+    WorkerStatisticsVO:
+      type: object
+      additionalProperties: false
+      required:
+        - asOf
+        - today
+        - month
+        - todayPendingCount
+        - monthCompletedCount
+        - totalCompletedCount
+        - monthBookedMinutes
+        - totalBookedMinutes
+      properties:
+        asOf:
+          $ref: "#/components/schemas/DateTime"
+        today:
+          $ref: "#/components/schemas/LocalDate"
+        month: *a7
+        todayPendingCount: &a8
+          type: integer
+          minimum: 0
+          maximum: 2147483647
+        monthCompletedCount: *a8
+        totalCompletedCount: *a8
+        monthBookedMinutes: *a8
+        totalBookedMinutes: *a8
+      description: Asia/Shanghai：今日待服务为预约日期今天且状态PENDING_SERVICE；月及累计统计当前人员全部COMPLETED订单，以closedAt完成确认时间归属月份（含24小时自动确认）。时长累加已完成订单预约服务时长，不是实际工时；不统计收入。独立聚合，不受列表分页影响。
+    WorkerMonthQuery:
+      type: object
+      additionalProperties: false
+      required:
+        - month
+      properties:
+        month: *a7
+    CalendarDayVO:
+      type: object
+      additionalProperties: false
+      required:
+        - date
+        - status
+        - segments
+      properties:
+        date:
+          $ref: "#/components/schemas/LocalDate"
+        status:
+          type: string
+          enum:
+            - UNCONFIGURED
+            - REST
+            - AVAILABLE
+            - ARRANGED
+            - LEAVE
+        segments:
+          type: array
+          items:
+            $ref: "#/components/schemas/SlotVO"
+      description: segments为08:00—22:00内按时间排序的合并区间：仅相邻status、orderId、assignmentId、bookingType均相同才合并。包含NON_WORKING、AVAILABLE、SERVICE、BUFFER、LEAVE。日期主状态优先未设置、已有服务/缓冲、请假、工作时间内空闲、休息，混合情况以区间为准。缓冲不可接单；空闲不保证容纳任意服务。
+    WorkerCalendarVO:
+      type: object
+      additionalProperties: false
+      required:
+        - from
+        - to
+        - schedule
+        - days
+      properties:
+        from:
+          $ref: "#/components/schemas/LocalDate"
+        to:
+          $ref: "#/components/schemas/LocalDate"
+        schedule:
+          $ref: "#/components/schemas/ScheduleVO"
+        days:
+          type: array
+          items:
+            $ref: "#/components/schemas/CalendarDayVO"
+      description: 返回所选自然月与未来30天（含今天）交集；from/to为整个可查看窗口端点，days可为空。不扩大客户预约窗口，不增加逐日排班模型。
+    WorkerStatisticsVOResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - message
+        - data
+      properties:
+        code:
+          type: string
+          enum:
+            - SUCCESS
+        message:
+          type: string
+        data:
+          $ref: "#/components/schemas/WorkerStatisticsVO"
+    WorkerCalendarVOResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - message
+        - data
+      properties:
+        code:
+          type: string
+          enum:
+            - SUCCESS
+        message:
+          type: string
+        data:
+          $ref: "#/components/schemas/WorkerCalendarVO"

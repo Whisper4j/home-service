@@ -330,7 +330,7 @@ export interface paths {
         /**
          * 创建预约
          * @description 保存服务/地址/价格范围快照。待支付15分钟；支付前不占槽、不承诺人员可用性。不提供修改规格/地址/时间接口，取消重下。
-         *     校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循 Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。
+         *     校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循 Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。 新订单优惠报价必须为5元整数倍、不低于最低价且严格低于标准价；最低价非5元倍数则向上取首个合法报价，不存在合法报价时不可优惠预约。建议价取价格中点向下对齐5元，再限制在合法区间；不静默修正用户输入。历史订单遵守 offerPriceRule 快照。
          */
         post: operations["createOrder"];
         delete?: never;
@@ -388,7 +388,7 @@ export interface paths {
         };
         /**
          * 分页查询订单
-         * @description 校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。
+         * @description 校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。 全量过滤后排序再分页：IN_SERVICE、ARRIVED、DEPARTED（进行中），PENDING_SERVICE，PENDING_CONFIRMATION，COMPLETED/CANCELLED；同组预约时间升序，终态按closedAt降序，最终数值ID升序。
          */
         get: operations["workerListOrders"];
         put?: never;
@@ -745,7 +745,7 @@ export interface paths {
         /**
          * 符合资格的优惠抢单池
          * @description 账号启用、允许派单、技能覆盖、城市匹配、服务及全部缓冲槽可用才可见。不泄漏详细地址/电话。
-         *     校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。
+         *     校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。 全量资格过滤后排序再分页。DEADLINE：截止时间升序、发布时间升序、数值ID升序；LATEST：发布时间降序、数值ID升序。仅为本项目规则。通知不替代HTTP结果；重连重新查询；确认期间不得静默更换报价。
          */
         get: operations["listEligibleOffers"];
         put?: never;
@@ -1435,6 +1435,66 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/worker/profile/contact": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * 修改本人联系电话
+         * @description 校验JWT、人员角色与启用账号；只操作/统计本人。 写操作必须携带Idempotency-Key，校验、变更和幂等结果在同一事务内。
+         */
+        put: operations["updateWorkerContact"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/worker/statistics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 本人完整服务数据聚合
+         * @description 校验JWT、人员角色与启用账号；只操作/统计本人。
+         */
+        get: operations["getWorkerStatistics"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/worker/calendar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 月历与合并后的工作安排
+         * @description 校验JWT、人员角色与启用账号；只操作/统计本人。
+         */
+        get: operations["getWorkerCalendar"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1629,7 +1689,7 @@ export interface components {
             name: string;
             description: string;
         };
-        /** @description 价格必须大于 0；支持优惠时 0 < 最低价 < 标准价，报价以最低价为锚点步进 5 元。不支持优惠时最低价等于标准价。维修不开放优惠。上下架和价格变更仅影响后续订单，历史订单保留快照。 */
+        /** @description 价格必须大于 0；支持优惠时 0 < 最低价 < 标准价。新订单须为5元整数倍；合法报价区间为空时不可优惠预约。不支持优惠时最低价等于标准价。维修不开放优惠。上下架和价格变更仅影响后续订单，历史订单保留报价规则快照。 */
         SkuDTO: {
             itemId: components["schemas"]["Id"];
             name: string;
@@ -1806,6 +1866,8 @@ export interface components {
              * @enum {string}
              */
             priceStep: "5.00";
+            /** @enum {string} */
+            offerPriceRule: "MULTIPLE_OF_FIVE";
         };
         /** @description 当前仅预约窗口可配置，其他核心规则只读。只影响新预约，已创建订单的截止时间不改变。 */
         SettingsDTO: {
@@ -1813,7 +1875,7 @@ export interface components {
             latestDays: number;
         };
         /**
-         * @description OFFER 必须提供 offerPrice；STANDARD 不提供。数量固定 1。开始时间按半小时对齐，至少提前 earliestHours、最多 latestDays。OFFER 需 SKU 支持且至少提前 12 小时。服务及尾部缓冲均在 08:00—22:00 内。 contactName/contactPhone 必须同时提供或同时省略，省略时使用地址联系人。图片至多3张，不影响价格和服务范围，不保证有人接单。
+         * @description 新订单优惠报价必须为5元整数倍、不低于最低价且严格低于标准价；最低价非5元倍数则向上取首个合法报价，不存在合法报价时不可优惠预约。建议价取价格中点向下对齐5元，再限制在合法区间；不静默修正用户输入。历史订单遵守 offerPriceRule 快照。
          * @example {
          *       "skuId": "301",
          *       "addressId": "401",
@@ -1856,7 +1918,7 @@ export interface components {
             excluded: string;
             customerSuppliesParts: boolean;
         };
-        /** @description 客户仅自己的订单；人员仅分配给自己的订单；管理员可查看全部。未发生的可选时间/人员/成交字段省略，不传 null。已支付订单禁止修改 SKU、地址和预约时间。开始码单独返回，不泄漏给人员。 contactName/contactPhone 为本次履约使用的订单联系人，address 内联系人为创建时地址簿快照，两者职责独立。sceneImages 为客户自愿提交的现场图片，附件不可替换或删除历史关联。 */
+        /** @description 客户仅自己的订单；人员仅分配给自己的订单；管理员可查看全部。未发生的可选时间/人员/成交字段省略，不传 null。已支付订单禁止修改 SKU、地址和预约时间。开始码单独返回，不泄漏给人员。 contactName/contactPhone 为本次履约使用的订单联系人，address 内联系人为创建时地址簿快照，两者职责独立。sceneImages 为客户自愿提交的现场图片，附件不可替换或删除历史关联。 offerPublishedAt 为优惠支付成功进入抢单池的首次发布时间。closedAt 为完成确认（含自动完成）或取消的实际时间；终态必须返回，用于历史排序及完成统计。预约 endTime 不等同于完成时间。 */
         OrderVO: {
             id: components["schemas"]["Id"];
             customerId: components["schemas"]["Id"];
@@ -1888,6 +1950,9 @@ export interface components {
             contactName: string;
             /** @description 本次订单联系电话；与 contactName 同时提供或同时省略。仅写订单快照。 */
             contactPhone: string;
+            offerPriceRule: components["schemas"]["OfferPriceRule"];
+            offerPublishedAt?: components["schemas"]["DateTime"];
+            closedAt?: components["schemas"]["DateTime"];
         };
         /** @description 日期按预约开始时间在 Asia/Shanghai 的自然日闭区间筛选；from 不得晚于 to。keyword 搜索订单 ID 或服务名称。 statuses 以逗号分隔传输，可筛选多个精确状态；与 status 互斥。仅用于页面浏览分组，不改变正式状态。 */
         OrderQuery: {
@@ -1910,6 +1975,11 @@ export interface components {
             keyword?: string;
             from?: components["schemas"]["LocalDate"];
             to?: components["schemas"]["LocalDate"];
+            /**
+             * @default DEADLINE
+             * @enum {string}
+             */
+            sort: "DEADLINE" | "LATEST";
         };
         /** @description 抢单前最小信息集，无客户 ID、门牌、电话、联系人或开始码。仅符合条件的人员可见。 sceneImages 仅允许当前符合接单资格的人员通过鉴权接口查看。提示客户避免拍入隐私；不得在抢单池暴露结构化门牌、联系方式或开始码。 */
         OfferVO: {
@@ -1929,9 +1999,10 @@ export interface components {
             excluded: string;
             customerSuppliesParts: boolean;
             sceneImages: components["schemas"]["SceneImageVO"][];
+            publishedAt: components["schemas"]["DateTime"];
         };
         /**
-         * @description 只有 WAITING_ACCEPTANCE 且未截止可调价。newPrice 与旧价相差非零 5 元整数倍且在订单快照范围内；涨价需 confirmSimulatedPayment=true。涨价补差或降价退款、报价历史、版本递增在同一事务提交，失败全部回滚。
+         * @description 只有 WAITING_ACCEPTANCE 且未截止可调价。newPrice 与旧价相差非零 5 元整数倍且在订单快照范围内；涨价需 confirmSimulatedPayment=true。涨价补差或降价退款、报价历史、版本递增在同一事务提交，失败全部回滚。 调价遵守订单 offerPriceRule 与价格范围快照；报价不变不可提交。涨价须明确确认模拟补付，降价明确退款。冲突须保留原报价并展示最新报价，用户重新确认后发起新请求。
          * @example {
          *       "newPrice": "135.00",
          *       "expectedPrice": "130.00",
@@ -2051,6 +2122,8 @@ export interface components {
             currentPrice?: components["schemas"]["Money"];
             priceVersion?: number;
             currentStatus?: components["schemas"]["OrderStatus"];
+            /** @description 人员排班/请假与本人已分配订单冲突时返回对应订单ID；不返回他人订单。 */
+            conflictingOrderIds?: components["schemas"]["Id"][];
         };
         ErrorResponse: {
             code: components["schemas"]["ErrorCode"];
@@ -2414,6 +2487,54 @@ export interface components {
         /** @description 客户读取本人上传图片可省略 orderId；人员和管理员必须指定包含该图片的订单 ID，每次读取重新校验访问资格。 */
         OrderSceneImageQuery: {
             orderId: components["schemas"]["Id"];
+        };
+        /**
+         * @description 新订单 MULTIPLE_OF_FIVE：金额为5元整数倍，向上取不低于最低价的首个合法值，且严格低于标准价。旧订单 MINIMUM_ANCHORED：以创建时最低价为锚点每5元递增。规则与价格范围随订单永久快照，不随配置迁移。
+         * @enum {string}
+         */
+        OfferPriceRule: "MULTIPLE_OF_FIVE" | "MINIMUM_ANCHORED";
+        WorkerContactDTO: {
+            phone: string;
+        };
+        /** @description Asia/Shanghai：今日待服务为预约日期今天且状态PENDING_SERVICE；月及累计统计当前人员全部COMPLETED订单，以closedAt完成确认时间归属月份（含24小时自动确认）。时长累加已完成订单预约服务时长，不是实际工时；不统计收入。独立聚合，不受列表分页影响。 */
+        WorkerStatisticsVO: {
+            asOf: components["schemas"]["DateTime"];
+            today: components["schemas"]["LocalDate"];
+            month: string;
+            todayPendingCount: number;
+            monthCompletedCount: number;
+            totalCompletedCount: number;
+            monthBookedMinutes: number;
+            totalBookedMinutes: number;
+        };
+        WorkerMonthQuery: {
+            month: string;
+        };
+        /** @description segments为08:00—22:00内按时间排序的合并区间：仅相邻status、orderId、assignmentId、bookingType均相同才合并。包含NON_WORKING、AVAILABLE、SERVICE、BUFFER、LEAVE。日期主状态优先未设置、已有服务/缓冲、请假、工作时间内空闲、休息，混合情况以区间为准。缓冲不可接单；空闲不保证容纳任意服务。 */
+        CalendarDayVO: {
+            date: components["schemas"]["LocalDate"];
+            /** @enum {string} */
+            status: "UNCONFIGURED" | "REST" | "AVAILABLE" | "ARRANGED" | "LEAVE";
+            segments: components["schemas"]["SlotVO"][];
+        };
+        /** @description 返回所选自然月与未来30天（含今天）交集；from/to为整个可查看窗口端点，days可为空。不扩大客户预约窗口，不增加逐日排班模型。 */
+        WorkerCalendarVO: {
+            from: components["schemas"]["LocalDate"];
+            to: components["schemas"]["LocalDate"];
+            schedule: components["schemas"]["ScheduleVO"];
+            days: components["schemas"]["CalendarDayVO"][];
+        };
+        WorkerStatisticsVOResponse: {
+            /** @enum {string} */
+            code: "SUCCESS";
+            message: string;
+            data: components["schemas"]["WorkerStatisticsVO"];
+        };
+        WorkerCalendarVOResponse: {
+            /** @enum {string} */
+            code: "SUCCESS";
+            message: string;
+            data: components["schemas"]["WorkerCalendarVO"];
         };
     };
     responses: {
@@ -3811,6 +3932,7 @@ export interface operations {
                 keyword?: string;
                 from?: components["schemas"]["LocalDate"];
                 to?: components["schemas"]["LocalDate"];
+                sort?: "DEADLINE" | "LATEST";
             };
             header?: never;
             path?: never;
@@ -5281,6 +5403,99 @@ export interface operations {
                     "image/jpeg": string;
                     "image/png": string;
                     "image/webp": string;
+                };
+            };
+            400: components["responses"]["Error400"];
+            401: components["responses"]["Error401"];
+            403: components["responses"]["Error403"];
+            404: components["responses"]["Error404"];
+            409: components["responses"]["Error409"];
+            422: components["responses"]["Error422"];
+            500: components["responses"]["Error500"];
+        };
+    };
+    updateWorkerContact: {
+        parameters: {
+            query?: never;
+            header: {
+                /**
+                 * @description 以账号+方法+路径+Key为作用域。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
+                 * @example request_20261003_0001
+                 */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkerContactDTO"];
+            };
+        };
+        responses: {
+            /** @description 成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkerVOResponse"];
+                };
+            };
+            400: components["responses"]["Error400"];
+            401: components["responses"]["Error401"];
+            403: components["responses"]["Error403"];
+            404: components["responses"]["Error404"];
+            409: components["responses"]["Error409"];
+            422: components["responses"]["Error422"];
+            500: components["responses"]["Error500"];
+        };
+    };
+    getWorkerStatistics: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkerStatisticsVOResponse"];
+                };
+            };
+            400: components["responses"]["Error400"];
+            401: components["responses"]["Error401"];
+            403: components["responses"]["Error403"];
+            404: components["responses"]["Error404"];
+            409: components["responses"]["Error409"];
+            422: components["responses"]["Error422"];
+            500: components["responses"]["Error500"];
+        };
+    };
+    getWorkerCalendar: {
+        parameters: {
+            query: {
+                month: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkerCalendarVOResponse"];
                 };
             };
             400: components["responses"]["Error400"];

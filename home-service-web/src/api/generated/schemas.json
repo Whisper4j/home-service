@@ -812,7 +812,7 @@
   "SkuDTO": {
     "type": "object",
     "additionalProperties": false,
-    "description": "价格必须大于 0；支持优惠时 0 < 最低价 < 标准价，报价以最低价为锚点步进 5 元。不支持优惠时最低价等于标准价。维修不开放优惠。上下架和价格变更仅影响后续订单，历史订单保留快照。",
+    "description": "价格必须大于 0；支持优惠时 0 < 最低价 < 标准价。新订单须为5元整数倍；合法报价区间为空时不可优惠预约。不支持优惠时最低价等于标准价。维修不开放优惠。上下架和价格变更仅影响后续订单，历史订单保留报价规则快照。",
     "required": [
       "itemId",
       "name",
@@ -1456,7 +1456,8 @@
       "standardBufferMinutes",
       "offerBufferMinutes",
       "autoConfirmHours",
-      "priceStep"
+      "priceStep",
+      "offerPriceRule"
     ],
     "properties": {
       "cityCode": {
@@ -1540,6 +1541,12 @@
         "enum": [
           "5.00"
         ]
+      },
+      "offerPriceRule": {
+        "type": "string",
+        "enum": [
+          "MULTIPLE_OF_FIVE"
+        ]
       }
     }
   },
@@ -1567,7 +1574,7 @@
   "CreateOrderDTO": {
     "type": "object",
     "additionalProperties": false,
-    "description": "OFFER 必须提供 offerPrice；STANDARD 不提供。数量固定 1。开始时间按半小时对齐，至少提前 earliestHours、最多 latestDays。OFFER 需 SKU 支持且至少提前 12 小时。服务及尾部缓冲均在 08:00—22:00 内。 contactName/contactPhone 必须同时提供或同时省略，省略时使用地址联系人。图片至多3张，不影响价格和服务范围，不保证有人接单。",
+    "description": "新订单优惠报价必须为5元整数倍、不低于最低价且严格低于标准价；最低价非5元倍数则向上取首个合法报价，不存在合法报价时不可优惠预约。建议价取价格中点向下对齐5元，再限制在合法区间；不静默修正用户输入。历史订单遵守 offerPriceRule 快照。",
     "required": [
       "skuId",
       "addressId",
@@ -1710,7 +1717,7 @@
   "OrderVO": {
     "type": "object",
     "additionalProperties": false,
-    "description": "客户仅自己的订单；人员仅分配给自己的订单；管理员可查看全部。未发生的可选时间/人员/成交字段省略，不传 null。已支付订单禁止修改 SKU、地址和预约时间。开始码单独返回，不泄漏给人员。 contactName/contactPhone 为本次履约使用的订单联系人，address 内联系人为创建时地址簿快照，两者职责独立。sceneImages 为客户自愿提交的现场图片，附件不可替换或删除历史关联。",
+    "description": "客户仅自己的订单；人员仅分配给自己的订单；管理员可查看全部。未发生的可选时间/人员/成交字段省略，不传 null。已支付订单禁止修改 SKU、地址和预约时间。开始码单独返回，不泄漏给人员。 contactName/contactPhone 为本次履约使用的订单联系人，address 内联系人为创建时地址簿快照，两者职责独立。sceneImages 为客户自愿提交的现场图片，附件不可替换或删除历史关联。 offerPublishedAt 为优惠支付成功进入抢单池的首次发布时间。closedAt 为完成确认（含自动完成）或取消的实际时间；终态必须返回，用于历史排序及完成统计。预约 endTime 不等同于完成时间。",
     "required": [
       "id",
       "customerId",
@@ -1732,7 +1739,8 @@
       "reviewed",
       "sceneImages",
       "contactName",
-      "contactPhone"
+      "contactPhone",
+      "offerPriceRule"
     ],
     "properties": {
       "id": {
@@ -1837,6 +1845,15 @@
         "maxLength": 11,
         "pattern": "^1[0-9]{10}$",
         "description": "本次订单联系电话；与 contactName 同时提供或同时省略。仅写订单快照。"
+      },
+      "offerPriceRule": {
+        "$ref": "#/components/schemas/OfferPriceRule"
+      },
+      "offerPublishedAt": {
+        "$ref": "#/components/schemas/DateTime"
+      },
+      "closedAt": {
+        "$ref": "#/components/schemas/DateTime"
       }
     }
   },
@@ -1911,6 +1928,14 @@
       },
       "to": {
         "$ref": "#/components/schemas/LocalDate"
+      },
+      "sort": {
+        "type": "string",
+        "enum": [
+          "DEADLINE",
+          "LATEST"
+        ],
+        "default": "DEADLINE"
       }
     }
   },
@@ -1934,7 +1959,8 @@
       "included",
       "excluded",
       "customerSuppliesParts",
-      "sceneImages"
+      "sceneImages",
+      "publishedAt"
     ],
     "properties": {
       "id": {
@@ -2004,13 +2030,16 @@
           "$ref": "#/components/schemas/SceneImageVO"
         },
         "maxItems": 3
+      },
+      "publishedAt": {
+        "$ref": "#/components/schemas/DateTime"
       }
     }
   },
   "ChangeOfferDTO": {
     "type": "object",
     "additionalProperties": false,
-    "description": "只有 WAITING_ACCEPTANCE 且未截止可调价。newPrice 与旧价相差非零 5 元整数倍且在订单快照范围内；涨价需 confirmSimulatedPayment=true。涨价补差或降价退款、报价历史、版本递增在同一事务提交，失败全部回滚。",
+    "description": "只有 WAITING_ACCEPTANCE 且未截止可调价。newPrice 与旧价相差非零 5 元整数倍且在订单快照范围内；涨价需 confirmSimulatedPayment=true。涨价补差或降价退款、报价历史、版本递增在同一事务提交，失败全部回滚。 调价遵守订单 offerPriceRule 与价格范围快照；报价不变不可提交。涨价须明确确认模拟补付，降价明确退款。冲突须保留原报价并展示最新报价，用户重新确认后发起新请求。",
     "required": [
       "newPrice",
       "expectedPrice",
@@ -2478,6 +2507,14 @@
       },
       "currentStatus": {
         "$ref": "#/components/schemas/OrderStatus"
+      },
+      "conflictingOrderIds": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/Id"
+        },
+        "uniqueItems": true,
+        "description": "人员排班/请假与本人已分配订单冲突时返回对应订单ID；不返回他人订单。"
       }
     }
   },
@@ -3151,9 +3188,7 @@
         ]
       },
       "message": {
-        "type": "string",
-        "minLength": 1,
-        "maxLength": 200
+        "type": "string"
       },
       "data": {
         "$ref": "#/components/schemas/WorkerVO"
@@ -3899,5 +3934,198 @@
     "required": [
       "orderId"
     ]
+  },
+  "OfferPriceRule": {
+    "type": "string",
+    "enum": [
+      "MULTIPLE_OF_FIVE",
+      "MINIMUM_ANCHORED"
+    ],
+    "description": "新订单 MULTIPLE_OF_FIVE：金额为5元整数倍，向上取不低于最低价的首个合法值，且严格低于标准价。旧订单 MINIMUM_ANCHORED：以创建时最低价为锚点每5元递增。规则与价格范围随订单永久快照，不随配置迁移。"
+  },
+  "WorkerContactDTO": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "phone"
+    ],
+    "properties": {
+      "phone": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 11,
+        "pattern": "^1[0-9]{10}$"
+      }
+    }
+  },
+  "WorkerStatisticsVO": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "asOf",
+      "today",
+      "month",
+      "todayPendingCount",
+      "monthCompletedCount",
+      "totalCompletedCount",
+      "monthBookedMinutes",
+      "totalBookedMinutes"
+    ],
+    "properties": {
+      "asOf": {
+        "$ref": "#/components/schemas/DateTime"
+      },
+      "today": {
+        "$ref": "#/components/schemas/LocalDate"
+      },
+      "month": {
+        "type": "string",
+        "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])$"
+      },
+      "todayPendingCount": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 2147483647
+      },
+      "monthCompletedCount": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 2147483647
+      },
+      "totalCompletedCount": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 2147483647
+      },
+      "monthBookedMinutes": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 2147483647
+      },
+      "totalBookedMinutes": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 2147483647
+      }
+    },
+    "description": "Asia/Shanghai：今日待服务为预约日期今天且状态PENDING_SERVICE；月及累计统计当前人员全部COMPLETED订单，以closedAt完成确认时间归属月份（含24小时自动确认）。时长累加已完成订单预约服务时长，不是实际工时；不统计收入。独立聚合，不受列表分页影响。"
+  },
+  "WorkerMonthQuery": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "month"
+    ],
+    "properties": {
+      "month": {
+        "type": "string",
+        "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])$"
+      }
+    }
+  },
+  "CalendarDayVO": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "date",
+      "status",
+      "segments"
+    ],
+    "properties": {
+      "date": {
+        "$ref": "#/components/schemas/LocalDate"
+      },
+      "status": {
+        "type": "string",
+        "enum": [
+          "UNCONFIGURED",
+          "REST",
+          "AVAILABLE",
+          "ARRANGED",
+          "LEAVE"
+        ]
+      },
+      "segments": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/SlotVO"
+        }
+      }
+    },
+    "description": "segments为08:00—22:00内按时间排序的合并区间：仅相邻status、orderId、assignmentId、bookingType均相同才合并。包含NON_WORKING、AVAILABLE、SERVICE、BUFFER、LEAVE。日期主状态优先未设置、已有服务/缓冲、请假、工作时间内空闲、休息，混合情况以区间为准。缓冲不可接单；空闲不保证容纳任意服务。"
+  },
+  "WorkerCalendarVO": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "from",
+      "to",
+      "schedule",
+      "days"
+    ],
+    "properties": {
+      "from": {
+        "$ref": "#/components/schemas/LocalDate"
+      },
+      "to": {
+        "$ref": "#/components/schemas/LocalDate"
+      },
+      "schedule": {
+        "$ref": "#/components/schemas/ScheduleVO"
+      },
+      "days": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/CalendarDayVO"
+        }
+      }
+    },
+    "description": "返回所选自然月与未来30天（含今天）交集；from/to为整个可查看窗口端点，days可为空。不扩大客户预约窗口，不增加逐日排班模型。"
+  },
+  "WorkerStatisticsVOResponse": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "code",
+      "message",
+      "data"
+    ],
+    "properties": {
+      "code": {
+        "type": "string",
+        "enum": [
+          "SUCCESS"
+        ]
+      },
+      "message": {
+        "type": "string"
+      },
+      "data": {
+        "$ref": "#/components/schemas/WorkerStatisticsVO"
+      }
+    }
+  },
+  "WorkerCalendarVOResponse": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "code",
+      "message",
+      "data"
+    ],
+    "properties": {
+      "code": {
+        "type": "string",
+        "enum": [
+          "SUCCESS"
+        ]
+      },
+      "message": {
+        "type": "string"
+      },
+      "data": {
+        "$ref": "#/components/schemas/WorkerCalendarVO"
+      }
+    }
   }
 }

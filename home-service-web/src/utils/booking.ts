@@ -1,10 +1,7 @@
 import type { Schema } from '../api/types'
-import { cents, DAY, HOUR, iso, money } from './format'
-export function suggestedPrice(sku: Schema['SkuVO']): string {
-  const min = cents(sku.minimumOfferPrice),
-    standard = cents(sku.standardPrice)
-  return money(min + Math.floor((standard - min) / 2 / 500) * 500)
-}
+import { DAY, HOUR, iso } from './format'
+export { suggestedPrice, quoteReason } from './quote'
+import { quoteBounds } from './quote'
 export function timeReason(
   start: number,
   now: number,
@@ -32,15 +29,9 @@ export function offerReason(
   rules: Schema['BookingRulesVO'],
 ): string {
   if (!sku.supportsOffer) return '该服务不支持优惠预约'
+  if (quoteBounds(sku).high < quoteBounds(sku).low)
+    return '该服务目前没有合法优惠报价，请选择标准预约'
   if (start < now + rules.offerLeadHours * HOUR)
     return `优惠预约需至少提前${rules.offerLeadHours}小时，请重新选时间或明确改为标准预约`
   return ''
-}
-export function quoteReason(value: string, sku: Schema['SkuVO']): string {
-  if (!/^\d+(\.\d{1,2})?$/.test(value)) return '请输入有效金额，最多两位小数'
-  const amount = Math.round(Number(value) * 100),
-    min = cents(sku.minimumOfferPrice)
-  if (amount < min || amount >= cents(sku.standardPrice))
-    return '报价不能低于最低价，且必须低于标准价'
-  return (amount - min) % 500 ? '请从最低报价起按5元步长调整' : ''
 }

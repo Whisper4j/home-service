@@ -68,6 +68,7 @@ export function bookingRules(db: Database): Schema['BookingRulesVO'] {
     offerBufferMinutes: 60,
     autoConfirmHours: 24,
     priceStep: '5.00',
+    offerPriceRule: 'MULTIPLE_OF_FIVE',
   }
 }
 export function serviceSnapshot(sku: Schema['SkuVO']): Schema['ServiceSnapshotVO'] {
@@ -336,6 +337,7 @@ export function createDatabase(now = Date.now()): Database {
       customerId: '101',
       skuId: sku.id,
       bookingType: offer ? 'OFFER' : 'STANDARD',
+      offerPriceRule: 'MINIMUM_ANCHORED',
       status: active
         ? offer
           ? 'WAITING_ACCEPTANCE'
@@ -355,13 +357,14 @@ export function createDatabase(now = Date.now()): Database {
       bufferEndTime: iso(start + (offer ? 3 : 4) * HOUR),
       createdAt: iso(active ? now : start - DAY),
       paymentDeadline: iso(active ? now + HOUR / 4 : start - DAY + HOUR / 4),
-      ...(offer ? { offerDeadline: iso(now + 2 * HOUR) } : {}),
+      ...(offer ? { offerDeadline: iso(now + 2 * HOUR), offerPublishedAt: iso(now) } : {}),
       currentPrice: offer ? '130.00' : '160.00',
       priceVersion: 1,
       remark: '可操作演示数据',
       reviewed: false,
       ...(!active
         ? {
+            closedAt: iso(start + 2 * HOUR),
             dealPrice: '160.00',
             workerId: '201',
             workerName: '清洁人员甲',

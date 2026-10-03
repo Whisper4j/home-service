@@ -15,7 +15,7 @@ it('候选时间严格遵守提前量、最远窗口、时长和各预约方式�
   expect(timeReason(evening, now, 120, 'OFFER', rules)).toBe('')
   expect(timeReason(NaN, now, 120, 'STANDARD', rules)).toContain('选择')
 })
-it('优惠建议价可解释、以最低价为步长锚点且不改变客户预约方式', () => {
+it('新订单建议价为合法5元整数倍且不改变客户预约方式', () => {
   expect(suggestedPrice(sku)).toBe('145.00')
   expect(quoteReason('130.00', sku)).toBe('')
   expect(quoteReason('155', sku)).toBe('')

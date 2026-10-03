@@ -106,7 +106,9 @@ export function updateSchedule(
     ) {
       if (!isWorking(context, workerId, t)) {
         context.db.schedules[workerId] = previous
-        fail('SCHEDULE_CONFLICT', `排班变更影响订单 ${order.id} 的服务或缓冲时间`)
+        fail('SCHEDULE_CONFLICT', `排班变更影响订单 ${order.id} 的服务或缓冲时间`, 409, {
+          conflictingOrderIds: [order.id],
+        })
       }
     }
   }
@@ -128,9 +130,15 @@ export function createLeave(
   )
     fail('BOOKING_WINDOW_INVALID', '请假须半小时对齐、至少提前2小时，且在未来30天窗口内', 422)
   for (let t = start; t < end; t += SLOT) {
-    const status = slotAt(context, workerId, t).status
+    const slot = slotAt(context, workerId, t),
+      status = slot.status
     if (status === 'SERVICE' || status === 'BUFFER' || status === 'LEAVE')
-      fail('SCHEDULE_CONFLICT', '请假与已分配订单、缓冲或已有请假冲突')
+      fail(
+        'SCHEDULE_CONFLICT',
+        slot.orderId ? `请假与订单 ${slot.orderId} 的服务或缓冲冲突` : '请假与已有请假冲突',
+        409,
+        slot.orderId ? { conflictingOrderIds: [slot.orderId] } : {},
+      )
   }
   const leave: Schema['LeaveVO'] = { id: context.nextId(), ...dto, status: 'ACTIVE' }
   context.db.leaves.unshift({ ...leave, workerId })
