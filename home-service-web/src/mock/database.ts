@@ -175,6 +175,52 @@ export function createDatabase(now = Date.now()): Database {
     ['312', '24', '更换同规格保险丝', '90.00', '90.00', 30, '33'],
     ['313', '25', '壁挂空调清洗', '130.00', '130.00', 90, '33'],
   ] as const
+  // 服务范围属于同一份正式 SKU 种子数据，客户端入口不另行承诺配件或排除范围。
+  const repairScopes: Record<
+    string,
+    { included: string; excluded: string; customerSuppliesParts: boolean }
+  > = {
+    '306': {
+      included: '单个马桶常见软性堵塞的常规疏通及通水检查',
+      excluded: '马桶拆装、硬物取出、主管道堵塞和管道改造',
+      customerSuppliesParts: false,
+    },
+    '307': {
+      included: '单个马桶同规格进水阀更换人工及进水检查，客户自备适配阀件',
+      excluded: '配件费用、马桶拆装、水箱破损和其他故障检测',
+      customerSuppliesParts: true,
+    },
+    '308': {
+      included: '单个普通水龙头密封件更换人工与漏水检查，客户自备适配密封件',
+      excluded: '配件费用、龙头本体损坏、暗管漏水与管道改造',
+      customerSuppliesParts: true,
+    },
+    '309': {
+      included: '单个同规格水龙头拆换人工及通水检查，客户自备水龙头',
+      excluded: '水龙头及配件费用、开孔、暗管维修和复杂管道改造',
+      customerSuppliesParts: true,
+    },
+    '310': {
+      included: '单个普通可触及灯泡更换人工与点亮检查，客户自备适配灯泡',
+      excluded: '灯泡费用、高空作业、灯座维修和线路故障检测',
+      customerSuppliesParts: true,
+    },
+    '311': {
+      included: '单个普通灯具同类更换人工与安装检查，客户自备适配灯具',
+      excluded: '灯具费用、大型吊灯、高空作业和重新布线',
+      customerSuppliesParts: true,
+    },
+    '312': {
+      included: '单个同规格保险丝更换人工，客户自备适配保险丝',
+      excluded: '配件费用、反复熔断故障检测、配电箱改造和线路维修',
+      customerSuppliesParts: true,
+    },
+    '313': {
+      included: '单台壁挂空调室内机滤网与可触及部位常规清洗',
+      excluded: '加氟、故障检修、室外机高空作业和拆机深洗',
+      customerSuppliesParts: false,
+    },
+  }
   const skus: Schema['SkuVO'][] = specs.map(
     ([id, itemId, name, standardPrice, minimumOfferPrice, durationMinutes, skillId]) => {
       const item = items.find((i) => i.id === itemId)!
@@ -213,9 +259,9 @@ export function createDatabase(now = Date.now()): Database {
         description: clean
           ? '已入住住宅固定套餐，数量为1。深度清洁不包含开荒保洁。'
           : '固定服务范围，无法预先确定的故障检测不在本规格内。',
-        included: clean ? '地面、可触及表面及厨卫清洁' : '指定项目人工操作与完成检查',
-        excluded: clean ? '高空外窗、装修开荒、危险搬运' : '配件费用、隐蔽线路改造、现场加价',
-        customerSuppliesParts: !clean,
+        included: clean ? '地面、可触及表面及厨卫清洁' : repairScopes[id].included,
+        excluded: clean ? '高空外窗、装修开荒、危险搬运' : repairScopes[id].excluded,
+        customerSuppliesParts: clean ? false : repairScopes[id].customerSuppliesParts,
       }
     },
   )

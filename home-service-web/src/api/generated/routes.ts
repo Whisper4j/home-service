@@ -969,7 +969,7 @@ export const routes = {
     "upload": false,
     "binary": true,
     "output": "",
-    "query": "SceneImageQuery",
+    "query": "OrderSceneImageQuery",
     "idempotent": false
   },
   "adminGetSceneImage": {
@@ -981,7 +981,7 @@ export const routes = {
     "upload": false,
     "binary": true,
     "output": "",
-    "query": "SceneImageQuery",
+    "query": "OrderSceneImageQuery",
     "idempotent": false
   }
 } as const

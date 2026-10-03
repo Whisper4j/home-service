@@ -37,7 +37,7 @@ async function submit() {
       !route.query.redirect.includes('/login')
         ? route.query.redirect
         : `/${props.role}`
-    await router.push(redirect)
+    await router.replace(redirect)
   })
 }
 </script>

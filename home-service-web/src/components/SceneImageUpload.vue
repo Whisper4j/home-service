@@ -3,6 +3,8 @@ import { onUnmounted, ref, watch } from 'vue'
 import { createIdempotencyKey, request } from '../api/client'
 import type { Schema } from '../api/types'
 import SceneImages from './SceneImages.vue'
+import { useTask } from '../composables/useTask'
+import Feedback from './CustomerFeedback.vue'
 const model = defineModel<Schema['SceneImageVO'][]>({ required: true })
 const emit = defineEmits<{ pending: [value: boolean] }>()
 type PendingImage = {
@@ -15,8 +17,11 @@ type PendingImage = {
 }
 const pending = ref<PendingImage[]>([]),
   error = ref('')
+const { busy: deleting, error: deleteError, run: deleteRun } = useTask()
 let disposed = false
-watch(pending, (rows) => emit('pending', rows.length > 0), { deep: true })
+watch([pending, deleting], () => emit('pending', pending.value.length > 0 || deleting.value), {
+  deep: true,
+})
 async function sanitize(file: File): Promise<File> {
   if (file.size > 5 * 1024 * 1024) throw Error('单张图片不能超过 5 MB')
   if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type))
@@ -86,7 +91,14 @@ function removePending(key: string) {
   pending.value = pending.value.filter((r) => r.key !== key)
 }
 function removeUploaded(id: string) {
-  model.value = model.value.filter((i) => i.id !== id)
+  void deleteRun(
+    async (key) => {
+      await request('deleteSceneImage', { id, idempotencyKey: key })
+      model.value = model.value.filter((i) => i.id !== id)
+    },
+    '',
+    `delete-image:${id}`,
+  )
 }
 onUnmounted(() => {
   disposed = true
@@ -109,7 +121,14 @@ onUnmounted(() => {
     MB。请避免拍入个人隐私；上传前清除照片元数据。图片不保证接单、不扩大套餐范围，也不允许现场议价。
   </p>
   <p v-if="error" role="alert">{{ error }}</p>
-  <SceneImages :images="model" role="customer" removable @remove="removeUploaded" />
+  <SceneImages
+    :images="model"
+    role="customer"
+    removable
+    :disabled="deleting"
+    @remove="removeUploaded"
+  />
+  <Feedback :error="deleteError" :busy="deleting" />
   <div v-for="row in pending" :key="row.key" class="panel">
     <img :src="row.url" alt="待上传现场图片" style="width: 80px; height: 80px; object-fit: cover" />
     <p v-if="row.busy" role="status">正在上传…</p>

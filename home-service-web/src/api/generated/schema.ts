@@ -2358,7 +2358,14 @@ export interface components {
          * @enum {string}
          */
         ClientEntryCode: "DAILY_2H" | "DAILY_3H" | "DAILY_4H" | "DEEP_60" | "DEEP_100" | "TOILET_UNBLOCK" | "TOILET_VALVE" | "TAP_REPAIR" | "TAP_REPLACE" | "BULB_REPLACE" | "LIGHT_REPLACE" | "FUSE_REPLACE" | "AC_CLEAN";
-        /** @description 始终返回全部固定入口。available=true 时提供 sku；缺失、未绑定、下架或业务性质/时长不符时 available=false，仅提供不可预约原因。价格和能力来自关联的同一个正式 SKU。 */
+        /**
+         * @description 始终返回全部固定入口。available=true 时提供 sku；缺失、未绑定、下架或业务性质/时长不符时 available=false，仅提供不可预约原因。价格和能力来自关联的同一个正式 SKU。
+         * @example {
+         *       "code": "DAILY_2H",
+         *       "available": false,
+         *       "unavailableReason": "当前关联服务已下架，暂不可预约"
+         *     }
+         */
         ClientEntryVO: {
             code: components["schemas"]["ClientEntryCode"];
             available: boolean;
@@ -2371,7 +2378,15 @@ export interface components {
             message: string;
             data: components["schemas"]["ClientEntryVO"][];
         };
-        /** @description 现场图片不可变引用元数据，无公开 URL、客户身份或原始文件名。通过当前角色的鉴权内容接口读取；订单保存这些引用快照。 */
+        /**
+         * @description 现场图片不可变引用元数据，无公开 URL、客户身份或原始文件名。通过当前角色的鉴权内容接口读取；订单保存这些引用快照。
+         * @example {
+         *       "id": "701",
+         *       "mimeType": "image/jpeg",
+         *       "size": 186240,
+         *       "createdAt": "2026-10-03T09:00:00+08:00"
+         *     }
+         */
         SceneImageVO: {
             id: components["schemas"]["Id"];
             /** @enum {string} */
@@ -2382,7 +2397,7 @@ export interface components {
         SceneImageUploadDTO: {
             /**
              * Format: binary
-             * @description 单张 JPEG/PNG/WebP，1 字节至 5 MiB。服务端验证真实图片内容和 MIME，移除 EXIF 等元数据，不接受 SVG 或其他可执行内容。
+             * @description 单张 JPEG/PNG/WebP，1 字节至 5 MiB。服务端验证真实图片内容和 MIME，移除 EXIF 等元数据，不接受 SVG 或其他可执行内容。 解码后最多4000万像素，超过按 IMAGE_TOO_LARGE 返回413；客户端可在上传前进行同样校验和元数据清理，服务端仍须独立验证。
              */
             file: string;
         };
@@ -2395,6 +2410,10 @@ export interface components {
         /** @description 客户读取本人上传图片可省略 orderId；人员和管理员必须指定包含该图片的订单 ID，每次读取重新校验访问资格。 */
         SceneImageQuery: {
             orderId?: components["schemas"]["Id"];
+        };
+        /** @description 客户读取本人上传图片可省略 orderId；人员和管理员必须指定包含该图片的订单 ID，每次读取重新校验访问资格。 */
+        OrderSceneImageQuery: {
+            orderId: components["schemas"]["Id"];
         };
     };
     responses: {

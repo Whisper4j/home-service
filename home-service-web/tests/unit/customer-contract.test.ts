@@ -124,7 +124,7 @@ it('图片幂等、文件与数量限制、所有权及接单前后动态资格�
   )
   await expect(
     engine.handle('adminGetSceneImage', { token: admin, id: image.id }),
-  ).rejects.toMatchObject({ code: 'NOT_FOUND' })
+  ).rejects.toMatchObject({ code: 'VALIDATION_ERROR' })
   await write('cancelCustomerOrder', customer, { reason: '取消' }, order.id)
   engine.db.workers[0].dispatchEnabled = true
   await expect(engine.handle('workerGetSceneImage', request)).rejects.toMatchObject({

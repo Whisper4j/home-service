@@ -18,6 +18,17 @@ export async function inspectImage(file?: File): Promise<string> {
     (file.type === 'image/webp' && webp)
   ))
     fail('IMAGE_TYPE_UNSUPPORTED', '仅支持有效的 JPG、PNG 或 WebP 图片', 415)
+  if (typeof createImageBitmap === 'function') {
+    let bitmap: ImageBitmap
+    try {
+      bitmap = await createImageBitmap(file)
+    } catch {
+      fail('IMAGE_TYPE_UNSUPPORTED', '图片内容损坏或无法读取', 415)
+    }
+    const pixels = bitmap.width * bitmap.height
+    bitmap.close()
+    if (pixels > 40_000_000) fail('IMAGE_TOO_LARGE', '图片最多支持4000万像素', 413)
+  }
   return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)), (b) =>
     b.toString(16).padStart(2, '0'),
   ).join('')

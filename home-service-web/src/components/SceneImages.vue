@@ -7,6 +7,7 @@ const props = defineProps<{
   role: RolePath
   orderId?: string
   removable?: boolean
+  disabled?: boolean
 }>()
 const emit = defineEmits<{ remove: [id: string] }>()
 const urls = ref<Record<string, string>>({}),
@@ -87,6 +88,7 @@ onUnmounted(() => {
       </template>
       <button
         v-if="removable"
+        :disabled="disabled"
         type="button"
         :aria-label="`删除现场图片 ${index + 1}`"
         @click="remove(image.id)"
