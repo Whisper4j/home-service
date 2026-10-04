@@ -330,7 +330,7 @@ export interface paths {
         /**
          * 创建预约
          * @description 保存服务/地址/价格范围快照。待支付15分钟；支付前不占槽、不承诺人员可用性。不提供修改规格/地址/时间接口，取消重下。
-         *     校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循 Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。 新订单优惠报价必须为5元整数倍、不低于最低价且严格低于标准价；最低价非5元倍数则向上取首个合法报价，不存在合法报价时不可优惠预约。建议价取价格中点向下对齐5元，再限制在合法区间；不静默修正用户输入。历史订单遵守 offerPriceRule 快照。
+         *     校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循 Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。 新订单优惠报价必须为priceStep 的整数倍、不低于最低价且严格低于标准价；最低价非 priceStep 倍数则向上取首个合法报价，不存在合法报价时不可优惠预约。建议价取价格中点向下对齐 priceStep，再限制在合法区间；不静默修正用户输入。
          */
         post: operations["createOrder"];
         delete?: never;
@@ -1258,7 +1258,7 @@ export interface paths {
         };
         /**
          * 关键操作审计
-         * @description 校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。
+         * @description USER操作必须包含actorId；SYSTEM定时任务省略actorId。退款处理包含订单ID、退款类型与金额，不能伪造系统的用户身份。 targetType 与 targetId 唯一表达目标类型和标识。订单相关操作必须提供 orderId；按订单查询仅匹配 orderId，不猜测 targetId。 仅管理员可访问。
          */
         get: operations["listAudits"];
         put?: never;
@@ -1302,8 +1302,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * 获取固定客户端入口与正式 SKU 的可预约关系
-         * @description 始终返回全部固定入口。available=true 时提供 sku；缺失、未绑定、下架或业务性质/时长不符时 available=false，仅提供不可预约原因。价格和能力来自关联的同一个正式 SKU。
+         * 查询接口驱动的客户端服务入口
+         * @description 返回数据库配置的全部展示入口，按 groupSort、groupCode、sort、code 稳定排序。同组元数据必须一致。已绑定时返回完整 SKU 展示信息；未绑定省略 sku。available=true 必须有 sku；false 必须有 unavailableReason。不得寻找替代 SKU。
          */
         get: operations["listClientEntries"];
         put?: never;
@@ -1494,6 +1494,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/service-entries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 查询可绑定的服务入口及当前绑定
+         * @description 返回数据库配置的全部展示入口，按 groupSort、groupCode、sort、code 稳定排序。同组元数据必须一致。已绑定时返回完整 SKU 展示信息；未绑定省略 sku。available=true 必须有 sku；false 必须有 unavailableReason。不得寻找替代 SKU。 仅管理员可查询，返回未绑定及下架绑定以供编辑，不因入口不可预约隐藏选项。
+         */
+        get: operations["listAdminClientEntries"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1562,21 +1582,13 @@ export interface components {
             pageSize: number;
         };
         LoginDTO: {
-            /** @example customer */
             username: string;
-            /**
-             * Format: password
-             * @example Demo12345
-             */
+            /** Format: password */
             password: string;
         };
         RegisterDTO: {
-            /** @example customer */
             username: string;
-            /**
-             * Format: password
-             * @example Demo12345
-             */
+            /** Format: password */
             password: string;
             displayName: string;
             phone: string;
@@ -1687,7 +1699,7 @@ export interface components {
             name: string;
             description: string;
         };
-        /** @description 价格必须大于 0；支持优惠时 0 < 最低价 < 标准价。新订单须为5元整数倍；合法报价区间为空时不可优惠预约。不支持优惠时最低价等于标准价。维修不开放优惠。上下架和价格变更仅影响后续订单，历史订单保留报价规则快照。 */
+        /** @description 价格大于0；支持优惠时最低价小于标准价，优惠报价为 priceStep 整数倍且在最低价与标准价之间（不含标准价）。维修不开放优惠。不支持优惠时最低价等于标准价。目录修改不改写历史订单快照。 */
         SkuDTO: {
             itemId: components["schemas"]["Id"];
             name: string;
@@ -1702,11 +1714,8 @@ export interface components {
             included: string;
             excluded: string;
             customerSuppliesParts: boolean;
-            /**
-             * @description 显式绑定的客户端入口；同一入口最多绑定一个 SKU（含已下架 SKU），null 为不绑定。更新时省略保持已有绑定；解除须显式 null。日常套餐时长须匹配入口，清洁入口只能绑定 CLEANING，维修入口只能绑定 REPAIR。删除/下架后入口不可预约，不自动回退其他 SKU。
-             * @enum {string|null}
-             */
-            clientEntryCode?: "DAILY_2H" | "DAILY_3H" | "DAILY_4H" | "DEEP_60" | "DEEP_100" | "TOILET_UNBLOCK" | "TOILET_VALVE" | "TAP_REPAIR" | "TAP_REPLACE" | "BULB_REPLACE" | "LIGHT_REPLACE" | "FUSE_REPLACE" | "AC_CLEAN" | null;
+            /** @description 创建和更新均必传：字符串绑定指定入口；null 不绑定或解除绑定。同一入口最多绑定一个 SKU（含下架 SKU）；服务端校验入口存在及服务类型匹配。 */
+            clientEntryCode: string | null;
         };
         SkuVO: {
             id: components["schemas"]["Id"];
@@ -1726,42 +1735,23 @@ export interface components {
             included: string;
             excluded: string;
             customerSuppliesParts: boolean;
-            /**
-             * @description 显式绑定的客户端入口；同一入口最多绑定一个 SKU（含已下架 SKU），null 为不绑定。更新时省略保持已有绑定；解除须显式 null。日常套餐时长须匹配入口，清洁入口只能绑定 CLEANING，维修入口只能绑定 REPAIR。删除/下架后入口不可预约，不自动回退其他 SKU。
-             * @enum {string|null}
-             */
-            clientEntryCode?: "DAILY_2H" | "DAILY_3H" | "DAILY_4H" | "DEEP_60" | "DEEP_100" | "TOILET_UNBLOCK" | "TOILET_VALVE" | "TAP_REPAIR" | "TAP_REPLACE" | "BULB_REPLACE" | "LIGHT_REPLACE" | "FUSE_REPLACE" | "AC_CLEAN" | null;
-        };
-        CatalogQuery: {
-            /** @default 1 */
-            pageNo: number;
-            /** @default 20 */
-            pageSize: number;
-            keyword?: string;
-            categoryId?: components["schemas"]["Id"];
-            itemId?: components["schemas"]["Id"];
-            status?: components["schemas"]["CatalogStatus"];
+            /** @description 创建和更新均必传：字符串绑定指定入口；null 不绑定或解除绑定。同一入口最多绑定一个 SKU（含下架 SKU）；服务端校验入口存在及服务类型匹配。 */
+            clientEntryCode?: string | null;
         };
         WorkerDTO: {
             displayName: string;
             phone: string;
-            /** @enum {string} */
-            cityCode: "440100";
+            cityCode: string;
             skillIds: components["schemas"]["Id"][];
             dispatchEnabled: boolean;
         };
         WorkerCreateDTO: {
-            /** @example customer */
             username: string;
-            /**
-             * Format: password
-             * @example Demo12345
-             */
+            /** Format: password */
             password: string;
             displayName: string;
             phone: string;
-            /** @enum {string} */
-            cityCode: "440100";
+            cityCode: string;
             skillIds: components["schemas"]["Id"][];
             dispatchEnabled: boolean;
         };
@@ -1772,10 +1762,10 @@ export interface components {
             status: components["schemas"]["AccountStatus"];
             displayName: string;
             phone: string;
-            /** @enum {string} */
-            cityCode: "440100";
+            cityCode: string;
             skillIds: components["schemas"]["Id"][];
             dispatchEnabled: boolean;
+            cityName: string;
         };
         WorkerQuery: {
             /** @default 1 */
@@ -1864,8 +1854,16 @@ export interface components {
              * @enum {string}
              */
             priceStep: "5.00";
-            /** @enum {string} */
-            offerPriceRule: "MULTIPLE_OF_FIVE";
+            cityName: string;
+            /** @enum {integer} */
+            scheduleWindowDays: 30;
+            /** @enum {integer} */
+            leaveLeadHours: 2;
+            /** @enum {integer} */
+            sceneImageMaxCount: 3;
+            /** @enum {integer} */
+            sceneImageMaxBytes: 5242880;
+            sceneImageMimeTypes: ("image/jpeg" | "image/png" | "image/webp")[];
         };
         /** @description 当前仅预约窗口可配置，其他核心规则只读。只影响新预约，已创建订单的截止时间不改变。 */
         SettingsDTO: {
@@ -1873,7 +1871,7 @@ export interface components {
             latestDays: number;
         };
         /**
-         * @description 新订单优惠报价必须为5元整数倍、不低于最低价且严格低于标准价；最低价非5元倍数则向上取首个合法报价，不存在合法报价时不可优惠预约。建议价取价格中点向下对齐5元，再限制在合法区间；不静默修正用户输入。历史订单遵守 offerPriceRule 快照。
+         * @description 新订单优惠报价必须为priceStep 的整数倍、不低于最低价且严格低于标准价；最低价非 priceStep 倍数则向上取首个合法报价，不存在合法报价时不可优惠预约。建议价取价格中点向下对齐 priceStep，再限制在合法区间；不静默修正用户输入。
          * @example {
          *       "skuId": "301",
          *       "addressId": "401",
@@ -1948,9 +1946,10 @@ export interface components {
             contactName: string;
             /** @description 本次订单联系电话；与 contactName 同时提供或同时省略。仅写订单快照。 */
             contactPhone: string;
-            offerPriceRule: components["schemas"]["OfferPriceRule"];
             offerPublishedAt?: components["schemas"]["DateTime"];
             closedAt?: components["schemas"]["DateTime"];
+            /** @description 按请求角色及资源权限裁剪；无操作返回空数组。前端不得自行从状态推导权限。 */
+            allowedActions: components["schemas"]["OrderAction"][];
         };
         /** @description 日期按预约开始时间在 Asia/Shanghai 的自然日闭区间筛选；from 不得晚于 to。keyword 搜索订单 ID 或服务名称。 statuses 以逗号分隔传输，可筛选多个精确状态；与 status 互斥。仅用于页面浏览分组，不改变正式状态。 */
         OrderQuery: {
@@ -1993,9 +1992,10 @@ export interface components {
             customerSuppliesParts: boolean;
             sceneImages: components["schemas"]["SceneImageVO"][];
             publishedAt: components["schemas"]["DateTime"];
+            cityName: string;
         };
         /**
-         * @description 只有 WAITING_ACCEPTANCE 且未截止可调价。newPrice 与旧价相差非零 5 元整数倍且在订单快照范围内；涨价需 confirmSimulatedPayment=true。涨价补差或降价退款、报价历史、版本递增在同一事务提交，失败全部回滚。 调价遵守订单 offerPriceRule 与价格范围快照；报价不变不可提交。涨价须明确确认模拟补付，降价明确退款。冲突须保留原报价并展示最新报价，用户重新确认后发起新请求。
+         * @description 只有 WAITING_ACCEPTANCE 且未截止可调价。newPrice 与旧价相差非零 5 元整数倍且在订单快照范围内；涨价需 confirmSimulatedPayment=true。涨价补差或降价退款、报价历史、版本递增在同一事务提交，失败全部回滚。 调价遵守订单 价格范围 与价格范围快照；报价不变不可提交。涨价须明确确认模拟补付，降价明确退款。冲突须保留原报价并展示最新报价，用户重新确认后发起新请求。
          * @example {
          *       "newPrice": "135.00",
          *       "expectedPrice": "130.00",
@@ -2059,6 +2059,7 @@ export interface components {
             priceVersion: number;
             createdAt: components["schemas"]["DateTime"];
         };
+        /** @description ACTIVE：assignedAt 必需，不返回 releasedAt/releaseReason/finishedAt。RELEASED：取消释放时 releasedAt、releaseReason 必需，省略 finishedAt。FINISHED：履约完成确认后 finishedAt 必需，省略释放字段。时间和历史不可被后续目录或排班修改覆盖。 */
         AssignmentVO: {
             id: components["schemas"]["Id"];
             orderId: components["schemas"]["Id"];
@@ -2067,6 +2068,9 @@ export interface components {
             bookingType: components["schemas"]["BookingType"];
             status: components["schemas"]["AssignmentStatus"];
             assignedAt: components["schemas"]["DateTime"];
+            releasedAt?: components["schemas"]["DateTime"];
+            releaseReason?: string;
+            finishedAt?: components["schemas"]["DateTime"];
         };
         DispatchAttemptVO: {
             id: components["schemas"]["Id"];
@@ -2083,8 +2087,9 @@ export interface components {
             priceHistory: components["schemas"]["PriceHistoryVO"][];
             assignments: components["schemas"]["AssignmentVO"][];
             review?: components["schemas"]["ReviewVO"];
+            statusHistory: components["schemas"]["OrderStatusHistoryVO"][];
         };
-        /** @description USER操作必须包含actorId；SYSTEM定时任务省略actorId。退款处理包含订单ID、退款类型与金额，不能伪造系统的用户身份。 */
+        /** @description USER操作必须包含actorId；SYSTEM定时任务省略actorId。退款处理包含订单ID、退款类型与金额，不能伪造系统的用户身份。 targetType 与 targetId 唯一表达目标类型和标识。订单相关操作必须提供 orderId；按订单查询仅匹配 orderId，不猜测 targetId。 */
         AuditVO: {
             id: components["schemas"]["Id"];
             actorType: components["schemas"]["ActorType"];
@@ -2093,6 +2098,8 @@ export interface components {
             targetId: components["schemas"]["Id"];
             detail: string;
             createdAt: components["schemas"]["DateTime"];
+            targetType: components["schemas"]["AuditTargetType"];
+            orderId?: components["schemas"]["Id"];
         };
         RecordQuery: {
             /** @default 1 */
@@ -2419,24 +2426,22 @@ export interface components {
             message: string;
             data: components["schemas"]["AuditPageDTO"];
         };
-        /**
-         * @description 固定客户端入口标识，不能从分类名称、列表顺序或 SKU 名称推断。增加后台分类不会自动增加客户端入口。
-         * @enum {string}
-         */
-        ClientEntryCode: "DAILY_2H" | "DAILY_3H" | "DAILY_4H" | "DEEP_60" | "DEEP_100" | "TOILET_UNBLOCK" | "TOILET_VALVE" | "TAP_REPAIR" | "TAP_REPLACE" | "BULB_REPLACE" | "LIGHT_REPLACE" | "FUSE_REPLACE" | "AC_CLEAN";
-        /**
-         * @description 始终返回全部固定入口。available=true 时提供 sku；缺失、未绑定、下架或业务性质/时长不符时 available=false，仅提供不可预约原因。价格和能力来自关联的同一个正式 SKU。
-         * @example {
-         *       "code": "DAILY_2H",
-         *       "available": false,
-         *       "unavailableReason": "当前关联服务已下架，暂不可预约"
-         *     }
-         */
+        /** @description 数据库维护的稳定入口标识；客户端不得枚举或推断业务含义。 */
+        ClientEntryCode: string;
+        /** @description 返回数据库配置的全部展示入口，按 groupSort、groupCode、sort、code 稳定排序。同组元数据必须一致。已绑定时返回完整 SKU 展示信息；未绑定省略 sku。available=true 必须有 sku；false 必须有 unavailableReason。不得寻找替代 SKU。 */
         ClientEntryVO: {
             code: components["schemas"]["ClientEntryCode"];
+            serviceKind: components["schemas"]["ServiceKind"];
+            groupCode: string;
+            groupName: string;
+            groupDescription: string;
+            groupSort: number;
+            name: string;
+            description: string;
+            sort: number;
             available: boolean;
-            sku?: components["schemas"]["SkuVO"];
             unavailableReason?: string;
+            sku?: components["schemas"]["SkuVO"];
         };
         ClientEntryListResponse: {
             /** @enum {string} */
@@ -2481,11 +2486,6 @@ export interface components {
         OrderSceneImageQuery: {
             orderId: components["schemas"]["Id"];
         };
-        /**
-         * @description 新订单 MULTIPLE_OF_FIVE：金额为5元整数倍，向上取不低于最低价的首个合法值，且严格低于标准价。旧订单 MINIMUM_ANCHORED：以创建时最低价为锚点每5元递增。规则与价格范围随订单永久快照，不随配置迁移。
-         * @enum {string}
-         */
-        OfferPriceRule: "MULTIPLE_OF_FIVE" | "MINIMUM_ANCHORED";
         WorkerContactDTO: {
             phone: string;
         };
@@ -2536,12 +2536,12 @@ export interface components {
             status: components["schemas"]["AccountStatus"];
             displayName: string;
             phone: string;
-            /** @enum {string} */
-            cityCode: "440100";
+            cityCode: string;
             skillIds: components["schemas"]["Id"][];
             dispatchEnabled: boolean;
             /** @description 当前人员实际拥有的技能详情，与skillIds逐一对应；只读，由平台维护。 */
             skills: components["schemas"]["SkillVO"][];
+            cityName: string;
         };
         WorkerProfileVOResponse: {
             /** @enum {string} */
@@ -2564,6 +2564,83 @@ export interface components {
             latitude: number | null;
             isDefault: boolean;
         };
+        /** @description 按 createdAt、数值ID升序返回。创建时省略 fromStatus；SYSTEM 不提供 actorId/actorRole。客户及人员不返回内部账号ID，actorRole 仅用于解释操作来源；原因经过权限脱敏。管理员可查看审计所需的操作者ID。状态写入与历史记录同事务完成。 */
+        OrderStatusHistoryVO: {
+            id: components["schemas"]["Id"];
+            orderId: components["schemas"]["Id"];
+            fromStatus?: components["schemas"]["OrderStatus"];
+            toStatus: components["schemas"]["OrderStatus"];
+            actorType: components["schemas"]["ActorType"];
+            actorId?: components["schemas"]["Id"];
+            actorRole?: components["schemas"]["Role"];
+            reason?: string;
+            createdAt: components["schemas"]["DateTime"];
+        };
+        /** @enum {string} */
+        AuditTargetType: "ACCOUNT" | "WORKER" | "CATEGORY" | "SERVICE_ITEM" | "SKU" | "SKILL" | "ORDER" | "SETTINGS" | "SCENE_IMAGE";
+        CategoryQuery: {
+            /** @default 1 */
+            pageNo: number;
+            /** @default 20 */
+            pageSize: number;
+            keyword?: string;
+            status?: components["schemas"]["CatalogStatus"];
+        };
+        PublicCategoryQuery: {
+            /** @default 1 */
+            pageNo: number;
+            /** @default 20 */
+            pageSize: number;
+            keyword?: string;
+        };
+        ServiceItemQuery: {
+            /** @default 1 */
+            pageNo: number;
+            /** @default 20 */
+            pageSize: number;
+            keyword?: string;
+            categoryId?: components["schemas"]["Id"];
+            status?: components["schemas"]["CatalogStatus"];
+        };
+        PublicServiceItemQuery: {
+            /** @default 1 */
+            pageNo: number;
+            /** @default 20 */
+            pageSize: number;
+            keyword?: string;
+            categoryId?: components["schemas"]["Id"];
+        };
+        SkuQuery: {
+            /** @default 1 */
+            pageNo: number;
+            /** @default 20 */
+            pageSize: number;
+            keyword?: string;
+            categoryId?: components["schemas"]["Id"];
+            itemId?: components["schemas"]["Id"];
+            status?: components["schemas"]["CatalogStatus"];
+        };
+        PublicSkuQuery: {
+            /** @default 1 */
+            pageNo: number;
+            /** @default 20 */
+            pageSize: number;
+            keyword?: string;
+            categoryId?: components["schemas"]["Id"];
+            itemId?: components["schemas"]["Id"];
+        };
+        SkillQuery: {
+            /** @default 1 */
+            pageNo: number;
+            /** @default 20 */
+            pageSize: number;
+            keyword?: string;
+        };
+        /**
+         * @description 服务端基于当前用户、来源状态、截止时间、顺序履约等规则计算；仅是当前提示，提交时仍重新校验并发及权限。
+         * @enum {string}
+         */
+        OrderAction: "PAY" | "CANCEL" | "CHANGE_OFFER" | "VIEW_START_CODE" | "DEPART" | "ARRIVE" | "START" | "FINISH" | "CONFIRM" | "REVIEW";
     };
     responses: {
         /** @description 请求格式或参数无效 */
@@ -2932,9 +3009,6 @@ export interface operations {
                 pageNo?: number;
                 pageSize?: number;
                 keyword?: string;
-                categoryId?: components["schemas"]["Id"];
-                itemId?: components["schemas"]["Id"];
-                status?: components["schemas"]["CatalogStatus"];
             };
             header?: never;
             path?: never;
@@ -2967,8 +3041,6 @@ export interface operations {
                 pageSize?: number;
                 keyword?: string;
                 categoryId?: components["schemas"]["Id"];
-                itemId?: components["schemas"]["Id"];
-                status?: components["schemas"]["CatalogStatus"];
             };
             header?: never;
             path?: never;
@@ -3002,7 +3074,6 @@ export interface operations {
                 keyword?: string;
                 categoryId?: components["schemas"]["Id"];
                 itemId?: components["schemas"]["Id"];
-                status?: components["schemas"]["CatalogStatus"];
             };
             header?: never;
             path?: never;
@@ -4174,8 +4245,6 @@ export interface operations {
                 pageNo?: number;
                 pageSize?: number;
                 keyword?: string;
-                categoryId?: components["schemas"]["Id"];
-                itemId?: components["schemas"]["Id"];
                 status?: components["schemas"]["CatalogStatus"];
             };
             header?: never;
@@ -4320,7 +4389,6 @@ export interface operations {
                 pageSize?: number;
                 keyword?: string;
                 categoryId?: components["schemas"]["Id"];
-                itemId?: components["schemas"]["Id"];
                 status?: components["schemas"]["CatalogStatus"];
             };
             header?: never;
@@ -4609,9 +4677,6 @@ export interface operations {
                 pageNo?: number;
                 pageSize?: number;
                 keyword?: string;
-                categoryId?: components["schemas"]["Id"];
-                itemId?: components["schemas"]["Id"];
-                status?: components["schemas"]["CatalogStatus"];
             };
             header?: never;
             path?: never;
@@ -5523,6 +5588,33 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["WorkerCalendarVOResponse"];
+                };
+            };
+            400: components["responses"]["Error400"];
+            401: components["responses"]["Error401"];
+            403: components["responses"]["Error403"];
+            404: components["responses"]["Error404"];
+            409: components["responses"]["Error409"];
+            422: components["responses"]["Error422"];
+            500: components["responses"]["Error500"];
+        };
+    };
+    listAdminClientEntries: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClientEntryListResponse"];
                 };
             };
             400: components["responses"]["Error400"];

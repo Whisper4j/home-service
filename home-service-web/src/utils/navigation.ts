@@ -1,17 +1,16 @@
 import type { RouteLocationNormalizedLoaded } from 'vue-router'
-import { clientEntries } from './clientEntries'
 import { sessions } from '../stores/session'
 function sourceKey(id: string) {
   return `booking.source.${sessions.customer?.account.id}.${id}`
 }
 export function rememberBookingSource(id: string, code: unknown) {
-  if (typeof code === 'string' && clientEntries.some((entry) => entry.code === code))
+  if (typeof code === 'string' && /^[A-Z][A-Z0-9_]{0,63}$/.test(code))
     sessionStorage.setItem(sourceKey(id), code)
 }
 export function bookingSource(id: string): string {
-  const entry = clientEntries.find((entry) => entry.code === sessionStorage.getItem(sourceKey(id)))
-  return entry
-    ? `/customer/${['daily', 'deep'].includes(entry.group) ? 'cleaning' : 'repair'}/${entry.group}`
+  const group = sessionStorage.getItem(sourceKey(id))
+  return group && /^[A-Z][A-Z0-9_]{0,63}$/.test(group)
+    ? `/customer/groups/${group}`
     : '/customer/home'
 }
 export function parentRoute(route: RouteLocationNormalizedLoaded): string {
@@ -26,18 +25,16 @@ export function parentRoute(route: RouteLocationNormalizedLoaded): string {
     target !== route.fullPath
   )
     return target
-  if (path.startsWith('/customer/cleaning/')) return '/customer/home'
-  if (path.startsWith('/customer/repair/')) return '/customer/repair'
-  if (path === '/customer/repair') return '/customer/home'
+  if (path.startsWith('/customer/groups/')) return '/customer/home'
   if (path.startsWith('/customer/services/')) {
-    const entry = clientEntries.find((e) => e.code === route.params.code)
-    return entry
-      ? `/customer/${['daily', 'deep'].includes(entry.group) ? 'cleaning' : 'repair'}/${entry.group}`
+    const group = route.query.group
+    return typeof group === 'string' && /^[A-Z][A-Z0-9_]{0,63}$/.test(group)
+      ? `/customer/groups/${group}`
       : '/customer/home'
   }
   if (path.startsWith('/customer/booking/'))
     return typeof route.query.entry === 'string'
-      ? `/customer/services/${route.query.entry}`
+      ? `/customer/services/${encodeURIComponent(route.query.entry)}${typeof route.query.group === 'string' ? `?group=${encodeURIComponent(route.query.group)}` : ''}`
       : '/customer/home'
   if (path.startsWith('/customer/pay/')) return `/customer/orders/${route.params.id}`
   if (/\/(customer|worker)\/orders\//.test(path)) return `/${role}/orders`

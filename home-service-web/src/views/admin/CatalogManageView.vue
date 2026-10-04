@@ -9,7 +9,8 @@ import { useRefresh } from '../../composables/useRefresh'
 import { label } from '../../utils/labels'
 import Feedback from '../../components/Feedback.vue'
 import Pagination from '../../components/Pagination.vue'
-import { clientEntries } from '../../utils/clientEntries'
+const clientEntries = ref<Schema['ClientEntryVO'][]>([])
+const rules = ref<Schema['BookingRulesVO']>()
 type Row = Schema['CategoryVO'] | Schema['ServiceItemVO'] | Schema['SkuVO'] | Schema['SkillVO']
 type Resource = 'categories' | 'service-items' | 'skus' | 'skills'
 const route = useRoute(),
@@ -47,13 +48,13 @@ const initialSku = (): Schema['SkuDTO'] => ({
   clientEntryCode: null,
   itemId: '',
   name: '',
-  standardPrice: '160.00',
-  minimumOfferPrice: '130.00',
-  durationMinutes: 120,
-  unit: '次',
+  standardPrice: '',
+  minimumOfferPrice: '',
+  durationMinutes: 0,
+  unit: '',
   skillIds: [],
   status: 'ON_SHELF',
-  supportsOffer: true,
+  supportsOffer: false,
   description: '',
   included: '',
   excluded: '',
@@ -80,11 +81,15 @@ async function refreshData() {
   rows.value = page.list
   total.value = page.total
   pages.value = page.pages
-  const [c, i, s] = await Promise.all([
+  const [c, i, s, e, config] = await Promise.all([
     allPages((n) => request('listAdminCategory', { query: { pageNo: n, pageSize: 100 } })),
     allPages((n) => request('listAdminServiceItem', { query: { pageNo: n, pageSize: 100 } })),
     allPages((n) => request('listAdminSkill', { query: { pageNo: n, pageSize: 100 } })),
+    request('listAdminClientEntries'),
+    request('getBookingRules'),
   ])
+  clientEntries.value = e
+  rules.value = config
   categories.value = c
   items.value = i
   skills.value = s
@@ -135,6 +140,7 @@ function open(row?: Row) {
     if (row)
       for (const key of Object.keys(initialSku()) as (keyof Schema['SkuDTO'])[])
         Object.assign(sku, { [key]: (row as Schema['SkuVO'])[key] })
+    sku.clientEntryCode ??= null
     sku.skillIds = [...sku.skillIds]
   }
 }
@@ -167,7 +173,11 @@ function save() {
         case 'skus':
           await request(editing.value ? 'updateAdminSku' : 'createAdminSku', {
             ...common,
-            body: { ...sku, skillIds: [...sku.skillIds] },
+            body: {
+              ...sku,
+              clientEntryCode: sku.clientEntryCode ?? null,
+              skillIds: [...sku.skillIds],
+            },
           })
           break
       }
@@ -297,11 +307,11 @@ function resizePage(value: number) {
       </template>
       <template v-if="resource === 'skus'">
         <label>
-          客户端固定入口绑定
+          客户端入口绑定
           <select name="clientEntryCode" v-model="sku.clientEntryCode">
             <option :value="null">不绑定客户端入口</option>
             <option v-for="entry in clientEntries" :key="entry.code" :value="entry.code">
-              {{ entry.title }}（{{ entry.code }}）
+              {{ entry.name }}（{{ entry.code }}）
             </option>
           </select>
         </label>
@@ -345,9 +355,9 @@ function resizePage(value: number) {
               v-model.number="sku.durationMinutes"
               required
               type="number"
-              min="30"
+              :min="rules?.slotMinutes"
               max="720"
-              step="30"
+              :step="rules?.slotMinutes"
             />
           </label>
           <label>

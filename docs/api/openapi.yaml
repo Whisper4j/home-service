@@ -367,22 +367,7 @@ paths:
             type: string
             minLength: 1
             maxLength: 100
-        - name: categoryId
-          in: query
-          required: false
-          schema:
-            $ref: "#/components/schemas/Id"
-        - name: itemId
-          in: query
-          required: false
-          schema:
-            $ref: "#/components/schemas/Id"
-        - name: status
-          in: query
-          required: false
-          schema:
-            $ref: "#/components/schemas/CatalogStatus"
-      x-query-schema: CatalogQuery
+      x-query-schema: PublicCategoryQuery
       responses:
         "200":
           description: 成功
@@ -443,17 +428,7 @@ paths:
           required: false
           schema:
             $ref: "#/components/schemas/Id"
-        - name: itemId
-          in: query
-          required: false
-          schema:
-            $ref: "#/components/schemas/Id"
-        - name: status
-          in: query
-          required: false
-          schema:
-            $ref: "#/components/schemas/CatalogStatus"
-      x-query-schema: CatalogQuery
+      x-query-schema: PublicServiceItemQuery
       responses:
         "200":
           description: 成功
@@ -519,12 +494,7 @@ paths:
           required: false
           schema:
             $ref: "#/components/schemas/Id"
-        - name: status
-          in: query
-          required: false
-          schema:
-            $ref: "#/components/schemas/CatalogStatus"
-      x-query-schema: CatalogQuery
+      x-query-schema: PublicSkuQuery
       responses:
         "200":
           description: 成功
@@ -740,9 +710,12 @@ paths:
         - customer
       operationId: createOrder
       summary: 创建预约
-      description: |-
+      description: >-
         保存服务/地址/价格范围快照。待支付15分钟；支付前不占槽、不承诺人员可用性。不提供修改规格/地址/时间接口，取消重下。
-        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循 Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。 新订单优惠报价必须为5元整数倍、不低于最低价且严格低于标准价；最低价非5元倍数则向上取首个合法报价，不存在合法报价时不可优惠预约。建议价取价格中点向下对齐5元，再限制在合法区间；不静默修正用户输入。历史订单遵守 offerPriceRule 快照。
+
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循 Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。
+        新订单优惠报价必须为priceStep 的整数倍、不低于最低价且严格低于标准价；最低价非 priceStep
+        倍数则向上取首个合法报价，不存在合法报价时不可优惠预约。建议价取价格中点向下对齐 priceStep，再限制在合法区间；不静默修正用户输入。
       parameters:
         - $ref: "#/components/parameters/IdempotencyKey"
       requestBody:
@@ -829,7 +802,7 @@ paths:
           required: false
           style: form
           explode: false
-          schema: &a1
+          schema:
             type: array
             items:
               $ref: "#/components/schemas/OrderStatus"
@@ -988,7 +961,13 @@ paths:
           required: false
           style: form
           explode: false
-          schema: *a1
+          schema:
+            type: array
+            items:
+              $ref: "#/components/schemas/OrderStatus"
+            minItems: 1
+            maxItems: 10
+            uniqueItems: true
       x-query-schema: OrderQuery
       responses:
         "200":
@@ -1141,7 +1120,13 @@ paths:
           required: false
           style: form
           explode: false
-          schema: *a1
+          schema:
+            type: array
+            items:
+              $ref: "#/components/schemas/OrderStatus"
+            minItems: 1
+            maxItems: 10
+            uniqueItems: true
       x-query-schema: OrderQuery
       responses:
         "200":
@@ -2032,22 +2017,12 @@ paths:
             type: string
             minLength: 1
             maxLength: 100
-        - name: categoryId
-          in: query
-          required: false
-          schema:
-            $ref: "#/components/schemas/Id"
-        - name: itemId
-          in: query
-          required: false
-          schema:
-            $ref: "#/components/schemas/Id"
         - name: status
           in: query
           required: false
           schema:
             $ref: "#/components/schemas/CatalogStatus"
-      x-query-schema: CatalogQuery
+      x-query-schema: CategoryQuery
       responses:
         "200":
           description: 成功
@@ -2223,17 +2198,12 @@ paths:
           required: false
           schema:
             $ref: "#/components/schemas/Id"
-        - name: itemId
-          in: query
-          required: false
-          schema:
-            $ref: "#/components/schemas/Id"
         - name: status
           in: query
           required: false
           schema:
             $ref: "#/components/schemas/CatalogStatus"
-      x-query-schema: CatalogQuery
+      x-query-schema: ServiceItemQuery
       responses:
         "200":
           description: 成功
@@ -2419,7 +2389,7 @@ paths:
           required: false
           schema:
             $ref: "#/components/schemas/CatalogStatus"
-      x-query-schema: CatalogQuery
+      x-query-schema: SkuQuery
       responses:
         "200":
           description: 成功
@@ -2590,22 +2560,7 @@ paths:
             type: string
             minLength: 1
             maxLength: 100
-        - name: categoryId
-          in: query
-          required: false
-          schema:
-            $ref: "#/components/schemas/Id"
-        - name: itemId
-          in: query
-          required: false
-          schema:
-            $ref: "#/components/schemas/Id"
-        - name: status
-          in: query
-          required: false
-          schema:
-            $ref: "#/components/schemas/CatalogStatus"
-      x-query-schema: CatalogQuery
+      x-query-schema: SkillQuery
       responses:
         "200":
           description: 成功
@@ -3250,9 +3205,8 @@ paths:
         - admin
       operationId: listAudits
       summary: 关键操作审计
-      description: |-
-        
-        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。
+      description: USER操作必须包含actorId；SYSTEM定时任务省略actorId。退款处理包含订单ID、退款类型与金额，不能伪造系统的用户身份。 targetType 与
+        targetId 唯一表达目标类型和标识。订单相关操作必须提供 orderId；按订单查询仅匹配 orderId，不猜测 targetId。 仅管理员可访问。
       parameters:
         - name: pageNo
           in: query
@@ -3376,9 +3330,9 @@ paths:
       tags:
         - customer
       operationId: listClientEntries
-      summary: 获取固定客户端入口与正式 SKU 的可预约关系
-      description: 始终返回全部固定入口。available=true 时提供 sku；缺失、未绑定、下架或业务性质/时长不符时
-        available=false，仅提供不可预约原因。价格和能力来自关联的同一个正式 SKU。
+      summary: 查询接口驱动的客户端服务入口
+      description: 返回数据库配置的全部展示入口，按 groupSort、groupCode、sort、code 稳定排序。同组元数据必须一致。已绑定时返回完整 SKU 展示信息；未绑定省略
+        sku。available=true 必须有 sku；false 必须有 unavailableReason。不得寻找替代 SKU。
       responses:
         "200":
           description: 成功
@@ -3813,6 +3767,36 @@ paths:
           schema: &a7
             type: string
             pattern: ^[0-9]{4}-(0[1-9]|1[0-2])$
+  /admin/service-entries:
+    get:
+      tags:
+        - admin
+      operationId: listAdminClientEntries
+      summary: 查询可绑定的服务入口及当前绑定
+      description: 返回数据库配置的全部展示入口，按 groupSort、groupCode、sort、code 稳定排序。同组元数据必须一致。已绑定时返回完整 SKU 展示信息；未绑定省略
+        sku。available=true 必须有 sku；false 必须有 unavailableReason。不得寻找替代 SKU。
+        仅管理员可查询，返回未绑定及下架绑定以供编辑，不因入口不可预约隐藏选项。
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClientEntryListResponse"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
 components:
   securitySchemes:
     bearerAuth:
@@ -4135,13 +4119,11 @@ components:
           minLength: 1
           maxLength: 32
           pattern: ^[A-Za-z][A-Za-z0-9_]{2,31}$
-          example: customer
         password:
           type: string
           minLength: 8
           maxLength: 72
           format: password
-          example: Demo12345
     RegisterDTO:
       type: object
       additionalProperties: false
@@ -4156,13 +4138,11 @@ components:
           minLength: 1
           maxLength: 32
           pattern: ^[A-Za-z][A-Za-z0-9_]{2,31}$
-          example: customer
         password:
           type: string
           minLength: 8
           maxLength: 72
           format: password
-          example: Demo12345
         displayName:
           type: string
           minLength: 1
@@ -4564,8 +4544,8 @@ components:
     SkuDTO:
       type: object
       additionalProperties: false
-      description: 价格必须大于 0；支持优惠时 0 < 最低价 <
-        标准价。新订单须为5元整数倍；合法报价区间为空时不可优惠预约。不支持优惠时最低价等于标准价。维修不开放优惠。上下架和价格变更仅影响后续订单，历史订单保留报价规则快照。
+      description: 价格大于0；支持优惠时最低价小于标准价，优惠报价为 priceStep
+        整数倍且在最低价与标准价之间（不含标准价）。维修不开放优惠。不支持优惠时最低价等于标准价。目录修改不改写历史订单快照。
       required:
         - itemId
         - name
@@ -4580,6 +4560,7 @@ components:
         - included
         - excluded
         - customerSuppliesParts
+        - clientEntryCode
       properties:
         itemId:
           $ref: "#/components/schemas/Id"
@@ -4624,27 +4605,13 @@ components:
           maxLength: 1000
         customerSuppliesParts:
           type: boolean
-        clientEntryCode: &a2
+        clientEntryCode:
           type: string
+          minLength: 1
+          maxLength: 64
+          pattern: ^[A-Z][A-Z0-9_]{0,63}$
           nullable: true
-          enum:
-            - DAILY_2H
-            - DAILY_3H
-            - DAILY_4H
-            - DEEP_60
-            - DEEP_100
-            - TOILET_UNBLOCK
-            - TOILET_VALVE
-            - TAP_REPAIR
-            - TAP_REPLACE
-            - BULB_REPLACE
-            - LIGHT_REPLACE
-            - FUSE_REPLACE
-            - AC_CLEAN
-            - null
-          description: 显式绑定的客户端入口；同一入口最多绑定一个 SKU（含已下架 SKU），null 为不绑定。更新时省略保持已有绑定；解除须显式
-            null。日常套餐时长须匹配入口，清洁入口只能绑定 CLEANING，维修入口只能绑定
-            REPAIR。删除/下架后入口不可预约，不自动回退其他 SKU。
+          description: 创建和更新均必传：字符串绑定指定入口；null 不绑定或解除绑定。同一入口最多绑定一个 SKU（含下架 SKU）；服务端校验入口存在及服务类型匹配。
     SkuVO:
       type: object
       additionalProperties: false
@@ -4722,31 +4689,13 @@ components:
           maxLength: 1000
         customerSuppliesParts:
           type: boolean
-        clientEntryCode: *a2
-    CatalogQuery:
-      type: object
-      additionalProperties: false
-      properties:
-        pageNo:
-          type: integer
-          minimum: 1
-          maximum: 2147483647
-          default: 1
-        pageSize:
-          type: integer
-          minimum: 1
-          maximum: 100
-          default: 20
-        keyword:
+        clientEntryCode:
           type: string
           minLength: 1
-          maxLength: 100
-        categoryId:
-          $ref: "#/components/schemas/Id"
-        itemId:
-          $ref: "#/components/schemas/Id"
-        status:
-          $ref: "#/components/schemas/CatalogStatus"
+          maxLength: 64
+          pattern: ^[A-Z][A-Z0-9_]{0,63}$
+          nullable: true
+          description: 创建和更新均必传：字符串绑定指定入口；null 不绑定或解除绑定。同一入口最多绑定一个 SKU（含下架 SKU）；服务端校验入口存在及服务类型匹配。
     WorkerDTO:
       type: object
       additionalProperties: false
@@ -4770,8 +4719,6 @@ components:
           type: string
           minLength: 1
           maxLength: 6
-          enum:
-            - "440100"
         skillIds:
           type: array
           items:
@@ -4797,13 +4744,11 @@ components:
           minLength: 1
           maxLength: 32
           pattern: ^[A-Za-z][A-Za-z0-9_]{2,31}$
-          example: customer
         password:
           type: string
           minLength: 8
           maxLength: 72
           format: password
-          example: Demo12345
         displayName:
           type: string
           minLength: 1
@@ -4817,8 +4762,6 @@ components:
           type: string
           minLength: 1
           maxLength: 6
-          enum:
-            - "440100"
         skillIds:
           type: array
           items:
@@ -4840,6 +4783,7 @@ components:
         - cityCode
         - skillIds
         - dispatchEnabled
+        - cityName
       properties:
         id:
           $ref: "#/components/schemas/Id"
@@ -4855,7 +4799,7 @@ components:
           type: string
           minLength: 1
           maxLength: 40
-        phone: &a6
+        phone:
           type: string
           minLength: 1
           maxLength: 11
@@ -4864,8 +4808,6 @@ components:
           type: string
           minLength: 1
           maxLength: 6
-          enum:
-            - "440100"
         skillIds:
           type: array
           items:
@@ -4874,6 +4816,10 @@ components:
           uniqueItems: true
         dispatchEnabled:
           type: boolean
+        cityName:
+          type: string
+          minLength: 1
+          maxLength: 40
     WorkerQuery:
       type: object
       additionalProperties: false
@@ -5047,7 +4993,12 @@ components:
         - offerBufferMinutes
         - autoConfirmHours
         - priceStep
-        - offerPriceRule
+        - cityName
+        - scheduleWindowDays
+        - leaveLeadHours
+        - sceneImageMaxCount
+        - sceneImageMaxBytes
+        - sceneImageMimeTypes
       properties:
         cityCode:
           type: string
@@ -5114,10 +5065,35 @@ components:
           description: 人民币元，两位小数字符串。服务端 BigDecimal/decimal；前端比较和计算使用整数分。
           enum:
             - "5.00"
-        offerPriceRule:
+        cityName:
           type: string
+          minLength: 1
+          maxLength: 40
+        scheduleWindowDays:
+          type: integer
           enum:
-            - MULTIPLE_OF_FIVE
+            - 30
+        leaveLeadHours:
+          type: integer
+          enum:
+            - 2
+        sceneImageMaxCount:
+          type: integer
+          enum:
+            - 3
+        sceneImageMaxBytes:
+          type: integer
+          enum:
+            - 5242880
+        sceneImageMimeTypes:
+          type: array
+          minItems: 1
+          items:
+            type: string
+            enum:
+              - image/jpeg
+              - image/png
+              - image/webp
     SettingsDTO:
       type: object
       additionalProperties: false
@@ -5137,8 +5113,8 @@ components:
     CreateOrderDTO:
       type: object
       additionalProperties: false
-      description: 新订单优惠报价必须为5元整数倍、不低于最低价且严格低于标准价；最低价非5元倍数则向上取首个合法报价，不存在合法报价时不可优惠预约。建议价取价格中点向下对齐5元，再限制在合法区间；不静默修正用户输入。历史订单遵守
-        offerPriceRule 快照。
+      description: 新订单优惠报价必须为priceStep 的整数倍、不低于最低价且严格低于标准价；最低价非 priceStep
+        倍数则向上取首个合法报价，不存在合法报价时不可优惠预约。建议价取价格中点向下对齐 priceStep，再限制在合法区间；不静默修正用户输入。
       required:
         - skuId
         - addressId
@@ -5159,12 +5135,12 @@ components:
           type: string
           minLength: 0
           maxLength: 300
-        contactName: &a3
+        contactName:
           type: string
           minLength: 1
           maxLength: 40
           description: 本次订单联系人；省略则取所选地址联系人，仅写订单快照。
-        contactPhone: &a4
+        contactPhone:
           type: string
           minLength: 1
           maxLength: 11
@@ -5251,11 +5227,9 @@ components:
       type: object
       additionalProperties: false
       description: 客户仅自己的订单；人员仅分配给自己的订单；管理员可查看全部。未发生的可选时间/人员/成交字段省略，不传 null。已支付订单禁止修改
-        SKU、地址和预约时间。开始码单独返回，不泄漏给人员。 contactName/contactPhone
-        为本次履约使用的订单联系人，address 内联系人为创建时地址簿快照，两者职责独立。sceneImages
-        为客户自愿提交的现场图片，附件不可替换或删除历史关联。 offerPublishedAt
-        为优惠支付成功进入抢单池的首次发布时间。closedAt 为完成确认（含自动完成）或取消的实际时间；终态必须返回，用于历史排序及完成统计。预约
-        endTime 不等同于完成时间。
+        SKU、地址和预约时间。开始码单独返回，不泄漏给人员。 contactName/contactPhone 为本次履约使用的订单联系人，address
+        内联系人为创建时地址簿快照，两者职责独立。sceneImages 为客户自愿提交的现场图片，附件不可替换或删除历史关联。 offerPublishedAt
+        为优惠支付成功进入抢单池的首次发布时间。closedAt 为完成确认（含自动完成）或取消的实际时间；终态必须返回，用于历史排序及完成统计。预约 endTime 不等同于完成时间。
       required:
         - id
         - customerId
@@ -5278,7 +5252,7 @@ components:
         - sceneImages
         - contactName
         - contactPhone
-        - offerPriceRule
+        - allowedActions
       properties:
         id:
           $ref: "#/components/schemas/Id"
@@ -5343,14 +5317,27 @@ components:
           items:
             $ref: "#/components/schemas/SceneImageVO"
           maxItems: 3
-        contactName: *a3
-        contactPhone: *a4
-        offerPriceRule:
-          $ref: "#/components/schemas/OfferPriceRule"
+        contactName:
+          type: string
+          minLength: 1
+          maxLength: 40
+          description: 本次订单联系人；省略则取所选地址联系人，仅写订单快照。
+        contactPhone:
+          type: string
+          minLength: 1
+          maxLength: 11
+          pattern: ^1[0-9]{10}$
+          description: 本次订单联系电话；与 contactName 同时提供或同时省略。仅写订单快照。
         offerPublishedAt:
           $ref: "#/components/schemas/DateTime"
         closedAt:
           $ref: "#/components/schemas/DateTime"
+        allowedActions:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrderAction"
+          uniqueItems: true
+          description: 按请求角色及资源权限裁剪；无操作返回空数组。前端不得自行从状态推导权限。
     OrderQuery:
       type: object
       additionalProperties: false
@@ -5379,7 +5366,13 @@ components:
           $ref: "#/components/schemas/LocalDate"
         to:
           $ref: "#/components/schemas/LocalDate"
-        statuses: *a1
+        statuses:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrderStatus"
+          minItems: 1
+          maxItems: 10
+          uniqueItems: true
     OfferQuery:
       type: object
       additionalProperties: false
@@ -5425,6 +5418,7 @@ components:
         - customerSuppliesParts
         - sceneImages
         - publishedAt
+        - cityName
       properties:
         id:
           $ref: "#/components/schemas/Id"
@@ -5479,12 +5473,15 @@ components:
           maxItems: 3
         publishedAt:
           $ref: "#/components/schemas/DateTime"
+        cityName:
+          type: string
+          minLength: 1
+          maxLength: 40
     ChangeOfferDTO:
       type: object
       additionalProperties: false
       description: 只有 WAITING_ACCEPTANCE 且未截止可调价。newPrice 与旧价相差非零 5 元整数倍且在订单快照范围内；涨价需
-        confirmSimulatedPayment=true。涨价补差或降价退款、报价历史、版本递增在同一事务提交，失败全部回滚。 调价遵守订单
-        offerPriceRule
+        confirmSimulatedPayment=true。涨价补差或降价退款、报价历史、版本递增在同一事务提交，失败全部回滚。 调价遵守订单 价格范围
         与价格范围快照；报价不变不可提交。涨价须明确确认模拟补付，降价明确退款。冲突须保留原报价并展示最新报价，用户重新确认后发起新请求。
       required:
         - newPrice
@@ -5689,6 +5686,17 @@ components:
           $ref: "#/components/schemas/AssignmentStatus"
         assignedAt:
           $ref: "#/components/schemas/DateTime"
+        releasedAt:
+          $ref: "#/components/schemas/DateTime"
+        releaseReason:
+          type: string
+          minLength: 1
+          maxLength: 300
+        finishedAt:
+          $ref: "#/components/schemas/DateTime"
+      description: ACTIVE：assignedAt 必需，不返回 releasedAt/releaseReason/finishedAt。RELEASED：取消释放时
+        releasedAt、releaseReason 必需，省略 finishedAt。FINISHED：履约完成确认后 finishedAt
+        必需，省略释放字段。时间和历史不可被后续目录或排班修改覆盖。
     DispatchAttemptVO:
       type: object
       additionalProperties: false
@@ -5728,6 +5736,7 @@ components:
         - payments
         - priceHistory
         - assignments
+        - statusHistory
       properties:
         payments:
           type: array
@@ -5743,10 +5752,15 @@ components:
             $ref: "#/components/schemas/AssignmentVO"
         review:
           $ref: "#/components/schemas/ReviewVO"
+        statusHistory:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrderStatusHistoryVO"
     AuditVO:
       type: object
       additionalProperties: false
-      description: USER操作必须包含actorId；SYSTEM定时任务省略actorId。退款处理包含订单ID、退款类型与金额，不能伪造系统的用户身份。
+      description: USER操作必须包含actorId；SYSTEM定时任务省略actorId。退款处理包含订单ID、退款类型与金额，不能伪造系统的用户身份。 targetType 与
+        targetId 唯一表达目标类型和标识。订单相关操作必须提供 orderId；按订单查询仅匹配 orderId，不猜测 targetId。
       required:
         - id
         - actorType
@@ -5754,6 +5768,7 @@ components:
         - targetId
         - detail
         - createdAt
+        - targetType
       properties:
         id:
           $ref: "#/components/schemas/Id"
@@ -5773,6 +5788,10 @@ components:
           maxLength: 2000
         createdAt:
           $ref: "#/components/schemas/DateTime"
+        targetType:
+          $ref: "#/components/schemas/AuditTargetType"
+        orderId:
+          $ref: "#/components/schemas/Id"
     RecordQuery:
       type: object
       additionalProperties: false
@@ -6749,42 +6768,62 @@ components:
           $ref: "#/components/schemas/AuditPageDTO"
     ClientEntryCode:
       type: string
-      enum:
-        - DAILY_2H
-        - DAILY_3H
-        - DAILY_4H
-        - DEEP_60
-        - DEEP_100
-        - TOILET_UNBLOCK
-        - TOILET_VALVE
-        - TAP_REPAIR
-        - TAP_REPLACE
-        - BULB_REPLACE
-        - LIGHT_REPLACE
-        - FUSE_REPLACE
-        - AC_CLEAN
-      description: 固定客户端入口标识，不能从分类名称、列表顺序或 SKU 名称推断。增加后台分类不会自动增加客户端入口。
+      minLength: 1
+      maxLength: 64
+      pattern: ^[A-Z][A-Z0-9_]{0,63}$
+      description: 数据库维护的稳定入口标识；客户端不得枚举或推断业务含义。
     ClientEntryVO:
       type: object
       additionalProperties: false
       required:
         - code
+        - serviceKind
+        - groupCode
+        - groupName
+        - groupDescription
+        - groupSort
+        - name
+        - description
+        - sort
         - available
       properties:
         code:
           $ref: "#/components/schemas/ClientEntryCode"
+        serviceKind:
+          $ref: "#/components/schemas/ServiceKind"
+        groupCode:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: ^[A-Z][A-Z0-9_]{0,63}$
+        groupName:
+          type: string
+          minLength: 1
+          maxLength: 80
+        groupDescription:
+          type: string
+          maxLength: 1000
+        groupSort:
+          type: integer
+        name:
+          type: string
+          minLength: 1
+          maxLength: 80
+        description:
+          type: string
+          maxLength: 2000
+        sort:
+          type: integer
         available:
           type: boolean
-        sku:
-          $ref: "#/components/schemas/SkuVO"
         unavailableReason:
           type: string
-      description: 始终返回全部固定入口。available=true 时提供 sku；缺失、未绑定、下架或业务性质/时长不符时
-        available=false，仅提供不可预约原因。价格和能力来自关联的同一个正式 SKU。
-      example:
-        code: DAILY_2H
-        available: false
-        unavailableReason: 当前关联服务已下架，暂不可预约
+          minLength: 1
+          maxLength: 300
+        sku:
+          $ref: "#/components/schemas/SkuVO"
+      description: 返回数据库配置的全部展示入口，按 groupSort、groupCode、sort、code 稳定排序。同组元数据必须一致。已绑定时返回完整 SKU
+        展示信息；未绑定省略 sku。available=true 必须有 sku；false 必须有 unavailableReason。不得寻找替代 SKU。
     ClientEntryListResponse:
       type: object
       additionalProperties: false
@@ -6876,20 +6915,17 @@ components:
       description: 客户读取本人上传图片可省略 orderId；人员和管理员必须指定包含该图片的订单 ID，每次读取重新校验访问资格。
       required:
         - orderId
-    OfferPriceRule:
-      type: string
-      enum:
-        - MULTIPLE_OF_FIVE
-        - MINIMUM_ANCHORED
-      description: 新订单 MULTIPLE_OF_FIVE：金额为5元整数倍，向上取不低于最低价的首个合法值，且严格低于标准价。旧订单
-        MINIMUM_ANCHORED：以创建时最低价为锚点每5元递增。规则与价格范围随订单永久快照，不随配置迁移。
     WorkerContactDTO:
       type: object
       additionalProperties: false
       required:
         - phone
       properties:
-        phone: *a6
+        phone:
+          type: string
+          minLength: 1
+          maxLength: 11
+          pattern: ^1[0-9]{10}$
     WorkerStatisticsVO:
       type: object
       additionalProperties: false
@@ -7013,6 +7049,7 @@ components:
         - skillIds
         - dispatchEnabled
         - skills
+        - cityName
       properties:
         id:
           $ref: "#/components/schemas/Id"
@@ -7037,8 +7074,6 @@ components:
           type: string
           minLength: 1
           maxLength: 6
-          enum:
-            - "440100"
         skillIds:
           type: array
           items:
@@ -7052,6 +7087,10 @@ components:
           items:
             $ref: "#/components/schemas/SkillVO"
           description: 当前人员实际拥有的技能详情，与skillIds逐一对应；只读，由平台维护。
+        cityName:
+          type: string
+          minLength: 1
+          maxLength: 40
     WorkerProfileVOResponse:
       type: object
       additionalProperties: false
@@ -7135,3 +7174,206 @@ components:
           nullable: true
         isDefault:
           type: boolean
+    OrderStatusHistoryVO:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - orderId
+        - toStatus
+        - actorType
+        - createdAt
+      properties:
+        id:
+          $ref: "#/components/schemas/Id"
+        orderId:
+          $ref: "#/components/schemas/Id"
+        fromStatus:
+          $ref: "#/components/schemas/OrderStatus"
+        toStatus:
+          $ref: "#/components/schemas/OrderStatus"
+        actorType:
+          $ref: "#/components/schemas/ActorType"
+        actorId:
+          $ref: "#/components/schemas/Id"
+        actorRole:
+          $ref: "#/components/schemas/Role"
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 300
+        createdAt:
+          $ref: "#/components/schemas/DateTime"
+      description: 按 createdAt、数值ID升序返回。创建时省略 fromStatus；SYSTEM 不提供
+        actorId/actorRole。客户及人员不返回内部账号ID，actorRole
+        仅用于解释操作来源；原因经过权限脱敏。管理员可查看审计所需的操作者ID。状态写入与历史记录同事务完成。
+    AuditTargetType:
+      type: string
+      enum:
+        - ACCOUNT
+        - WORKER
+        - CATEGORY
+        - SERVICE_ITEM
+        - SKU
+        - SKILL
+        - ORDER
+        - SETTINGS
+        - SCENE_IMAGE
+    CategoryQuery:
+      type: object
+      additionalProperties: false
+      properties:
+        pageNo:
+          type: integer
+          minimum: 1
+          maximum: 2147483647
+          default: 1
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        keyword:
+          type: string
+          minLength: 1
+          maxLength: 100
+        status:
+          $ref: "#/components/schemas/CatalogStatus"
+    PublicCategoryQuery:
+      type: object
+      additionalProperties: false
+      properties:
+        pageNo:
+          type: integer
+          minimum: 1
+          maximum: 2147483647
+          default: 1
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        keyword:
+          type: string
+          minLength: 1
+          maxLength: 100
+    ServiceItemQuery:
+      type: object
+      additionalProperties: false
+      properties:
+        pageNo:
+          type: integer
+          minimum: 1
+          maximum: 2147483647
+          default: 1
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        keyword:
+          type: string
+          minLength: 1
+          maxLength: 100
+        categoryId:
+          $ref: "#/components/schemas/Id"
+        status:
+          $ref: "#/components/schemas/CatalogStatus"
+    PublicServiceItemQuery:
+      type: object
+      additionalProperties: false
+      properties:
+        pageNo:
+          type: integer
+          minimum: 1
+          maximum: 2147483647
+          default: 1
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        keyword:
+          type: string
+          minLength: 1
+          maxLength: 100
+        categoryId:
+          $ref: "#/components/schemas/Id"
+    SkuQuery:
+      type: object
+      additionalProperties: false
+      properties:
+        pageNo:
+          type: integer
+          minimum: 1
+          maximum: 2147483647
+          default: 1
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        keyword:
+          type: string
+          minLength: 1
+          maxLength: 100
+        categoryId:
+          $ref: "#/components/schemas/Id"
+        itemId:
+          $ref: "#/components/schemas/Id"
+        status:
+          $ref: "#/components/schemas/CatalogStatus"
+    PublicSkuQuery:
+      type: object
+      additionalProperties: false
+      properties:
+        pageNo:
+          type: integer
+          minimum: 1
+          maximum: 2147483647
+          default: 1
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        keyword:
+          type: string
+          minLength: 1
+          maxLength: 100
+        categoryId:
+          $ref: "#/components/schemas/Id"
+        itemId:
+          $ref: "#/components/schemas/Id"
+    SkillQuery:
+      type: object
+      additionalProperties: false
+      properties:
+        pageNo:
+          type: integer
+          minimum: 1
+          maximum: 2147483647
+          default: 1
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        keyword:
+          type: string
+          minLength: 1
+          maxLength: 100
+    OrderAction:
+      type: string
+      enum:
+        - PAY
+        - CANCEL
+        - CHANGE_OFFER
+        - VIEW_START_CODE
+        - DEPART
+        - ARRIVE
+        - START
+        - FINISH
+        - CONFIRM
+        - REVIEW
+      description: 服务端基于当前用户、来源状态、截止时间、顺序履约等规则计算；仅是当前提示，提交时仍重新校验并发及权限。

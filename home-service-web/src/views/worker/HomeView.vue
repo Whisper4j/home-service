@@ -227,7 +227,7 @@ function loadMore() {
       <small>订单 {{ offer.id }}</small>
       <p>{{ displayTime(offer.startTime) }} · {{ offer.durationMinutes }}分钟</p>
       <p>
-        广州市{{ offer.districtName }} ·
+        {{ offer.cityName }}{{ offer.districtName }} ·
         <strong>¥{{ offer.currentPrice }}</strong>
       </p>
       <p>接单截止 {{ displayTime(offer.offerDeadline) }}</p>

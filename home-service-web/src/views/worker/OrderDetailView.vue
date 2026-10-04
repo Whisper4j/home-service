@@ -9,14 +9,21 @@ import { displayTime } from '../../utils/format'
 import { label } from '../../utils/labels'
 import Feedback from '../../components/Feedback.vue'
 import SceneImages from '../../components/SceneImages.vue'
+import OrderStatusHistory from '../../components/OrderStatusHistory.vue'
 const id = String(useRoute().params.id),
   order = ref<Schema['OrderVO']>(),
+  history = ref<Schema['OrderHistoryVO']>(),
   enteredCode = ref(''),
   loader = useTask(),
   action = useTask()
 function load() {
   return loader.run(async () => {
-    order.value = await request('workerGetOrder', { id })
+    const [detail, records] = await Promise.all([
+      request('workerGetOrder', { id }),
+      request('workerGetOrderHistory', { id }),
+    ])
+    order.value = detail
+    history.value = records
   })
 }
 function act(operation: 'departOrder' | 'arriveOrder' | 'startOrder' | 'finishOrder') {
@@ -31,6 +38,7 @@ function act(operation: 'departOrder' | 'arriveOrder' | 'startOrder' | 'finishOr
             })
           : await request(operation, { id, idempotencyKey: key })
       enteredCode.value = ''
+      await load()
     },
     '履约进度已更新',
     `${operation}:${id}:${enteredCode.value}`,
@@ -65,8 +73,13 @@ useRefresh(load)
       <p>排除：{{ order.service.excluded }}</p>
       <p>客户自备配件：{{ order.service.customerSuppliesParts ? '需要' : '不需要' }}</p>
     </section>
+    <OrderStatusHistory v-if="history" :entries="history.statusHistory" />
     <Feedback :error="action.error.value" :success="action.success.value" />
-    <form v-if="order.status === 'ARRIVED'" id="start-service" @submit.prevent="act('startOrder')">
+    <form
+      v-if="order.allowedActions.includes('START')"
+      id="start-service"
+      @submit.prevent="act('startOrder')"
+    >
       <label>
         向客户索取服务开始码
         <input
@@ -89,12 +102,16 @@ useRefresh(load)
       订单 {{ id }}。按出发、到达、开始、提交完成顺序履约，无法自行取消或修改成交金额。
     </p>
     <Teleport
-      v-if="['PENDING_SERVICE', 'DEPARTED', 'ARRIVED', 'IN_SERVICE'].includes(order.status)"
+      v-if="
+        order.allowedActions.some((action) =>
+          ['DEPART', 'ARRIVE', 'START', 'FINISH'].includes(action),
+        )
+      "
       to="#worker-actions"
       defer
     >
       <button
-        v-if="order.status === 'PENDING_SERVICE'"
+        v-if="order.allowedActions.includes('DEPART')"
         class="wide-button"
         :disabled="action.busy.value"
         @click="act('departOrder')"
@@ -102,7 +119,7 @@ useRefresh(load)
         确认出发
       </button>
       <button
-        v-else-if="order.status === 'DEPARTED'"
+        v-else-if="order.allowedActions.includes('ARRIVE')"
         class="wide-button"
         :disabled="action.busy.value"
         @click="act('arriveOrder')"
@@ -110,7 +127,7 @@ useRefresh(load)
         确认到达
       </button>
       <button
-        v-else-if="order.status === 'ARRIVED'"
+        v-else-if="order.allowedActions.includes('START')"
         class="wide-button"
         form="start-service"
         :disabled="action.busy.value"

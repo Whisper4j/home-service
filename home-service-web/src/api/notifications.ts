@@ -1,5 +1,4 @@
 import type { Schema } from './types'
-import { useMock } from './client'
 
 export async function connectNotifications(
   token: string,
@@ -7,20 +6,6 @@ export async function connectNotifications(
   refresh: () => void,
   status: (text: string) => void,
 ): Promise<() => void> {
-  if (useMock) {
-    const { subscribeMock, tickMock } = await import('../mock/transport')
-    status('演示通知已连接')
-    refresh()
-    const unsubscribe = subscribeMock(token, receive)
-    const timer = setInterval(() => {
-      if (document.hidden || !navigator.onLine) return
-      void tickMock().catch(() => status('模拟任务暂不可用，请刷新重试'))
-    }, 10_000)
-    return () => {
-      clearInterval(timer)
-      unsubscribe()
-    }
-  }
   let stopped = false,
     socket: WebSocket | undefined,
     timer: ReturnType<typeof setTimeout> | undefined,

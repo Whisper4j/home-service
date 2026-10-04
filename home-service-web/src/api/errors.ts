@@ -10,14 +10,6 @@ export class ApiError extends Error {
     this.name = 'ApiError'
   }
 }
-export function fail(
-  code: Schema['ErrorCode'],
-  message: string,
-  status = 409,
-  data: Schema['ErrorDetailsVO'] = {},
-): never {
-  throw new ApiError(code, message, status, data)
-}
 export function errorMessage(error: unknown): string {
   if (error instanceof ApiError)
     return `${error.message}（${error.code}）${error.code === 'PRICE_CHANGED' ? `；最新报价 ¥${error.data.currentPrice}。请重新查询后确认。` : ''}`

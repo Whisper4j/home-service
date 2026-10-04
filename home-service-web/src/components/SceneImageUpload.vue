@@ -6,6 +6,7 @@ import SceneImages from './SceneImages.vue'
 import { useTask } from '../composables/useTask'
 import Feedback from './CustomerFeedback.vue'
 import { showError } from '../stores/feedback'
+const props = defineProps<{ rules: Schema['BookingRulesVO'] }>()
 const model = defineModel<Schema['SceneImageVO'][]>({ required: true })
 const emit = defineEmits<{ pending: [value: boolean] }>()
 type PendingImage = {
@@ -24,8 +25,9 @@ watch([pending, deleting], () => emit('pending', pending.value.length > 0 || del
   deep: true,
 })
 async function sanitize(file: File): Promise<File> {
-  if (file.size > 5 * 1024 * 1024) throw Error('单张图片不能超过 5 MB')
-  if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type))
+  if (file.size > props.rules.sceneImageMaxBytes)
+    throw Error(`单张图片不能超过 ${props.rules.sceneImageMaxBytes / 1024 / 1024} MiB`)
+  if (!props.rules.sceneImageMimeTypes.some((type) => type === file.type))
     throw Error('仅支持 JPG、PNG、WebP 图片')
   let bitmap: ImageBitmap
   try {
@@ -43,7 +45,8 @@ async function sanitize(file: File): Promise<File> {
     const blob = await new Promise<Blob>((resolve, reject) =>
       canvas.toBlob((b) => (b ? resolve(b) : reject(Error('图片处理失败'))), file.type, 0.9),
     )
-    if (blob.size > 5 * 1024 * 1024) throw Error('处理后的图片超过 5 MB，请选择较小图片')
+    if (blob.size > props.rules.sceneImageMaxBytes)
+      throw Error('处理后的图片超过接口允许的大小，请选择较小图片')
     return new File([blob], 'scene-image', { type: blob.type })
   } finally {
     bitmap.close()
@@ -71,8 +74,8 @@ async function select(event: Event) {
     files = Array.from(input.files || [])
   input.value = ''
   error.value = ''
-  if (files.length + pending.value.length + model.value.length > 3) {
-    error.value = '最多上传 3 张现场图片，请删除后再选择'
+  if (files.length + pending.value.length + model.value.length > props.rules.sceneImageMaxCount) {
+    error.value = `最多上传 ${props.rules.sceneImageMaxCount} 张现场图片，请删除后再选择`
     showError(error.value)
     return
   }
@@ -110,18 +113,18 @@ onUnmounted(() => {
 </script>
 <template>
   <label>
-    选择现场图片（可选，最多3张）
+    选择现场图片（可选，最多{{ rules.sceneImageMaxCount }}张）
     <input
       type="file"
-      accept="image/jpeg,image/png,image/webp"
+      :accept="rules.sceneImageMimeTypes.join(',')"
       multiple
       @change="select"
       :disabled="pending.some((r) => r.busy)"
     />
   </label>
   <p class="muted">
-    每张不超过5
-    MB。请避免拍入个人隐私；上传前清除照片元数据。图片不保证接单、不扩大套餐范围，也不允许现场议价。
+    每张不超过{{ rules.sceneImageMaxBytes / 1024 / 1024 }}
+    MiB。请避免拍入个人隐私；上传前清除照片元数据。图片不保证接单、不扩大套餐范围，也不允许现场议价。
   </p>
   <p v-if="error" role="status">{{ error }}</p>
   <SceneImages

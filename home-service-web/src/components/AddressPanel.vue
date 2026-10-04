@@ -20,12 +20,12 @@ function empty(): Schema['AddressDTO'] {
   return {
     contactName: sessions.customer?.account.displayName || '',
     contactPhone: sessions.customer?.account.phone || '',
-    provinceCode: '440000',
-    provinceName: '广东省',
-    cityCode: '440100',
-    cityName: '广州市',
-    districtCode: '440106',
-    districtName: '天河区',
+    provinceCode: '',
+    provinceName: '',
+    cityCode: '',
+    cityName: '',
+    districtCode: '',
+    districtName: '',
     detail: '',
     isDefault: false,
   }
@@ -73,9 +73,19 @@ function backToList() {
 async function save() {
   await action.run(
     async (idempotencyKey) => {
-      const district = regions.value[0]?.districts.find((d) => d.code === form.districtCode)
-      if (!district) throw Error('请选择服务区域')
-      const body = { ...form, districtName: district.name }
+      const region = regions.value.find((r) =>
+        r.districts.some((d) => d.code === form.districtCode),
+      )
+      const district = region?.districts.find((d) => d.code === form.districtCode)
+      if (!region || !district) throw Error('请选择服务区域')
+      const body = {
+        ...form,
+        provinceCode: region.provinceCode,
+        provinceName: region.provinceName,
+        cityCode: region.cityCode,
+        cityName: region.cityName,
+        districtName: district.name,
+      }
       const saved = editingId.value
         ? await request('updateAddress', { id: editingId.value, body, idempotencyKey })
         : await request('createAddress', { body, idempotencyKey })
@@ -195,11 +205,14 @@ onMounted(async () => {
         服务区域
         <select name="districtCode" v-model="form.districtCode" required>
           <option
-            v-for="district in regions[0]?.districts"
+            v-for="district in regions.flatMap((region) =>
+              region.districts.map((district) => ({ ...district, region })),
+            )"
             :key="district.code"
             :value="district.code"
           >
-            广东省 / 广州市 / {{ district.name }}
+            {{ district.region.provinceName }} / {{ district.region.cityName }} /
+            {{ district.name }}
           </option>
         </select>
       </label>
@@ -211,7 +224,7 @@ onMounted(async () => {
         <input name="isDefault" v-model="form.isDefault" type="checkbox" />
         设为默认地址
       </label>
-      <p class="muted">当前按广州市服务范围预约，无需填写坐标。</p>
+      <p class="muted">按接口返回的服务范围预约，无需填写坐标。</p>
     </form>
     <Feedback :error="action.error.value" />
     <template #actions>

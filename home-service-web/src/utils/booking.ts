@@ -2,6 +2,19 @@ import type { Schema } from '../api/types'
 import { DAY, HOUR, iso } from './format'
 export { suggestedPrice, quoteReason } from './quote'
 import { quoteBounds } from './quote'
+export function bookingTimes(rules?: Schema['BookingRulesVO']): string[] {
+  if (!rules || rules.slotMinutes <= 0) return []
+  const minutes = (value: string) => Number(value.slice(0, 2)) * 60 + Number(value.slice(3))
+  const start = minutes(rules.workStart),
+    end = minutes(rules.workEnd)
+  return Array.from(
+    { length: Math.max(0, Math.ceil((end - start) / rules.slotMinutes)) },
+    (_, i) => {
+      const value = start + i * rules.slotMinutes
+      return `${String(Math.floor(value / 60)).padStart(2, '0')}:${String(value % 60).padStart(2, '0')}`
+    },
+  )
+}
 export function timeReason(
   start: number,
   now: number,
@@ -29,7 +42,7 @@ export function offerReason(
   rules: Schema['BookingRulesVO'],
 ): string {
   if (!sku.supportsOffer) return '该服务不支持优惠预约'
-  if (quoteBounds(sku).high < quoteBounds(sku).low)
+  if (quoteBounds(sku, rules.priceStep).high < quoteBounds(sku, rules.priceStep).low)
     return '该服务目前没有合法优惠报价，请选择标准预约'
   if (start < now + rules.offerLeadHours * HOUR)
     return `优惠预约需至少提前${rules.offerLeadHours}小时，请重新选时间或明确改为标准预约`

@@ -39,14 +39,9 @@ export const router = createRouter({
           meta: { public: true, title: '首页' },
         },
         {
-          path: 'cleaning/:group',
+          path: 'groups/:group',
           component: () => import('../views/customer/ServicesView.vue'),
-          meta: { public: true, title: '清洁服务' },
-        },
-        {
-          path: 'repair/:group?',
-          component: () => import('../views/customer/ServicesView.vue'),
-          meta: { public: true, title: '维修服务' },
+          meta: { public: true, title: '选择服务' },
         },
         {
           path: 'services/:code',
@@ -83,11 +78,6 @@ export const router = createRouter({
         },
         { path: 'profile', redirect: '/customer/me?panel=profile' },
         { path: 'rules', redirect: '/customer/me?panel=rules' },
-        {
-          path: 'development',
-          component: () => import('../views/customer/DevelopmentView.vue'),
-          meta: { public: true, title: '演示工具' },
-        },
         {
           path: 'result/:id',
           component: () => import('../views/customer/PaymentResultView.vue'),

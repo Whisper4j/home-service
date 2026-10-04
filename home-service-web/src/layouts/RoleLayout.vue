@@ -1,13 +1,11 @@
 <script setup lang="ts">
-import { defineAsyncComponent, onMounted, onUnmounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import type { RolePath, Schema } from '../api/types'
 import { clearSession, sessions } from '../stores/session'
-import { useMock } from '../api/client'
 import { connectNotifications } from '../api/notifications'
 import { displayTime } from '../utils/format'
 import { label, roleLabels } from '../utils/labels'
-const DemoPanel = defineAsyncComponent(() => import('../components/DemoPanel.vue'))
 const props = defineProps<{ role: RolePath }>()
 const router = useRouter()
 const connection = ref('通知连接中'),
@@ -89,7 +87,6 @@ function logout() {
       </nav>
     </aside>
     <main>
-      <DemoPanel v-if="useMock" />
       <details class="notifications">
         <summary>{{ connection }} · 最近通知 {{ events.length }} 条</summary>
         <p>收到通知后刷新获取最新状态；提交仍会核验报价和版本。</p>

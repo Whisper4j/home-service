@@ -2,21 +2,21 @@
 import { reactive, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import type { RolePath, Schema } from '../../api/types'
-import { request, useMock } from '../../api/client'
+import { request } from '../../api/client'
 import { saveSession } from '../../stores/session'
 import { roleLabels } from '../../utils/labels'
 import { useTask } from '../../composables/useTask'
 import Feedback from '../../components/Feedback.vue'
 const props = defineProps<{ role: RolePath }>()
 const form = reactive<Schema['LoginDTO']>({
-  username: useMock ? props.role : '',
-  password: useMock ? 'Demo12345' : '',
+  username: '',
+  password: '',
 })
 watch(
   () => props.role,
-  (role) => {
-    form.username = useMock ? role : ''
-    form.password = useMock ? 'Demo12345' : ''
+  () => {
+    form.username = ''
+    form.password = ''
   },
 )
 const route = useRoute(),
@@ -81,20 +81,5 @@ async function submit() {
     <RouterLink v-if="role === 'customer'" :to="{ path: '/customer/register', query: route.query }">
       注册客户账号
     </RouterLink>
-    <section v-if="useMock" class="panel">
-      <p>
-        当前为 Mock 原型，演示密码统一为
-        <code>Demo12345</code>
-        。
-      </p>
-      <p v-if="role !== 'customer'">
-        客户：customer / customer2
-        <br />
-        人员：worker / worker2 / repair
-        <br />
-        管理员：admin
-      </p>
-      <p v-if="role === 'customer'">演示客户：customer / customer2。登录后返回刚才的操作。</p>
-    </section>
   </main>
 </template>

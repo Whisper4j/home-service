@@ -72,7 +72,7 @@ function resizePage(value: number) {
   <p v-if="resource === 'audits'">目录价格、上下架、账号状态、异常取消等关键操作留痕。</p>
   <form class="filters" @submit.prevent="search">
     <label>
-      {{ resource === 'audits' ? '目标 ID' : '订单 ID' }}
+      订单 ID
       <input name="orderId" v-model.trim="query.orderId" pattern="[1-9][0-9]{0,18}" />
     </label>
     <label>
@@ -100,13 +100,13 @@ function resizePage(value: number) {
             {{ displayTime(row.createdAt) }}
           </td>
           <td>
-            <RouterLink v-if="'orderId' in row" :to="`/admin/orders/${row.orderId}`">
+            <RouterLink v-if="row.orderId" :to="`/admin/orders/${row.orderId}`">
               订单 {{ row.orderId }}
             </RouterLink>
-            <template v-else>
+            <template v-if="'targetType' in row">
               操作者 {{ row.actorType === 'SYSTEM' ? '系统任务' : row.actorId }}
               <br />
-              目标 {{ row.targetId }}
+              目标 {{ label(row.targetType) }} · {{ row.targetId }}
             </template>
           </td>
           <td>

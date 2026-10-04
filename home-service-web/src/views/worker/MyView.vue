@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { request, useMock } from '../../api/client'
+import { request } from '../../api/client'
 import type { Schema } from '../../api/types'
 import { sessions } from '../../stores/session'
 import { useAutoSync } from '../../composables/useAutoSync'
@@ -11,10 +11,17 @@ import ModalPanel from '../../components/ModalPanel.vue'
 import LogoutPanel from '../../components/LogoutPanel.vue'
 import WorkerRules from '../../components/WorkerRules.vue'
 const { panel, open, close } = usePanel()
+const profile = ref<Schema['WorkerProfileVO']>()
 const stats = ref<Schema['WorkerStatisticsVO']>()
 const { error, sync } = useAutoSync(async (active) => {
-  const data = await request('getWorkerStatistics')
-  if (active()) stats.value = data
+  const [data, person] = await Promise.all([
+    request('getWorkerStatistics'),
+    request('getWorkerProfile'),
+  ])
+  if (active()) {
+    stats.value = data
+    profile.value = person
+  }
 })
 </script>
 <template>
@@ -24,7 +31,7 @@ const { error, sync } = useAutoSync(async (active) => {
         {{ sessions.worker?.account.displayName }}
       </button>
     </h2>
-    <p class="muted">服务人员 · 广州市 · 已登录</p>
+    <p class="muted">服务人员 · {{ profile?.cityName }} · 已登录</p>
   </section>
   <section aria-label="服务数据" class="statistics-summary">
     <p v-if="stats">
@@ -32,11 +39,7 @@ const { error, sync } = useAutoSync(async (active) => {
       累计已完成 {{ stats.totalCompletedCount }} 单
     </p>
     <p v-else>正在查询服务数据…</p>
-    <small class="muted">
-      北京时间；今日按预约日期，完成按确认时间，不含待确认。{{
-        useMock ? 'Mock演示聚合数据。' : ''
-      }}
-    </small>
+    <small class="muted">北京时间；今日按预约日期，完成按确认时间，不含待确认。</small>
     <p v-if="error">
       {{ error }}
       <button @click="sync">重试服务数据</button>

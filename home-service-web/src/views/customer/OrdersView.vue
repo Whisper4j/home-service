@@ -50,13 +50,13 @@ function turn(delta: number) {
   document.getElementById('customer-scroll')?.scrollTo({ top: 0 })
 }
 function action(order: Schema['OrderVO']) {
-  return order.status === 'PENDING_PAYMENT'
+  return order.allowedActions.includes('PAY')
     ? '去支付'
-    : order.status === 'PENDING_CONFIRMATION'
+    : order.allowedActions.includes('CONFIRM')
       ? '确认完成'
-      : order.status === 'COMPLETED' && !order.reviewed
+      : order.allowedActions.includes('REVIEW')
         ? '去评价'
-        : order.status === 'WAITING_ACCEPTANCE'
+        : order.allowedActions.includes('CHANGE_OFFER')
           ? '查看进度'
           : '查看进度'
 }
@@ -77,7 +77,7 @@ useRefresh(load)
     <RouterLink
       class="button wide-button"
       :to="
-        order.status === 'PENDING_PAYMENT'
+        order.allowedActions.includes('PAY')
           ? `/customer/pay/${order.id}`
           : `/customer/orders/${order.id}`
       "
@@ -85,7 +85,7 @@ useRefresh(load)
       {{ action(order) }}
     </RouterLink>
     <button
-      v-if="order.status === 'WAITING_ACCEPTANCE'"
+      v-if="order.allowedActions.includes('CHANGE_OFFER')"
       class="wide-button"
       @click="quoteOrder = order"
     >

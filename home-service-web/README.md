@@ -8,24 +8,30 @@ npm run dev
 npm run build
 ```
 
-默认使用浏览器本地 Mock，入口 `/customer/login`、`/worker/login`、`/admin/login`。演示账号：`customer`、`customer2`、`worker`、`worker2`、`repair`、`admin`；密码统一为 `Demo12345`。所有联系人、地址、订单为虚构演示数据。
+客户端 `/customer/home`；三端独立登录入口 `/customer/login`、`/worker/login`、`/admin/login`。账号及业务数据由后端和数据库提供，前端没有默认测试账号或离线业务数据库。当前尚无 Java 后端，接口请求失败会明确显示错误，不会生成模拟成功结果。
 
-三端可在不同标签页登录，共享业务数据、隔离登录令牌。Mock 通过 Web Locks 串行修改 localStorage，使用 BroadcastChannel 模拟在线通知；请使用现代浏览器及 localhost。顶部演示工具可推进时间、模拟断网、重置数据。订单详情可推进到预约开始时间，客户端查看开始码，人员端输入后开始服务。
+## 同源接口与 Nginx 联调
 
-Mock 是可操作的产品原型，不是后端并发实现或安全边界。Mock 令牌明确以 `mock.` 开头；真实模式只接收后端签发的 HS256 JWT。后端 BCrypt、MySQL 事务/行锁、定时任务和 WebSocket 服务仍需后续实现与验证。
+HTTP 始终请求 `/api`，WebSocket 始终连接同源 `/ws`。开发时可在不提交的 `.env.local` 设置 `DEV_API_TARGET` 为实际后端 origin，由 Vite 代理两个路径；未配置时不代理，也没有后备业务数据。不要将后端主机、端口或密钥写入源码。
 
-## 接入真实接口
+部署时由 Nginx 提供构建后的 `dist`，将 `/api` 按原路径转发到后端；`/ws` 配置 HTTP/1.1、Upgrade 和 Connection 请求头及合理连接超时。API 和 WebSocket 路径必须优先于 SPA history 回退，不能把 API 错误改成 `index.html`。前端业务路由使用 `try_files $uri $uri/ /index.html`。实际 upstream 由部署环境设置。
 
-在未提交的 `.env.local` 中设置 `VITE_USE_MOCK=false`。开发时可同时设置 `DEV_API_TARGET` 为自己的后端 origin；值不写入仓库。请求保持同源 `/api`，WebSocket 保持 `/ws`；部署时由 Nginx 代理这两个路径，并为前端 history 路由配置 `try_files $uri $uri/ /index.html`。
+唯一契约为 `../docs/api/openapi.yaml`。HTTP 使用 Bearer Token；WebSocket 连接后发送 AUTH 首帧，JWT 不放入 URL。收到通知或断线重连后重新执行 HTTP 查询；确认中的报价保留原版本，冲突须重新确认。支付仍为项目的后端模拟支付接口，不连接真实支付渠道。
 
-唯一契约在 `../docs/api/openapi.yaml`。WebSocket 认证使用连接后的 AUTH 首帧，不把 JWT 放入 URL。断线重连后重新执行 HTTP 查询；确认中的报价保持原版本，冲突由用户重新确认。
+## 验证
 
 ```sh
-npm run api:generate # 修改契约后再生成类型、路由元数据和Mock校验Schema
-npm run api:check    # 校验OpenAPI语法、引用和生成产物一致性
-npm test            # 业务边界与契约测试
-npx playwright install chromium
-npm run test:e2e     # 浏览器交互验证
+npm run api:generate
+npm run api:check
+npm run format:check
+npm test
+npm run build
 ```
 
-`src/api` 放契约类型、集中请求和通知；`src/mock` 放独立演示业务；`src/views/{customer,worker,admin}` 按端组织页面，复用视图在 `shared`；`layouts`、`router`、`components`、`composables` 和 `stores` 各自负责布局、路由、组件、组合逻辑与登录状态。不提交 `node_modules`、`dist`、本机环境文件或密钥。
+生成物包含 TypeScript 类型、路由元数据和 JSON Schema 镜像；不手工修改生成文件。单元测试检查金额/步长边界、时区以及契约职责，不模拟数据库。
+
+真实端到端测试：先启动同源前端、Java 后端及迁移初始化后的数据库，设置 `E2E_BASE_URL` 为实际部署 origin，再执行 `npx playwright install chromium` 和 `npm run test:e2e`。未配置 origin 时测试明确拒绝启动；不拦截接口伪造返回，不启动浏览器业务模拟。目前仅提供真实目录到页面的联调冒烟用例；登录、创建/支付、调度、抢单并发、履约、图片权限及定时任务的完整联调仍等待后端和数据库。
+
+`src/api` 管理契约类型、请求与通知；`src/views/{customer,worker,admin}` 按端组织页面；其他目录分别负责布局、路由、组件、组合逻辑和登录状态。页面只在内存中展示后端数据；sessionStorage 仅保留登录会话、按账号隔离的未提交草稿、幂等键和导航上下文，不作为业务事实来源。历史浏览器演示数据不会被新代码读取或迁移。
+
+不提交 `node_modules`、`dist`、测试产物、本机配置或密钥。

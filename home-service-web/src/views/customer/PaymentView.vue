@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { useAutoSync } from '../../composables/useAutoSync'
 import { showSuccess } from '../../stores/feedback'
 import { useRoute, useRouter } from 'vue-router'
-import { createIdempotencyKey, request, useMock } from '../../api/client'
+import { createIdempotencyKey, request } from '../../api/client'
 import type { Schema } from '../../api/types'
 import { sessions } from '../../stores/session'
 import { useTask } from '../../composables/useTask'
@@ -78,16 +78,12 @@ const { sync: confirmPayment } = useAutoSync(async (active) => {
     <section class="booking-section">
       <h3>确认金额 ¥{{ order.currentPrice }}</h3>
       <p>
-        {{
-          useMock
-            ? '当前为浏览器原型模拟，不会扣款。'
-            : '当前调用真实接口模式的模拟支付接口，不连接真实支付渠道。'
-        }}
+        {{ '支付由后端模拟支付接口确认，不连接真实支付渠道。' }}
       </p>
       <p v-if="order.status === 'PENDING_PAYMENT'">
         请在
         {{ displayTime(order.paymentDeadline) }}
-        前完成支付（创建后15分钟）。现在退出也会保留待支付订单。
+        前完成支付。现在退出也会保留待支付订单。
       </p>
       <p v-else>当前订单：{{ label(order.status) }}，请查看最新进度。</p>
     </section>
@@ -101,7 +97,7 @@ const { sync: confirmPayment } = useAutoSync(async (active) => {
     </p>
     <RouterLink replace :to="`/customer/orders/${id}`">稍后处理 / 查看订单</RouterLink>
     <Teleport to="#customer-actions" defer>
-      <div v-if="order.status === 'PENDING_PAYMENT'" class="amount-bar">
+      <div v-if="order.allowedActions.includes('PAY')" class="amount-bar">
         <strong>¥{{ order.currentPrice }}</strong>
         <button class="primary" :disabled="payment.busy.value || loader.busy.value" @click="pay">
           确认模拟支付

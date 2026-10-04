@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import { request, useMock } from '../../api/client'
+import { request } from '../../api/client'
 import type { Schema } from '../../api/types'
 import { useTask } from '../../composables/useTask'
 import { useRefresh } from '../../composables/useRefresh'
@@ -10,6 +10,7 @@ import { label } from '../../utils/labels'
 import Feedback from '../../components/CustomerFeedback.vue'
 import QuoteDialog from '../../components/QuoteDialog.vue'
 import SceneImages from '../../components/SceneImages.vue'
+import OrderStatusHistory from '../../components/OrderStatusHistory.vue'
 const id = String(useRoute().params.id),
   order = ref<Schema['OrderVO']>(),
   history = ref<Schema['OrderHistoryVO']>(),
@@ -19,13 +20,7 @@ const loader = useTask(),
   action = useTask(),
   quoteOpen = ref(false)
 const review = reactive<Schema['ReviewDTO']>({ score: 5, tags: [], content: '' })
-const canCancel = computed(
-  () =>
-    order.value &&
-    ['PENDING_PAYMENT', 'WAITING_DISPATCH', 'WAITING_ACCEPTANCE', 'PENDING_SERVICE'].includes(
-      order.value.status,
-    ),
-)
+const canCancel = computed(() => order.value?.allowedActions.includes('CANCEL'))
 async function refreshData() {
   const [detail, records] = await Promise.all([
     request('customerGetOrder', { id }),
@@ -34,7 +29,7 @@ async function refreshData() {
   order.value = detail
   history.value = records
   startCode.value = ''
-  if (['PENDING_SERVICE', 'DEPARTED', 'ARRIVED', 'IN_SERVICE'].includes(detail.status))
+  if (detail.allowedActions.includes('VIEW_START_CODE'))
     startCode.value = (await request('getStartCode', { id })).startCode
 }
 function load() {
@@ -89,12 +84,10 @@ useRefresh(load)
         }}，无人接单将取消并全额模拟退款。
       </p>
       <p v-if="order.status === 'PENDING_PAYMENT'">
-        待支付，截止{{ displayTime(order.paymentDeadline) }}。创建后15分钟未支付自动取消。
+        待支付，截止{{ displayTime(order.paymentDeadline) }}。到期未支付自动取消。
       </p>
       <p v-if="order.status === 'PENDING_CONFIRMATION'">
-        人员已提交完成，请确认服务。24小时未处理自动完成：{{
-          displayTime(order.confirmationDeadline)
-        }}。
+        人员已提交完成，请确认服务。自动确认截止：{{ displayTime(order.confirmationDeadline) }}。
       </p>
       <p v-if="order.cancellationReason">取消原因：{{ order.cancellationReason }}</p>
       <p v-if="order.paymentStatus === 'REFUNDED'">已全额模拟退款，金额可在下方记录查看。</p>
@@ -124,7 +117,7 @@ useRefresh(load)
       :success="action.success.value"
     />
     <button
-      v-if="order.status === 'WAITING_ACCEPTANCE'"
+      v-if="order.allowedActions.includes('CHANGE_OFFER')"
       class="wide-button"
       @click="quoteOpen = true"
     >
@@ -147,7 +140,7 @@ useRefresh(load)
     <p v-if="['DEPARTED', 'ARRIVED', 'IN_SERVICE'].includes(order.status)" class="muted">
       服务人员已出发，当前不可由客户直接取消。
     </p>
-    <section v-if="order.status === 'COMPLETED' && !order.reviewed" class="booking-section">
+    <section v-if="order.allowedActions.includes('REVIEW')" class="booking-section">
       <h3>评价本次服务（每单一次）</h3>
       <form @submit.prevent="act('review')">
         <label>
@@ -173,6 +166,7 @@ useRefresh(load)
         <button :disabled="action.busy.value">提交评价</button>
       </form>
     </section>
+    <OrderStatusHistory v-if="history" :entries="history.statusHistory" />
     <section v-if="history" class="booking-section">
       <h3>支付与退款记录</h3>
       <ul class="record-list">
@@ -194,6 +188,10 @@ useRefresh(load)
       <ul class="record-list">
         <li v-for="item in history.assignments" :key="item.id">
           {{ item.workerName }} · {{ label(item.status) }}
+          <p v-if="item.releasedAt">
+            释放：{{ displayTime(item.releasedAt) }} · {{ item.releaseReason }}
+          </p>
+          <p v-if="item.finishedAt">完成：{{ displayTime(item.finishedAt) }}</p>
           <small>{{ displayTime(item.assignedAt) }}</small>
         </li>
       </ul>
@@ -205,17 +203,15 @@ useRefresh(load)
     <p class="muted">
       订单号 {{ id }}
       <br />
-      {{
-        useMock ? '本浏览器原型模拟数据，未连接后端服务。' : '真实接口模式；支付仍为项目模拟支付。'
-      }}
+      {{ '支付由后端模拟支付接口确认，不连接真实支付渠道。' }}
     </p>
     <Teleport
-      v-if="order.status === 'PENDING_PAYMENT' || order.status === 'PENDING_CONFIRMATION'"
+      v-if="order.allowedActions.includes('PAY') || order.allowedActions.includes('CONFIRM')"
       to="#customer-actions"
       defer
     >
       <RouterLink
-        v-if="order.status === 'PENDING_PAYMENT'"
+        v-if="order.allowedActions.includes('PAY')"
         class="button primary wide-button"
         :to="`/customer/pay/${id}`"
       >

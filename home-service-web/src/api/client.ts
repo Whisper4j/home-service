@@ -3,7 +3,6 @@ import type { OperationId, Output, RequestOptions, RolePath, Schema } from './ty
 import { ApiError } from './errors'
 import { clearSession, sessions } from '../stores/session'
 
-export const useMock = import.meta.env.VITE_USE_MOCK !== 'false'
 export function createIdempotencyKey(): string {
   return crypto.randomUUID()
 }
@@ -18,18 +17,6 @@ export async function request<K extends OperationId>(
     ? options.idempotencyKey || createIdempotencyKey()
     : undefined
   try {
-    if (useMock) {
-      const { mockRequest } = await import('../mock/transport')
-      const result = await mockRequest(operation, {
-        id: options.id,
-        body: options.body,
-        file: options.file,
-        query: options.query as Record<string, unknown>,
-        token,
-        idempotencyKey,
-      })
-      return result.data as Output<K>
-    }
     if (route.path.includes('{id}') && !options.id)
       throw new ApiError('VALIDATION_ERROR', '缺少资源 ID', 400)
     const path = route.path.replace('{id}', encodeURIComponent(options.id || ''))

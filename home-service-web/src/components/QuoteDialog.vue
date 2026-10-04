@@ -15,6 +15,7 @@ const snapshot = ref(JSON.parse(JSON.stringify(props.order)) as Schema['OrderVO'
   price = ref(props.order.currentPrice),
   confirmed = ref(false),
   latest = ref<Schema['OrderVO']>()
+const rules = ref<Schema['BookingRulesVO']>()
 const task = useTask(),
   latestTask = useTask()
 const conflict = computed(
@@ -27,8 +28,7 @@ const unchanged = computed(() => Number(price.value) === Number(snapshot.value.c
 watch(
   () => props.order,
   (value) => {
-    if (value.priceVersion !== snapshot.value.priceVersion)
-      latest.value = JSON.parse(JSON.stringify(value))
+    latest.value = JSON.parse(JSON.stringify(value))
   },
   { deep: true },
 )
@@ -51,6 +51,9 @@ function acceptLatest() {
 }
 async function submit() {
   if (
+    !rules.value ||
+    !snapshot.value.allowedActions.includes('CHANGE_OFFER') ||
+    (latest.value && !latest.value.allowedActions.includes('CHANGE_OFFER')) ||
     !editor.value?.validate() ||
     conflict.value ||
     unchanged.value ||
@@ -73,7 +76,15 @@ async function submit() {
     JSON.stringify(body),
   )
 }
-onMounted(() => dialog.value?.showModal())
+function loadRules() {
+  return latestTask.run(async () => {
+    rules.value = await request('getBookingRules')
+  })
+}
+onMounted(() => {
+  dialog.value?.showModal()
+  void loadRules()
+})
 </script>
 <template>
   <dialog
@@ -88,10 +99,11 @@ onMounted(() => dialog.value?.showModal())
     </header>
     <form id="quote-form" class="dialog-body" @submit.prevent="submit">
       <QuoteEditor
+        v-if="rules"
         ref="editor"
         v-model="price"
         :range="snapshot.service"
-        :rule="snapshot.offerPriceRule"
+        :price-step="rules.priceStep"
         :current="snapshot.currentPrice"
       />
       <label v-if="higher" class="inline">
@@ -101,6 +113,9 @@ onMounted(() => dialog.value?.showModal())
       <p v-else-if="!unchanged">确认降价后，将退回差额并保留退款记录。</p>
       <Feedback :error="task.error.value" />
       <Feedback :error="latestTask.error.value" />
+      <button v-if="!rules && latestTask.error.value" type="button" @click="loadRules">
+        重新加载报价规则
+      </button>
       <section v-if="conflict" class="panel" role="alert">
         <p>
           原确认报价 ¥{{ snapshot.currentPrice }}；最新报价 ¥{{
@@ -112,7 +127,14 @@ onMounted(() => dialog.value?.showModal())
           我已查看，按最新报价重新填写
         </button>
       </section>
-      <p v-if="snapshot.status !== 'WAITING_ACCEPTANCE'">当前订单已不可调价，请关闭并刷新订单。</p>
+      <p
+        v-if="
+          !snapshot.allowedActions.includes('CHANGE_OFFER') ||
+          (latest && !latest.allowedActions.includes('CHANGE_OFFER'))
+        "
+      >
+        当前订单已不可调价，请关闭并刷新订单。
+      </p>
     </form>
     <footer>
       <button
@@ -121,9 +143,10 @@ onMounted(() => dialog.value?.showModal())
           task.busy.value ||
           Boolean(conflict) ||
           unchanged ||
-          Boolean(quoteReason(price, snapshot.service, snapshot.offerPriceRule)) ||
+          Boolean(!rules || quoteReason(price, snapshot.service, rules.priceStep)) ||
           (higher && !confirmed) ||
-          snapshot.status !== 'WAITING_ACCEPTANCE'
+          !snapshot.allowedActions.includes('CHANGE_OFFER') ||
+          (latest && !latest.allowedActions.includes('CHANGE_OFFER'))
         "
       >
         确认报价调整

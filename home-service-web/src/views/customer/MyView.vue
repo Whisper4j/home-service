@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
-import { useMock } from '../../api/client'
 import { sessions } from '../../stores/session'
 import { usePanel } from '../../composables/usePanel'
 import ProfilePanel from '../../components/ProfilePanel.vue'
@@ -39,9 +38,4 @@ function authenticatedPanel(name: string) {
     <CustomerRules />
   </ModalPanel>
   <LogoutPanel v-if="sessions.customer && panel === 'logout'" role="customer" @close="close" />
-  <details v-if="useMock" class="muted">
-    <summary>关于产品原型</summary>
-    <p>当前操作保存在本浏览器，不代表真实后端已实现；全部支付为模拟。</p>
-    <RouterLink to="/customer/development">打开独立演示工具</RouterLink>
-  </details>
 </template>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
-import { request, useMock } from '../../api/client'
+import { request } from '../../api/client'
 import { allPages } from '../../api/pagination'
 import type { Schema } from '../../api/types'
 import { dateOf } from '../../utils/format'
@@ -9,6 +9,7 @@ import { useTask } from '../../composables/useTask'
 import { useRefresh } from '../../composables/useRefresh'
 import Feedback from '../../components/Feedback.vue'
 import Pagination from '../../components/Pagination.vue'
+const regions = ref<Schema['RegionVO'][]>([])
 const page = ref<Schema['WorkerPageDTO']>({ list: [], total: 0, pages: 0 }),
   skills = ref<Schema['SkillVO'][]>([]),
   slots = ref<Schema['SlotVO'][]>([])
@@ -18,7 +19,7 @@ const form = reactive<Schema['WorkerCreateDTO']>({
   password: '',
   displayName: '',
   phone: '',
-  cityCode: '440100',
+  cityCode: '',
   skillIds: [],
   dispatchEnabled: true,
 })
@@ -28,7 +29,7 @@ const editing = ref(''),
   slotDate = ref(dateOf(Date.now()))
 const { busy, error, success, run } = useTask()
 async function refreshData() {
-  const [p, s] = await Promise.all([
+  const [p, s, area] = await Promise.all([
     request('listWorkers', {
       query: {
         pageNo: query.pageNo,
@@ -39,7 +40,9 @@ async function refreshData() {
       },
     }),
     allPages((n) => request('listAdminSkill', { query: { pageNo: n, pageSize: 100 } })),
+    request('listServiceRegions'),
   ])
+  regions.value = area
   page.value = p
   skills.value = s
 }
@@ -58,7 +61,7 @@ function edit(worker?: Schema['WorkerVO']) {
     password: '',
     displayName: worker?.displayName || '',
     phone: worker?.phone || '',
-    cityCode: '440100',
+    cityCode: worker?.cityCode || '',
     skillIds: [...(worker?.skillIds || [])],
     dispatchEnabled: worker?.dispatchEnabled ?? true,
   })
@@ -89,7 +92,6 @@ function loadSlots() {
 }
 async function inspect(id: string) {
   selectedWorker.value = id
-  if (useMock) slotDate.value = dateOf((await import('../../mock/transport')).mockNow())
   loadSlots()
 }
 useRefresh(load)
@@ -165,7 +167,10 @@ function resizePage(value: number) {
         <label>
           服务城市
           <select name="cityCode" v-model="form.cityCode">
-            <option value="440100">广州市</option>
+            <option value="" disabled>请选择服务城市</option>
+            <option v-for="region in regions" :key="region.cityCode" :value="region.cityCode">
+              {{ region.cityName }}
+            </option>
           </select>
         </label>
       </div>

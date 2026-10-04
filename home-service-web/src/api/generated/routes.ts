@@ -117,7 +117,7 @@ export const routes = {
     "upload": false,
     "binary": false,
     "output": "CategoryPageDTOResponse",
-    "query": "CatalogQuery",
+    "query": "PublicCategoryQuery",
     "idempotent": false
   },
   "listCustomerServiceItem": {
@@ -129,7 +129,7 @@ export const routes = {
     "upload": false,
     "binary": false,
     "output": "ServiceItemPageDTOResponse",
-    "query": "CatalogQuery",
+    "query": "PublicServiceItemQuery",
     "idempotent": false
   },
   "listCustomerSku": {
@@ -141,7 +141,7 @@ export const routes = {
     "upload": false,
     "binary": false,
     "output": "SkuPageDTOResponse",
-    "query": "CatalogQuery",
+    "query": "PublicSkuQuery",
     "idempotent": false
   },
   "getCustomerSku": {
@@ -561,7 +561,7 @@ export const routes = {
     "upload": false,
     "binary": false,
     "output": "CategoryPageDTOResponse",
-    "query": "CatalogQuery",
+    "query": "CategoryQuery",
     "idempotent": false
   },
   "createAdminCategory": {
@@ -609,7 +609,7 @@ export const routes = {
     "upload": false,
     "binary": false,
     "output": "ServiceItemPageDTOResponse",
-    "query": "CatalogQuery",
+    "query": "ServiceItemQuery",
     "idempotent": false
   },
   "createAdminServiceItem": {
@@ -657,7 +657,7 @@ export const routes = {
     "upload": false,
     "binary": false,
     "output": "SkuPageDTOResponse",
-    "query": "CatalogQuery",
+    "query": "SkuQuery",
     "idempotent": false
   },
   "createAdminSku": {
@@ -705,7 +705,7 @@ export const routes = {
     "upload": false,
     "binary": false,
     "output": "SkillPageDTOResponse",
-    "query": "CatalogQuery",
+    "query": "SkillQuery",
     "idempotent": false
   },
   "createAdminSkill": {
@@ -1018,6 +1018,18 @@ export const routes = {
     "binary": false,
     "output": "WorkerCalendarVOResponse",
     "query": "WorkerMonthQuery",
+    "idempotent": false
+  },
+  "listAdminClientEntries": {
+    "method": "GET",
+    "path": "/admin/service-entries",
+    "status": 200,
+    "anonymous": false,
+    "input": "",
+    "upload": false,
+    "binary": false,
+    "output": "ClientEntryListResponse",
+    "query": "",
     "idempotent": false
   }
 } as const

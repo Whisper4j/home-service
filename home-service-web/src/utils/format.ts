@@ -9,7 +9,6 @@ export function money(value: number): string {
 }
 export const HOUR = 3_600_000
 export const DAY = 24 * HOUR
-export const SLOT = HOUR / 2
 export function iso(time: number): string {
   return new Date(time + 8 * HOUR).toISOString().slice(0, 19) + '+08:00'
 }
@@ -24,7 +23,4 @@ export function localInput(time: number): string {
 }
 export function fromLocalInput(value: string): string {
   return `${value}:00+08:00`
-}
-export function tomorrowMorning(now = Date.now(), days = 1): number {
-  return Date.parse(`${dateOf(now + days * DAY)}T09:00:00+08:00`)
 }

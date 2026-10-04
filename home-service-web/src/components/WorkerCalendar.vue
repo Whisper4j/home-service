@@ -3,9 +3,9 @@ import { computed, reactive, ref, watch } from 'vue'
 import { usePanel } from '../composables/usePanel'
 import ModalPanel from './ModalPanel.vue'
 import { sessions } from '../stores/session'
-import { request, useMock } from '../api/client'
+import { request } from '../api/client'
 import type { Schema } from '../api/types'
-import { dateOf, displayTime, fromLocalInput, localInput, tomorrowMorning } from '../utils/format'
+import { dateOf, displayTime, fromLocalInput } from '../utils/format'
 import { label } from '../utils/labels'
 import { useTask } from '../composables/useTask'
 import { useRefresh } from '../composables/useRefresh'
@@ -21,8 +21,9 @@ const dirty = computed(
       ? JSON.stringify(schedule) !== scheduleBaseline.value
       : panel.value === 'leave' && JSON.stringify(leave) !== leaveBaseline.value),
 )
+const rules = ref<Schema['BookingRulesVO']>()
 const schedule = reactive<Schema['ScheduleDTO']>({
-  intervals: [{ start: '08:00', end: '22:00' }],
+  intervals: [],
   restWeekdays: [],
 })
 const leave = reactive({ startTime: '', endTime: '', reason: '' }),
@@ -53,22 +54,30 @@ watch(
     if (initialized.value)
       sessionStorage.setItem(
         storageKey,
-        JSON.stringify({ schedule, leave, date: date.value, month: month.value }),
+        JSON.stringify({
+          schedule: JSON.stringify(schedule) !== scheduleBaseline.value ? schedule : undefined,
+          leave: JSON.stringify(leave) !== leaveBaseline.value ? leave : undefined,
+          date: date.value,
+          month: month.value,
+        }),
       )
   },
   { deep: true },
 )
 async function refreshData() {
+  rules.value = await request('getBookingRules')
   if (!initialized.value) {
-    const now = useMock ? (await import('../mock/transport')).mockNow() : Date.now()
+    const now = Date.now()
     date.value = dateOf(now)
     month.value = date.value.slice(0, 7)
-    leave.startTime = localInput(tomorrowMorning(now))
-    leave.endTime = localInput(tomorrowMorning(now) + 3_600_000)
+
     leaveBaseline.value = JSON.stringify(leave)
     if (draft) {
-      Object.assign(leave, draft.leave)
-      if (draft.date >= dateOf(now) && draft.date < dateOf(now + 30 * 86400000)) {
+      if (draft.leave) Object.assign(leave, draft.leave)
+      if (
+        draft.date >= dateOf(now) &&
+        draft.date < dateOf(now + rules.value.scheduleWindowDays * 86400000)
+      ) {
         date.value = draft.date
         month.value = draft.month
       }
@@ -78,11 +87,13 @@ async function refreshData() {
   const template = day.schedule
   if (!initialized.value) {
     Object.assign(schedule, {
-      intervals: template.configured ? template.intervals : [{ start: '08:00', end: '22:00' }],
+      intervals: template.configured
+        ? template.intervals
+        : [{ start: rules.value.workStart, end: rules.value.workEnd }],
       restWeekdays: template.restWeekdays,
     })
     scheduleBaseline.value = JSON.stringify(schedule)
-    if (draft) Object.assign(schedule, draft.schedule)
+    if (draft?.schedule) Object.assign(schedule, draft.schedule)
     initialized.value = true
   }
   calendar.value = day
@@ -114,6 +125,8 @@ function save() {
         idempotencyKey: key,
       })
       scheduleBaseline.value = JSON.stringify(schedule)
+      sessionStorage.removeItem(storageKey)
+      draft = undefined
       close()
       setTimeout(() => window.dispatchEvent(new Event('data-refresh')), 0)
     },
@@ -134,6 +147,8 @@ function submitLeave() {
       })
       leave.reason = ''
       leaveBaseline.value = JSON.stringify(leave)
+      sessionStorage.removeItem(storageKey)
+      draft = undefined
       close()
       setTimeout(() => window.dispatchEvent(new Event('data-refresh')), 0)
     },
@@ -162,7 +177,8 @@ function resizePage(value: number) {
   void load()
 }
 function setWeekdaySchedule() {
-  schedule.intervals = [{ start: '08:00', end: '22:00' }]
+  if (!rules.value) return
+  schedule.intervals = [{ start: rules.value.workStart, end: rules.value.workEnd }]
   schedule.restWeekdays = [6, 7]
 }
 const dayLabels: Record<string, string> = {
@@ -185,6 +201,10 @@ const cells = computed(() => {
     ...Array.from({ length: count }, (_, i) => `${month.value}-${String(i + 1).padStart(2, '0')}`),
   ]
 })
+function addInterval() {
+  if (rules.value)
+    schedule.intervals.push({ start: rules.value.workStart, end: rules.value.workEnd })
+}
 function selectDate(value: string) {
   date.value = value
   slots.value = calendar.value?.days.find((d) => d.date === value)?.segments || []
@@ -254,7 +274,9 @@ function closeEditor() {
       </template>
     </div>
     <p class="muted">
-      仅展示未来30天；这不扩大客户预约窗口。空闲仅指工作时间内，剩余时段不保证容纳任意服务。
+      仅展示未来{{
+        rules?.scheduleWindowDays
+      }}天；这不扩大客户预约窗口。空闲仅指工作时间内，剩余时段不保证容纳任意服务。
     </p>
     <p v-if="calendar && !calendar.schedule.configured">
       尚未设置工作时间，请点击“修改工作时间”设置统一工作区间。
@@ -297,7 +319,11 @@ function closeEditor() {
     @close="closeEditor"
   >
     <h2>统一每日工作区间</h2>
-    <p>所有非休息日使用同一套区间，平台开放08:00—22:00；不得与已有服务槽或缓冲槽冲突。</p>
+    <p>
+      所有非休息日使用同一套区间，平台开放{{ rules?.workStart }}—{{
+        rules?.workEnd
+      }}；不得与已有服务槽或缓冲槽冲突。
+    </p>
     <form id="schedule-form" @submit.prevent="save">
       <div v-for="(interval, index) in schedule.intervals" :key="index" class="actions">
         <label>
@@ -306,9 +332,9 @@ function closeEditor() {
             name="start"
             v-model="interval.start"
             type="time"
-            min="08:00"
-            max="22:00"
-            step="1800"
+            :min="rules?.workStart"
+            :max="rules?.workEnd"
+            :step="rules ? rules.slotMinutes * 60 : undefined"
             required
           />
         </label>
@@ -318,9 +344,9 @@ function closeEditor() {
             name="end"
             v-model="interval.end"
             type="time"
-            min="08:00"
-            max="22:00"
-            step="1800"
+            :min="rules?.workStart"
+            :max="rules?.workEnd"
+            :step="rules ? rules.slotMinutes * 60 : undefined"
             required
           />
         </label>
@@ -333,10 +359,8 @@ function closeEditor() {
         </button>
       </div>
       <div class="actions">
-        <button type="button" @click="schedule.intervals.push({ start: '13:00', end: '22:00' })">
-          添加区间
-        </button>
-        <button type="button" @click="setWeekdaySchedule">一键工作日08:00—22:00</button>
+        <button type="button" @click="addInterval">添加区间</button>
+        <button type="button" @click="setWeekdaySchedule">一键使用平台工作区间</button>
       </div>
       <p>每周固定休息日</p>
       <div class="check-group">
@@ -364,7 +388,9 @@ function closeEditor() {
       </RouterLink>
       ；请假不能取消已接订单。
     </p>
-    <template #actions><button form="schedule-form" :disabled="busy">保存排班</button></template>
+    <template #actions>
+      <button form="schedule-form" :disabled="busy || !rules">保存排班</button>
+    </template>
   </ModalPanel>
   <ModalPanel
     v-if="panel === 'leave'"
@@ -375,7 +401,11 @@ function closeEditor() {
     @close="closeEditor"
   >
     <h2>临时请假</h2>
-    <p>至少提前2小时，按30分钟对齐；已分配订单的服务和缓冲时间不能请假。</p>
+    <p>
+      至少提前{{ rules?.leaveLeadHours }}小时，按{{
+        rules?.slotMinutes
+      }}分钟对齐；已分配订单的服务和缓冲时间不能请假。
+    </p>
     <form id="leave-form" @submit.prevent="submitLeave">
       <label>
         开始（北京时间）
@@ -383,13 +413,19 @@ function closeEditor() {
           name="startTime"
           v-model="leave.startTime"
           type="datetime-local"
-          step="1800"
+          :step="rules ? rules.slotMinutes * 60 : undefined"
           required
         />
       </label>
       <label>
         结束（北京时间）
-        <input name="endTime" v-model="leave.endTime" type="datetime-local" step="1800" required />
+        <input
+          name="endTime"
+          v-model="leave.endTime"
+          type="datetime-local"
+          :step="rules ? rules.slotMinutes * 60 : undefined"
+          required
+        />
       </label>
       <label>
         原因
@@ -405,7 +441,9 @@ function closeEditor() {
       </RouterLink>
       ；请假不能取消已接订单。
     </p>
-    <template #actions><button form="leave-form" :disabled="busy">提交请假</button></template>
+    <template #actions>
+      <button form="leave-form" :disabled="busy || !rules">提交请假</button>
+    </template>
   </ModalPanel>
   <button class="text-action" @click="open('leaves')">请假记录 →</button>
   <ModalPanel v-if="panel === 'leaves'" title="请假记录" expanded :busy="busy" @close="close">

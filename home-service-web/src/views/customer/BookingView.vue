@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { createIdempotencyKey, request, useMock } from '../../api/client'
+import { createIdempotencyKey, request } from '../../api/client'
 import type { Schema } from '../../api/types'
 import { sessions } from '../../stores/session'
 import { useTask } from '../../composables/useTask'
 import { dateOf, DAY, iso, money } from '../../utils/format'
-import { offerReason, suggestedPrice, timeReason } from '../../utils/booking'
+import { bookingTimes, offerReason, suggestedPrice, timeReason } from '../../utils/booking'
 import Feedback from '../../components/CustomerFeedback.vue'
 import QuoteEditor from '../../components/QuoteEditor.vue'
 import AddressPanel from '../../components/AddressPanel.vue'
@@ -21,6 +21,7 @@ const route = useRoute(),
 const sku = ref<Schema['SkuVO']>(),
   rules = ref<Schema['BookingRulesVO']>(),
   addresses = ref<Schema['AddressVO'][]>([])
+const sourceGroup = ref('')
 const { panel, open, close } = usePanel()
 const quoteEditor = ref<InstanceType<typeof QuoteEditor>>()
 const now = ref(Date.now()),
@@ -57,11 +58,12 @@ watch(form, saveDraft, { deep: true, flush: 'sync' })
 const address = computed(() => addresses.value.find((a) => a.id === form.addressId))
 const start = computed(() => Date.parse(`${form.date}T${form.time}:00+08:00`))
 const dates = computed(() =>
-  Array.from({ length: (rules.value?.latestDays || 7) + 1 }, (_, i) => dateOf(now.value + i * DAY)),
+  Array.from({ length: rules.value ? rules.value.latestDays + 1 : 0 }, (_, i) =>
+    dateOf(now.value + i * DAY),
+  ),
 )
 const times = computed(() =>
-  Array.from({ length: 28 }, (_, i) => {
-    const time = `${String(8 + Math.floor(i / 2)).padStart(2, '0')}:${i % 2 ? '30' : '00'}`
+  bookingTimes(rules.value).map((time) => {
     const stamp = Date.parse(`${form.date}T${time}:00+08:00`)
     return {
       time,
@@ -98,7 +100,7 @@ const blocked = computed(
     (pendingImages.value ? '请完成上传或移除失败图片' : ''),
 )
 async function updateNow() {
-  now.value = useMock ? (await import('../../mock/transport')).mockNow() : Date.now()
+  now.value = Date.now()
 }
 function selectAddress() {
   const selected = address.value
@@ -119,12 +121,13 @@ async function load() {
       const binding = (await request('listClientEntries')).find((e) => e.code === route.query.entry)
       if (!binding?.available || binding.sku?.id !== service.id)
         throw Error('原先选择的服务暂不可预约，请返回重新选择')
+      sourceGroup.value = binding.groupCode
     }
     sku.value = service
     addresses.value = list
     rules.value = config
     if (!initialized.value) {
-      form.offerPrice = suggestedPrice(service)
+      form.offerPrice = suggestedPrice(service, config.priceStep)
       form.date = dateOf(now.value + DAY)
       let candidate = times.value.find(
         (t) =>
@@ -206,8 +209,8 @@ async function submit() {
   await submitting.run(
     async () => {
       const order = await request('createOrder', { body, idempotencyKey: submission.key })
-      rememberBookingSource(order.id, route.query.entry)
-      showSuccess('预约已提交，请在15分钟内支付')
+      rememberBookingSource(order.id, sourceGroup.value)
+      showSuccess(`预约已提交，请在 ${rules.value?.paymentTimeoutMinutes} 分钟内支付`)
       sessionStorage.removeItem(key)
       await router.replace(`/customer/pay/${order.id}`)
     },
@@ -301,7 +304,7 @@ onUnmounted(() => clearInterval(timer))
         <label>
           开始时间
           <select name="time" v-model="form.time" required>
-            <option value="" disabled>请选择半小时粒度的开始时间</option>
+            <option value="" disabled>请选择开始时间</option>
             <option
               v-for="slot in times"
               :key="slot.time"
@@ -329,7 +332,12 @@ onUnmounted(() => clearInterval(timer))
     </section>
     <section v-if="form.bookingType === 'OFFER'" class="booking-section">
       <h2>设置优惠报价</h2>
-      <QuoteEditor ref="quoteEditor" v-model="form.offerPrice" :range="sku" />
+      <QuoteEditor
+        ref="quoteEditor"
+        v-model="form.offerPrice"
+        :range="sku"
+        :price-step="rules.priceStep"
+      />
       <p class="muted">需低于标准价。不承诺有人接单，不会自动加价或转标准预约。</p>
     </section>
     <section class="booking-section">
@@ -346,7 +354,7 @@ onUnmounted(() => clearInterval(timer))
     <section class="booking-section">
       <h2>现场图片</h2>
       <p v-if="form.bookingType === 'OFFER'">帮助符合资格的人员在接单前了解现场情况。</p>
-      <SceneImageUpload v-model="form.sceneImages" @pending="setPending" />
+      <SceneImageUpload :rules="rules" v-model="form.sceneImages" @pending="setPending" />
     </section>
     <Feedback :error="submitting.error.value" />
     <Teleport to="#customer-actions" defer>

@@ -6,7 +6,7 @@ import { useTask } from '../../composables/useTask'
 import { useRefresh } from '../../composables/useRefresh'
 import Feedback from '../../components/Feedback.vue'
 const rules = ref<Schema['BookingRulesVO']>(),
-  form = reactive<Schema['SettingsDTO']>({ earliestHours: 2, latestDays: 7 })
+  form = reactive<Schema['SettingsDTO']>({ earliestHours: 0, latestDays: 0 })
 const { busy, error, success, run } = useTask()
 function load() {
   return run(async () => {
@@ -29,7 +29,7 @@ useRefresh(load)
 <template>
   <h1>平台配置</h1>
   <Feedback :error="error" :success="success" :busy="busy" />
-  <section class="panel">
+  <section v-if="rules" class="panel">
     <h2>预约窗口</h2>
     <form @submit.prevent="save">
       <div class="form-grid">

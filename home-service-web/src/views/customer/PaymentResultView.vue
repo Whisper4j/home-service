@@ -25,8 +25,8 @@ const { sync, error, loading } = useAutoSync(async (active) => {
     <p>{{ label(order.status) }}</p>
     <p v-if="order.workerName">已安排：{{ order.workerName }}</p>
     <p v-if="order.status === 'WAITING_DISPATCH'">
-      正在安排人员，每30秒重试；最晚到
-      {{ displayTime(order.dispatchDeadline) }}，5分钟失败将取消并全额模拟退款。
+      正在安排人员，系统会自动重试；最晚到
+      {{ displayTime(order.dispatchDeadline) }}，安排超时将取消并全额模拟退款。
     </p>
     <p v-if="order.status === 'WAITING_ACCEPTANCE'">
       等待人员自主接单，截止

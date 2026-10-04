@@ -14,7 +14,7 @@ function load() {
 onMounted(load)
 </script>
 <template>
-  <h2>当前服务范围：广州市</h2>
+  <h2 v-if="rules">当前服务范围：{{ rules.cityName }}</h2>
   <Feedback :busy="busy" :error="error" />
   <button v-if="error" @click="load">重试</button>
   <section v-if="rules" class="booking-section">
@@ -22,27 +22,29 @@ onMounted(load)
     <p>
       最少提前{{ rules.earliestHours }}小时，最远{{ rules.latestDays }}天；每天{{
         rules.workStart
-      }}—{{ rules.workEnd }}，按半小时起约。服务结束后还需预留缓冲，优惠预约至少提前{{
-        rules.offerLeadHours
-      }}小时。
+      }}—{{ rules.workEnd }}，按{{
+        rules.slotMinutes
+      }}分钟起约。服务结束后还需预留缓冲，优惠预约至少提前{{ rules.offerLeadHours }}小时。
     </p>
   </section>
-  <section class="booking-section">
+  <section v-if="rules" class="booking-section">
     <h3>服务边界</h3>
-    <p>
-      清洁按固定套餐提供，深度清洁不包含装修开荒。维修仅提供固定范围、确定价格的服务，配件以详情说明为准。
-    </p>
+    <p>服务范围、配件要求和排除内容以所选服务详情为准；不支持现场议价或接单后加价。</p>
   </section>
-  <section class="booking-section">
+  <section v-if="rules" class="booking-section">
     <h3>支付与安排</h3>
     <p>
-      创建后15分钟内模拟支付。标准预约由系统安排，5分钟内未安排成功则取消并全额模拟退款；优惠预约等待人员自主接单，无人接单到期退款。
+      创建后{{ rules.paymentTimeoutMinutes }}分钟内模拟支付。标准预约由系统安排，{{
+        rules.dispatchWaitMinutes
+      }}分钟内未安排成功则取消并全额模拟退款；优惠预约等待人员自主接单，无人接单到期退款。
     </p>
   </section>
-  <section class="booking-section">
+  <section v-if="rules" class="booking-section">
     <h3>取消与完成</h3>
     <p>
-      人员出发前可取消。出发后不能直接取消；到达后向人员提供开始码。提交完成后请确认服务，24小时后自动完成。仅已完成订单可评价，每单一次。
+      人员出发前可取消。出发后不能直接取消；到达后向人员提供开始码。提交完成后请确认服务，{{
+        rules.autoConfirmHours
+      }}小时后自动完成。仅已完成订单可评价，每单一次。
     </p>
   </section>
 </template>

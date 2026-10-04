@@ -102,7 +102,7 @@ onMounted(load)
           <dt>技能</dt>
           <dd>{{ person.skills.map((skill) => skill.name).join('、') }}</dd>
           <dt>城市</dt>
-          <dd>广州市</dd>
+          <dd>{{ person && 'cityName' in person ? person.cityName : '' }}</dd>
           <dt>账号状态</dt>
           <dd>{{ label(person.status) }}</dd>
           <dt>调度资格</dt>

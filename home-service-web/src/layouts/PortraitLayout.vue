@@ -3,7 +3,6 @@ import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { sessions } from '../stores/session'
 import { connectNotifications } from '../api/notifications'
-import { useMock } from '../api/client'
 import { parentRoute, scrollPositions } from '../utils/navigation'
 import '../styles/customer.css'
 const props = defineProps<{ role: 'customer' | 'worker' }>()
@@ -130,7 +129,7 @@ onUnmounted(() => {
     <header class="customer-header">
       <button v-if="!primary" aria-label="返回上一页" @click="back">返回</button>
       <h1>{{ title }}</h1>
-      <span class="mode-note">{{ useMock ? '产品原型' : '接口联调' }}</span>
+      <span class="mode-note">接口联调</span>
     </header>
     <div v-if="notice" class="customer-notice" role="status">
       <span>{{ notice }}</span>
