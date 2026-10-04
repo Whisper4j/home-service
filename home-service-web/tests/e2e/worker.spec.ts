@@ -60,7 +60,7 @@ test('人员多任务展开、收起位置、卡片排序、筛选恢复及小�
       orders[i].order.status = i === 0 ? 'IN_SERVICE' : i === 1 ? 'ARRIVED' : 'PENDING_SERVICE'
     localStorage.setItem(key, JSON.stringify(db))
   })
-  await page.getByRole('button', { name: '刷新抢单池', exact: true }).click()
+  await page.evaluate(() => window.dispatchEvent(new Event('data-refresh')))
   await expect(page.getByRole('button', { name: '查看全部9单' })).toBeVisible()
   await page.setViewportSize({ width: 360, height: 640 })
   await page.locator('#worker-scroll').evaluate((element) => {
@@ -160,7 +160,7 @@ test('月历服务与缓冲、请假冲突、电话边界及完整统计', async
   await page.getByRole('button', { name: '按此价格确认接单' }).click()
   await expect(page.getByRole('button', { name: '查看全部1单' })).toBeVisible()
   const order = await api(page, 'workerGetOrder', { id: '10002' })
-  await page.goto('/worker/schedule')
+  await page.goto('/worker/me')
   await page.getByRole('button', { name: new RegExp(`^${order.startTime.slice(0, 10)} `) }).click()
   const calendar = page.getByRole('region', { name: '工作月历' })
   await expect(calendar.getByText(/服务后预留间隔（不可接单）/)).toBeVisible()
@@ -169,6 +169,7 @@ test('月历服务与缓冲、请假冲突、电话边界及完整统计', async
     element.scrollTop = 0
   })
   await page.screenshot({ path: 'test-results/worker-calendar.png' })
+  await page.getByRole('button', { name: '请假', exact: true }).click()
   await page.getByLabel('开始（北京时间）').fill(order.endTime.slice(0, 16))
   await page.getByLabel('结束（北京时间）').fill(order.bufferEndTime.slice(0, 16))
   await page.getByLabel('原因', { exact: true }).fill('缓冲冲突验证')
@@ -176,8 +177,10 @@ test('月历服务与缓冲、请假冲突、电话边界及完整统计', async
   await expect(page.getByRole('link', { name: '查看冲突订单 10002' })).toBeVisible()
   await page.getByRole('link', { name: '查看冲突订单 10002' }).click()
   await page.getByRole('button', { name: '返回上一页' }).click()
-  await expect(page).toHaveURL(/worker\/schedule$/)
+  await expect(page).toHaveURL(/worker\/me\?panel=leave$/)
+  await expect(page.getByLabel('原因', { exact: true })).toHaveValue('缓冲冲突验证')
   await page.goto('/worker/profile')
+  await page.getByRole('button', { name: '✎ 编辑信息' }).click()
   await page.getByLabel('联系电话', { exact: true }).fill('123')
   await page.getByLabel('联系电话', { exact: true }).blur()
   await expect(page.locator('[data-field-error]')).toContainText('格式不正确')
@@ -185,18 +188,20 @@ test('月历服务与缓冲、请假冲突、电话边界及完整统计', async
   await expect(page.locator('.error-toast')).not.toBeVisible({ timeout: 4000 })
   await expect(page.locator('[data-field-error]')).toBeVisible()
   await page.getByLabel('联系电话', { exact: true }).fill('13800000999')
-  await page.getByRole('button', { name: '保存联系电话' }).click()
-  await expect(page.getByRole('status')).toContainText('联系电话已更新')
+  await page.getByRole('button', { name: '保存个人信息' }).click()
+  await expect(page.getByRole('status')).toContainText('个人资料已保存')
   await page.reload()
-  await expect(page.getByLabel('联系电话', { exact: true })).toHaveValue('13800000999')
+  await expect(page.getByRole('dialog').getByText('13800000999', { exact: true })).toBeVisible()
   await page.goto('/worker/statistics')
   const stats = await api(page, 'getWorkerStatistics')
   await expect(
-    page.getByRole('heading', { name: `累计已完成 ${stats.totalCompletedCount} 单` }),
+    page
+      .getByRole('region', { name: '服务数据' })
+      .getByText(new RegExp(`累计已完成 ${stats.totalCompletedCount} 单`)),
   ).toBeVisible()
-  await expect(page.getByText(/预约服务时长/).last()).toBeVisible()
+  await expect(page.getByText(/北京时间；今日按预约日期/)).toBeVisible()
 })
-test('新增抢单只提示不插入；非法调价不修正、边界禁用、弹窗上方统一错误', async ({
+test('新增抢单自动排入后部；非法调价不修正、边界禁用、弹窗上方统一错误', async ({
   page,
   context,
 }) => {
@@ -216,9 +221,7 @@ test('新增抢单只提示不插入；非法调价不修正、边界禁用、�
     },
   })
   await api(customer, 'payOrder', { id: created.id })
-  await expect(page.getByRole('button', { name: /1条新订单/ })).toBeVisible()
-  await expect(page.locator('.order-card')).toHaveCount(before)
-  await page.getByRole('button', { name: /1条新订单/ }).click()
+  await expect(page.getByText(/新增1单，已更新/)).toBeVisible()
   await expect(page.locator('.order-card')).toHaveCount(before + 1)
   await customer.getByRole('button', { name: '调整报价' }).click()
   await expect(customer.getByRole('button', { name: '确认报价调整' })).toBeDisabled()

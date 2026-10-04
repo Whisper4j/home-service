@@ -5,6 +5,7 @@ import type { Schema } from '../../api/types'
 import { sessions } from '../../stores/session'
 import { useTask } from '../../composables/useTask'
 import { useRefresh } from '../../composables/useRefresh'
+import OrderGroups from '../../components/OrderGroups.vue'
 import Feedback from '../../components/Feedback.vue'
 import WorkerOrderCard from '../../components/WorkerOrderCard.vue'
 const groups: { name: string; statuses?: Schema['OrderStatus'][] }[] = [
@@ -47,17 +48,7 @@ function turn(delta: number) {
 useRefresh(load)
 </script>
 <template>
-  <div class="order-groups">
-    <button
-      v-for="(item, index) in groups"
-      :key="item.name"
-      :disabled="task.busy.value"
-      :aria-pressed="group === index"
-      @click="select(index)"
-    >
-      {{ item.name }}
-    </button>
-  </div>
+  <OrderGroups :groups="groups" :selected="group" :busy="task.busy.value" @select="select" />
   <p class="muted">进行中优先，待服务按预约先后，历史按结束时间倒序。</p>
   <Feedback :busy="task.busy.value" :error="task.error.value" />
   <button @click="load">刷新订单</button>

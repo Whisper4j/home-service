@@ -1,31 +1,26 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { request } from '../../api/client'
 import { allPages } from '../../api/pagination'
 import type { Schema } from '../../api/types'
 import { useTask } from '../../composables/useTask'
+import { useAutoSync } from '../../composables/useAutoSync'
 import { displayTime } from '../../utils/format'
 import { label } from '../../utils/labels'
-import { sessions } from '../../stores/session'
 import Feedback from '../../components/Feedback.vue'
 import ModalPanel from '../../components/ModalPanel.vue'
 import SceneImages from '../../components/SceneImages.vue'
 import WorkerOrderCard from '../../components/WorkerOrderCard.vue'
-const task = useTask(),
-  claimTask = useTask()
-const storageKey = `worker.home.${sessions.worker?.account.id}`
-const saved = JSON.parse(sessionStorage.getItem(storageKey) || '{}')
-const sort = ref<'DEADLINE' | 'LATEST'>(saved.sort === 'LATEST' ? 'LATEST' : 'DEADLINE'),
-  pageNo = ref(Number(saved.pageNo) || 1)
-const pool = ref<Schema['OfferPageDTO']>({ list: [], total: 0, pages: 0 }),
-  tasks = ref<Schema['OrderVO'][]>([])
+const claimTask = useTask()
+const offers = ref<Schema['OfferVO'][]>([]),
+  tasks = ref<Schema['OrderVO'][]>([]),
+  visibleCount = ref(8)
+const visibleOffers = computed(() => offers.value.slice(0, visibleCount.value))
 const expanded = ref(false),
   selection = ref<Schema['OfferVO']>(),
   latest = ref<Schema['OfferVO']>(),
   unavailable = ref(false),
-  changeNotice = ref(''),
-  unavailableIds = ref(new Set<string>()),
-  newIds = ref(new Set<string>())
+  changeNotice = ref('')
 const statuses: Schema['OrderStatus'][] = [
   'IN_SERVICE',
   'ARRIVED',
@@ -38,90 +33,127 @@ const quoteChanged = computed(
     Boolean(latest.value && latest.value.priceVersion !== selection.value?.priceVersion) ||
     claimTask.code.value === 'PRICE_CHANGED',
 )
-let knownIds = new Set<string>(),
-  timer: ReturnType<typeof setInterval> | undefined,
-  syncing = false
-function fetchPool() {
-  return request('listEligibleOffers', {
-    query: { pageNo: pageNo.value, pageSize: 8, sort: sort.value },
-  })
+let initialized = false,
+  pointerDown = false,
+  releaseTimer: ReturnType<typeof setTimeout> | undefined
+let deferred: (() => Promise<void>) | undefined
+// A moving offset page is retried if totals or duplicate IDs reveal an intervening mutation.
+async function fetchPool() {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const first = await request('listEligibleOffers', { query: { pageNo: 1, pageSize: 100 } })
+    const rows = [...first.list]
+    let stable = true
+    for (let pageNo = 2; pageNo <= first.pages; pageNo++) {
+      const page = await request('listEligibleOffers', { query: { pageNo, pageSize: 100 } })
+      stable &&= page.total === first.total
+      rows.push(...page.list)
+    }
+    const unique = new Map(rows.map((o) => [o.id, o]))
+    if (stable && unique.size === first.total) return [...unique.values()]
+  }
+  throw Error('订单正在变化，稍后自动重新同步')
 }
-async function fetchTasks() {
-  tasks.value = await allPages((pageNo) =>
-    request('workerListOrders', { query: { statuses, pageNo, pageSize: 100 } }),
+async function apply(
+  orders: Schema['OfferVO'][],
+  assigned: Schema['OrderVO'][],
+  poolConfirmed: boolean,
+) {
+  const scroll = document.getElementById('worker-scroll')
+  const anchors = [...(scroll?.querySelectorAll<HTMLElement>('[data-offer-id]') || [])].filter(
+    (el) => el.getBoundingClientRect().bottom > (scroll?.getBoundingClientRect().top || 0),
   )
+  const anchor = anchors.find((el) => orders.some((o) => o.id === el.dataset.offerId))
+  const top = anchor?.getBoundingClientRect().top
+  const previous = new Map(offers.value.map((o) => [o.id, o]))
+  const added = orders.filter((o) => !previous.has(o.id)).length
+  const removed = offers.value.filter((o) => !orders.some((fresh) => fresh.id === o.id)).length
+  const changed = orders.some(
+    (o) => previous.has(o.id) && previous.get(o.id)?.priceVersion !== o.priceVersion,
+  )
+  if (initialized && (added || removed || changed))
+    changeNotice.value = [
+      added ? `新增${added}单，已更新` : '',
+      removed ? `${removed}单已被接走、截止或资格变化，已移出` : '',
+      changed ? '报价已更新，确认窗口保留原报价' : '',
+    ]
+      .filter(Boolean)
+      .join('；')
+  if (initialized && visibleCount.value >= offers.value.length)
+    visibleCount.value = Math.max(visibleCount.value, orders.length)
+  offers.value = orders
+  tasks.value = assigned
+  if (selection.value && poolConfirmed) {
+    latest.value = orders.find((o) => o.id === selection.value?.id)
+    unavailable.value = !latest.value
+  }
+  initialized = true
+  await nextTick()
+  if (scroll && anchor?.isConnected && top !== undefined)
+    scroll.scrollTop += anchor.getBoundingClientRect().top - top
 }
-async function loadData() {
-  const [offers, all] = await Promise.all([
+const { sync, error, loading } = useAutoSync(async (active) => {
+  const [poolResult, taskResult] = await Promise.allSettled([
     fetchPool(),
     allPages((pageNo) =>
-      request('listEligibleOffers', { query: { pageNo, pageSize: 100, sort: sort.value } }),
+      request('workerListOrders', { query: { statuses, pageNo, pageSize: 100 } }),
     ),
-    fetchTasks(),
   ])
-  knownIds = new Set(all.map((o) => o.id))
-  pool.value = offers
-  unavailableIds.value.clear()
-  newIds.value.clear()
-  changeNotice.value = ''
-  sessionStorage.setItem(storageKey, JSON.stringify({ sort: sort.value, pageNo: pageNo.value }))
-}
-function load() {
-  return task.run(loadData)
-}
-async function sync() {
-  if (syncing || task.busy.value || claimTask.busy.value) return
-  syncing = true
-  try {
-    await task.run(async () => {
-      const offers = await allPages((pageNo) =>
-        request('listEligibleOffers', { query: { pageNo, pageSize: 100, sort: sort.value } }),
-      )
-      // 更新已有位置；新订单只提示，确认窗口保留原价快照。
-      const map = new Map(offers.map((o) => [o.id, o]))
-      pool.value.list = pool.value.list.map((old) => {
-        const fresh = map.get(old.id)
-        if (!fresh) {
-          unavailableIds.value.add(old.id)
-          changeNotice.value = '部分订单已被接走、截止或不再符合资格，请刷新抢单池。'
-          return old
-        }
-        unavailableIds.value.delete(old.id)
-        if (old.priceVersion !== fresh.priceVersion)
-          changeNotice.value = '报价有变化，请查看最新报价后确认。'
-        return fresh
-      })
-      const currentIds = new Set(offers.map((o) => o.id))
-      for (const id of newIds.value) if (!currentIds.has(id)) newIds.value.delete(id)
-      if (selection.value) {
-        latest.value = map.get(selection.value.id)
-        unavailable.value = !latest.value
-      }
-      for (const offer of offers) if (!knownIds.has(offer.id)) newIds.value.add(offer.id)
-      await fetchTasks()
-    })
-  } finally {
-    syncing = false
+  if (!active()) return
+  const orders = poolResult.status === 'fulfilled' ? poolResult.value : offers.value
+  const assigned = taskResult.status === 'fulfilled' ? taskResult.value : tasks.value
+  if (selection.value && poolResult.status === 'fulfilled') {
+    latest.value = orders.find((o) => o.id === selection.value?.id)
+    unavailable.value = !latest.value
   }
+  const update = async () => {
+    if (active()) await apply(orders, assigned, poolResult.status === 'fulfilled')
+  }
+  if (pointerDown) deferred = update
+  else {
+    deferred = undefined
+    await update()
+  }
+  if (poolResult.status === 'rejected') throw poolResult.reason
+  if (taskResult.status === 'rejected') throw taskResult.reason
+})
+function hold() {
+  pointerDown = true
 }
-function onNotification(event: Event) {
-  const notice = (event as CustomEvent<Schema['WsEvent']>).detail
-  if (notice.type === 'OFFER_CREATED') newIds.value.add(notice.orderId)
-  else changeNotice.value = `${label(notice.type)}，正在同步资格与任务。`
-  void sync()
+function release() {
+  clearTimeout(releaseTimer)
+  releaseTimer = setTimeout(() => {
+    pointerDown = false
+    const update = deferred
+    deferred = undefined
+    void update?.()
+  }, 0)
 }
+onMounted(() => {
+  window.addEventListener('pointerdown', hold)
+  window.addEventListener('pointerup', release)
+  window.addEventListener('pointercancel', release)
+  window.addEventListener('blur', release)
+})
+onUnmounted(() => {
+  clearTimeout(releaseTimer)
+  deferred = undefined
+  window.removeEventListener('pointerdown', hold)
+  window.removeEventListener('pointerup', release)
+  window.removeEventListener('pointercancel', release)
+  window.removeEventListener('blur', release)
+})
 function select(offer: Schema['OfferVO']) {
-  selection.value = JSON.parse(JSON.stringify(offer))
-  latest.value = undefined
-  unavailable.value = false
+  selection.value = structuredClone(JSON.parse(JSON.stringify(offer)))
+  latest.value = offers.value.find((o) => o.id === offer.id)
+  unavailable.value = !latest.value
   claimTask.error.value = ''
   claimTask.code.value = ''
 }
 function closeSelection() {
   if (!claimTask.busy.value) selection.value = undefined
 }
-async function reviewLatest() {
-  await sync()
+function reviewLatest() {
+  void sync()
 }
 function acceptLatest() {
   if (latest.value) select(latest.value)
@@ -137,36 +169,22 @@ async function claim() {
         idempotencyKey: key,
       })
       selection.value = undefined
-      await loadData()
     },
     '接单成功，已加入已有任务。',
     JSON.stringify(selected),
   )
-}
-function changeSort() {
-  pageNo.value = 1
-  void load()
-}
-function turn(delta: number) {
-  pageNo.value += delta
-  void load()
+  if (
+    ['ORDER_TAKEN', 'OFFER_CLOSED', 'WORKER_INELIGIBLE', 'NOT_FOUND'].includes(claimTask.code.value)
+  )
+    unavailable.value = true
+  await sync()
 }
 function closeTasks() {
   expanded.value = false
 }
-onMounted(() => {
-  void load()
-  window.addEventListener('business-notification', onNotification)
-  window.addEventListener('data-refresh', sync)
-  window.addEventListener('focus', sync)
-  timer = setInterval(() => void sync(), 30000)
-})
-onUnmounted(() => {
-  clearInterval(timer)
-  window.removeEventListener('business-notification', onNotification)
-  window.removeEventListener('data-refresh', sync)
-  window.removeEventListener('focus', sync)
-})
+function loadMore() {
+  visibleCount.value += 8
+}
 </script>
 <template>
   <section class="task-summary" aria-label="已有任务">
@@ -186,26 +204,25 @@ onUnmounted(() => {
       </p>
       <button class="wide-button" @click="expanded = true">查看全部{{ tasks.length }}单</button>
     </template>
-    <p v-else>{{ task.busy.value ? '正在查询任务…' : '暂无待处理任务，可浏览下方抢单池。' }}</p>
+    <p v-else>{{ loading ? '正在查询任务…' : '暂无待处理任务，可浏览下方抢单池。' }}</p>
   </section>
-  <Feedback :error="task.error.value" :success="claimTask.success.value" />
+  <Feedback :success="claimTask.success.value" />
+  <p v-if="error" role="status">
+    {{ error }}
+    <button @click="sync">重试连接</button>
+  </p>
   <section aria-label="抢单池">
     <h2>优惠抢单池</h2>
     <p class="muted">
       仅显示符合资格的订单，接单后需完成服务及预留间隔。本页面在线通知，不是手机后台推送。
     </p>
-    <label>
-      排列顺序
-      <select name="sort" v-model="sort" :disabled="task.busy.value" @change="changeSort">
-        <option value="DEADLINE">截止时间最近</option>
-        <option value="LATEST">最新发布</option>
-      </select>
-    </label>
-    <button class="wide-button" :disabled="task.busy.value" @click="load">
-      {{ newIds.size ? `${newIds.size}条新订单，点击更新` : '刷新抢单池' }}
-    </button>
     <p v-if="changeNotice" role="status">{{ changeNotice }}</p>
-    <article v-for="offer in pool.list" :key="offer.id" class="panel order-card">
+    <article
+      v-for="offer in visibleOffers"
+      :key="offer.id"
+      :data-offer-id="offer.id"
+      class="panel order-card"
+    >
       <h2>{{ offer.skuName }}</h2>
       <small>订单 {{ offer.id }}</small>
       <p>{{ displayTime(offer.startTime) }} · {{ offer.durationMinutes }}分钟</p>
@@ -215,19 +232,14 @@ onUnmounted(() => {
       </p>
       <p>接单截止 {{ displayTime(offer.offerDeadline) }}</p>
       <p v-if="offer.sceneImages.length">含{{ offer.sceneImages.length }}张现场图片</p>
-      <p v-if="unavailableIds.has(offer.id)">已被接走、截止或资格变化，请刷新。</p>
-      <button class="wide-button" :disabled="unavailableIds.has(offer.id)" @click="select(offer)">
-        查看详情 / 接单
-      </button>
+      <button class="wide-button" @click="select(offer)">查看详情 / 接单</button>
     </article>
-    <p v-if="!pool.list.length && !task.busy.value" class="empty">
+    <p v-if="!offers.length && !loading" class="empty">
       暂无符合资格的订单。可检查工作时间和已有安排；技能、调度资格由平台维护。
     </p>
-    <div v-if="pool.pages" class="pagination">
-      <button :disabled="task.busy.value || pageNo <= 1" @click="turn(-1)">上一页</button>
-      <span>{{ pageNo }} / {{ pool.pages }}</span>
-      <button :disabled="task.busy.value || pageNo >= pool.pages" @click="turn(1)">下一页</button>
-    </div>
+    <button v-if="visibleCount < offers.length" class="wide-button" @click="loadMore">
+      继续查看较新订单（剩余{{ offers.length - visibleCount }}单）
+    </button>
   </section>
   <ModalPanel v-if="expanded" title="全部已有任务" expanded @close="closeTasks">
     <WorkerOrderCard
@@ -260,7 +272,7 @@ onUnmounted(() => {
     </p>
     <Feedback :error="claimTask.error.value" persistent />
     <p v-if="unavailable" role="alert">
-      该订单已被接走、截止或资格已变化，不能继续接单。请关闭并刷新。
+      该订单已被接走、截止或资格已变化，不能继续接单。请关闭后查看其他订单。
     </p>
     <section v-if="quoteChanged" class="panel" role="alert">
       <p>

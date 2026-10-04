@@ -174,7 +174,7 @@
   top: calc(var(--viewport-offset, 0px) + 0.75rem);
   bottom: auto;
   margin-block: 0;
-  max-height: calc(var(--viewport-height, 100dvh) - 1.5rem);
+  max-height: min(calc(var(--viewport-height, 100dvh) - 1.5rem), calc(100dvh - 1.5rem));
 }
 .task-dialog {
   height: calc(var(--viewport-height, 100dvh) - 1.5rem);
@@ -350,13 +350,20 @@
   flex: 1;
 }
 .order-groups {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.35rem;
-  margin-bottom: 1rem;
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  max-width: 100%;
+  gap: 0.25rem;
+  margin-bottom: 0.65rem;
+  overscroll-behavior-x: contain;
 }
 .order-groups button {
-  padding: 0.3rem;
+  flex: none;
+  white-space: nowrap;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.875rem;
+  min-height: 40px;
 }
 .order-groups [aria-pressed='true'] {
   border: 2px solid #222;
@@ -445,4 +452,71 @@
   .customer-scroll {
     padding: 0.65rem;
   }
+}
+
+.text-action {
+  border: 0;
+  background: transparent;
+  text-align: left;
+  padding: 0.45rem 0.1rem;
+  text-decoration: underline;
+}
+.identity-name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.identity h2 {
+  margin: 0;
+}
+.compact-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.1rem;
+  margin-block: 0.8rem;
+}
+.compact-actions {
+  margin-block: 0.8rem;
+}
+.statistics-summary {
+  padding-block: 0.5rem;
+  border-block: 1px solid #ccc;
+}
+.flow-dialog dl {
+  display: grid;
+  grid-template-columns: 5rem minmax(0, 1fr);
+  gap: 0.5rem;
+}
+.flow-dialog dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.flow-dialog .actions {
+  flex-wrap: wrap;
+}
+.flow-dialog .actions label {
+  min-width: 0;
+  flex: 1;
+}
+.flow-dialog select,
+.flow-dialog textarea {
+  max-width: 100%;
+  width: 100%;
+}
+.flow-dialog {
+  overflow-wrap: anywhere;
+}
+.flow-dialog > header h2 {
+  min-width: 0;
+  font-size: 1.15rem;
+}
+.flow-dialog > footer {
+  gap: 0.5rem;
+}
+.flow-dialog > footer button {
+  flex: 1;
+  min-width: 0;
+}
+[data-offer-id] {
+  overflow-anchor: none;
 }

@@ -22,7 +22,7 @@ export function compareWorkerOrders(a: Schema['OrderVO'], b: Schema['OrderVO']):
   )
 }
 export function compareIds(a: string, b: string) {
-  return BigInt(a) < BigInt(b) ? -1 : a === b ? 0 : 1
+  return BigInt(a) < BigInt(b) ? -1 : BigInt(a) === BigInt(b) ? 0 : 1
 }
 export function workerStatistics(
   context: MockContext,

@@ -17,7 +17,11 @@ const primary = computed(() =>
   ['home', 'orders', 'me'].some((p) => route.path === `/${props.role}/${p}`),
 )
 const title = computed(() =>
-  String(route.meta.title || (props.role === 'worker' ? '服务人员' : '家政预约')),
+  route.path === `/${props.role}/me`
+    ? props.role === 'worker'
+      ? '服务人员'
+      : '家政预约'
+    : String(route.meta.title || (props.role === 'worker' ? '服务人员' : '家政预约')),
 )
 let restoring = false,
   observer: MutationObserver | undefined,
@@ -36,6 +40,10 @@ function back() {
 function refresh() {
   notice.value = ''
   window.dispatchEvent(new Event('data-refresh'))
+}
+function reconnect() {
+  window.dispatchEvent(new Event('retry-notifications'))
+  refresh()
 }
 function savePosition() {
   if (!restoring && scroll.value) scrollPositions.set(route.fullPath, scroll.value.scrollTop)
@@ -64,7 +72,7 @@ async function restore() {
     apply()
   }
 }
-watch(() => route.fullPath, restore, { flush: 'post' })
+watch(() => route.path, restore, { flush: 'post' })
 watch(
   () => sessions[props.role]?.accessToken,
   async (token, _old, cleanup) => {
@@ -86,7 +94,7 @@ watch(
             event.type === 'OFFER_PRICE_CHANGED'
               ? '预约报价有变化，请查看最新金额后重新确认。'
               : '预约进度有更新，可刷新查看。'
-        else if (route.path !== '/worker/home') notice.value = '任务或接单资格有更新，请刷新查看。'
+        if (props.role === 'worker') window.dispatchEvent(new Event('data-refresh'))
       },
       refresh,
       (text) => {
@@ -134,7 +142,7 @@ onUnmounted(() => {
       role="status"
     >
       <span>{{ connection }}</span>
-      <button @click="refresh">重新查询</button>
+      <button @click="reconnect">重试连接</button>
     </div>
     <div
       ref="scroll"
@@ -144,7 +152,7 @@ onUnmounted(() => {
       @wheel.passive="userScroll"
       @touchstart.passive="userScroll"
     >
-      <RouterView :key="route.fullPath" />
+      <RouterView :key="route.path" />
     </div>
     <div :id="`${role}-actions`" class="customer-actions" />
     <nav

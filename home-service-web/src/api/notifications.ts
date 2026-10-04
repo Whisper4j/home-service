@@ -13,6 +13,7 @@ export async function connectNotifications(
     refresh()
     const unsubscribe = subscribeMock(token, receive)
     const timer = setInterval(() => {
+      if (document.hidden || !navigator.onLine) return
       void tickMock().catch(() => status('模拟任务暂不可用，请刷新重试'))
     }, 10_000)
     return () => {
@@ -26,6 +27,8 @@ export async function connectNotifications(
     attempts = 0
   const seen = new Set<string>()
   const connect = () => {
+    if (stopped || document.hidden || !navigator.onLine) return
+    if (socket && socket.readyState < WebSocket.CLOSING) return
     const url = new URL('/ws', window.location.href)
     url.protocol = location.protocol === 'https:' ? 'wss:' : 'ws:'
     status('通知连接中')
@@ -48,7 +51,8 @@ export async function connectNotifications(
         if (seen.size > 500) seen.delete(seen.values().next().value!)
         receive(event)
       } catch {
-        status('通知解析失败，请刷新列表')
+        status('通知解析失败，将通过HTTP重新同步')
+        refresh()
       }
     }
     socket.onclose = (event) => {
@@ -58,15 +62,27 @@ export async function connectNotifications(
         refresh()
         return
       }
-      status('通知已断开，正在重连；可手动刷新')
+      status('通知已断开，正在重连；HTTP同步继续补漏')
       timer = setTimeout(connect, Math.min(30_000, 1000 * 2 ** attempts++))
     }
     socket.onerror = () => status('通知暂不可用，业务操作仍可通过HTTP提交')
   }
+  const recover = () => {
+    if (document.hidden || !navigator.onLine) return
+    clearTimeout(timer)
+    connect()
+    refresh()
+  }
+  window.addEventListener('online', recover)
+  window.addEventListener('retry-notifications', recover)
+  document.addEventListener('visibilitychange', recover)
   connect()
   return () => {
     stopped = true
     clearTimeout(timer)
     socket?.close()
+    window.removeEventListener('online', recover)
+    window.removeEventListener('retry-notifications', recover)
+    document.removeEventListener('visibilitychange', recover)
   }
 }

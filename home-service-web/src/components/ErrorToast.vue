@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
-import { toast, showError } from '../stores/feedback'
+import { toast, toastKind, showError } from '../stores/feedback'
 import type { Schema } from '../api/types'
 const panel = ref<HTMLElement>()
 function position() {
@@ -102,7 +102,14 @@ onUnmounted(() => {
 })
 </script>
 <template>
-  <div ref="panel" popover="manual" class="error-toast" role="alert">{{ toast }}</div>
+  <div
+    ref="panel"
+    popover="manual"
+    class="error-toast"
+    :role="toastKind === 'success' ? 'status' : 'alert'"
+  >
+    {{ toast }}
+  </div>
 </template>
 <style>
 .error-toast {

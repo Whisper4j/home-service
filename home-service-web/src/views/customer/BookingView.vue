@@ -9,6 +9,10 @@ import { dateOf, DAY, iso, money } from '../../utils/format'
 import { offerReason, suggestedPrice, timeReason } from '../../utils/booking'
 import Feedback from '../../components/CustomerFeedback.vue'
 import QuoteEditor from '../../components/QuoteEditor.vue'
+import AddressPanel from '../../components/AddressPanel.vue'
+import { usePanel } from '../../composables/usePanel'
+import { rememberBookingSource } from '../../utils/navigation'
+import { showSuccess } from '../../stores/feedback'
 import SceneImageUpload from '../../components/SceneImageUpload.vue'
 const route = useRoute(),
   router = useRouter(),
@@ -17,6 +21,7 @@ const route = useRoute(),
 const sku = ref<Schema['SkuVO']>(),
   rules = ref<Schema['BookingRulesVO']>(),
   addresses = ref<Schema['AddressVO'][]>([])
+const { panel, open, close } = usePanel()
 const quoteEditor = ref<InstanceType<typeof QuoteEditor>>()
 const now = ref(Date.now()),
   pendingImages = ref(false),
@@ -147,7 +152,26 @@ async function load() {
 }
 function addAddress() {
   saveDraft()
-  void router.push({ path: '/customer/addresses', query: { returnTo: route.fullPath, add: '1' } })
+  void open('address-add')
+}
+function chooseAddress(selected: Schema['AddressVO']) {
+  const previous = address.value
+  const manualName = previous && form.contactName !== previous.contactName
+  const manualPhone = previous && form.contactPhone !== previous.contactPhone
+  // The panel returns the authoritative saved VO; selecting it needs no second write/read.
+  addresses.value = [...addresses.value.filter((item) => item.id !== selected.id), selected]
+  form.addressId = selected.id
+  if (!manualName) form.contactName = selected.contactName
+  if (!manualPhone) form.contactPhone = selected.contactPhone
+  saveDraft()
+  close()
+}
+async function closeAddressPanel() {
+  close()
+  await loading.run(async () => {
+    addresses.value = await request('listAddresses')
+    if (!addresses.value.some((item) => item.id === form.addressId)) form.addressId = ''
+  })
 }
 function changeDate() {
   form.time = ''
@@ -182,6 +206,8 @@ async function submit() {
   await submitting.run(
     async () => {
       const order = await request('createOrder', { body, idempotencyKey: submission.key })
+      rememberBookingSource(order.id, route.query.entry)
+      showSuccess('预约已提交，请在15分钟内支付')
       sessionStorage.removeItem(key)
       await router.replace(`/customer/pay/${order.id}`)
     },
@@ -196,6 +222,14 @@ onMounted(() => {
 onUnmounted(() => clearInterval(timer))
 </script>
 <template>
+  <AddressPanel
+    v-if="['addresses', 'address-add'].includes(panel)"
+    selecting
+    :add="panel === 'address-add'"
+    :context="key"
+    @close="closeAddressPanel"
+    @selected="chooseAddress"
+  />
   <Feedback :busy="loading.busy.value" :error="loading.error.value" />
   <button v-if="loading.error.value" @click="load">重新加载预约</button>
   <form
@@ -216,14 +250,9 @@ onUnmounted(() => clearInterval(timer))
     <section class="booking-section">
       <h2>服务地址</h2>
       <div class="fields">
-        <label v-if="addresses.length">
-          选择地址
-          <select name="addressId" v-model="form.addressId" @change="selectAddress">
-            <option v-for="item in addresses" :key="item.id" :value="item.id">
-              {{ item.isDefault ? '默认 · ' : '' }}{{ item.districtName }} {{ item.detail }}
-            </option>
-          </select>
-        </label>
+        <button v-if="addresses.length" type="button" @click="open('addresses')">
+          切换服务地址
+        </button>
         <p v-if="address">
           {{ address.contactName }} · {{ address.contactPhone }}
           <br />

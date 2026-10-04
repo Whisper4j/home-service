@@ -744,8 +744,7 @@ export interface paths {
         };
         /**
          * 符合资格的优惠抢单池
-         * @description 账号启用、允许派单、技能覆盖、城市匹配、服务及全部缓冲槽可用才可见。不泄漏详细地址/电话。
-         *     校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。 全量资格过滤后排序再分页。DEADLINE：截止时间升序、发布时间升序、数值ID升序；LATEST：发布时间降序、数值ID升序。仅为本项目规则。通知不替代HTTP结果；重连重新查询；确认期间不得静默更换报价。
+         * @description 仅账号启用、允许派单、技能覆盖、城市匹配、服务及全部缓冲槽可用的人员可见。完整资格过滤后按publishedAt升序、同时间按数值意义的字符串订单ID升序稳定排序，再分页；大整数ID不得转浮点数比较。不提供排序选择。发布时间是优惠订单支付成功正式进入抢单池的首次时间，调价不改变发布时间。抢单前隐藏完整门牌、电话和开始码，私有图片仍需资格鉴权。客户端自动同步并保留阅读位置，新订单在全局后部，不绕过未加载旧单；失效订单移除。确认中的报价与版本保持快照，变化或失效必须重新确认或禁用提交。WebSocket只通知，HTTP决定结果；重连、页面恢复可见、网络恢复重新查询，约30秒可见页面补漏。不宣称为手机后台推送或外部平台内部排序。
          */
         get: operations["listEligibleOffers"];
         put?: never;
@@ -1613,7 +1612,7 @@ export interface components {
             role?: components["schemas"]["Role"];
             status?: components["schemas"]["AccountStatus"];
         };
-        /** @description 仅支持广东省广州市及其全部区。行政区编码与名称必须匹配；经纬度同时为空或同时提供。不按距离计价。设置默认地址原子清除旧默认。 */
+        /** @description 客户仅提交联系人、电话、行政区、详细地址及默认标记，不接受经纬度。仅支持广东省广州市，编码和名称必须匹配。设置默认地址原子清除旧默认；首个地址自动默认，删除或取消默认后最早创建的其他地址成为默认。 */
         AddressDTO: {
             contactName: string;
             contactPhone: string;
@@ -1624,10 +1623,9 @@ export interface components {
             districtCode: string;
             districtName: string;
             detail: string;
-            longitude: number | null;
-            latitude: number | null;
             isDefault: boolean;
         };
+        /** @description 坐标由系统维护，当前未接地图服务，新地址坐标同时为空且可正常按城市预约。只改联系人、电话或默认标记保留已有系统坐标；行政区或详细地址变化后旧坐标同时失效为空，未来由地图服务重新解析。禁止随机坐标或用0,0冒充解析成功。地址解析与两位置间距离计算是不同能力，本接口不返回距离。 */
         AddressVO: {
             id: components["schemas"]["Id"];
             contactName: string;
@@ -1928,7 +1926,7 @@ export interface components {
             paymentStatus: components["schemas"]["PaymentStatus"];
             dispatchStatus: components["schemas"]["DispatchStatus"];
             service: components["schemas"]["ServiceSnapshotVO"];
-            address: components["schemas"]["AddressDTO"];
+            address: components["schemas"]["OrderAddressSnapshotVO"];
             startTime: components["schemas"]["DateTime"];
             endTime: components["schemas"]["DateTime"];
             bufferEndTime: components["schemas"]["DateTime"];
@@ -1975,11 +1973,6 @@ export interface components {
             keyword?: string;
             from?: components["schemas"]["LocalDate"];
             to?: components["schemas"]["LocalDate"];
-            /**
-             * @default DEADLINE
-             * @enum {string}
-             */
-            sort: "DEADLINE" | "LATEST";
         };
         /** @description 抢单前最小信息集，无客户 ID、门牌、电话、联系人或开始码。仅符合条件的人员可见。 sceneImages 仅允许当前符合接单资格的人员通过鉴权接口查看。提示客户避免拍入隐私；不得在抢单池暴露结构化门牌、联系方式或开始码。 */
         OfferVO: {
@@ -2555,6 +2548,21 @@ export interface components {
             code: "SUCCESS";
             message: string;
             data: components["schemas"]["WorkerProfileVO"];
+        };
+        /** @description 订单创建时保存的不可变地址输出快照，独立于客户地址写入DTO。地址簿编辑、删除或未来坐标解析均不改变历史订单快照。坐标由系统维护且允许同时为空；isDefault仅为创建时快照，不表示当前默认地址。 */
+        OrderAddressSnapshotVO: {
+            contactName: string;
+            contactPhone: string;
+            provinceCode: string;
+            provinceName: string;
+            cityCode: string;
+            cityName: string;
+            districtCode: string;
+            districtName: string;
+            detail: string;
+            longitude: number | null;
+            latitude: number | null;
+            isDefault: boolean;
         };
     };
     responses: {
@@ -3952,7 +3960,6 @@ export interface operations {
                 keyword?: string;
                 from?: components["schemas"]["LocalDate"];
                 to?: components["schemas"]["LocalDate"];
-                sort?: "DEADLINE" | "LATEST";
             };
             header?: never;
             path?: never;

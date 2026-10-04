@@ -44,9 +44,20 @@ export function readDatabase(): Database {
         }
       }
       const migrateOrder = (order: Schema['OrderVO']) => {
+        order.address.longitude ??= null
+        order.address.latitude ??= null
         order.offerPriceRule ||= 'MINIMUM_ANCHORED'
-        if (order.offerDeadline) order.offerPublishedAt ||= order.createdAt
+        if (order.offerDeadline && !order.offerPublishedAt) {
+          const payment = saved.histories[order.id]?.payments.find(
+            (record: Schema['PaymentVO']) => record.type === 'PAYMENT',
+          )
+          if (payment) order.offerPublishedAt = payment.createdAt
+        }
         if (['COMPLETED', 'CANCELLED'].includes(order.status)) order.closedAt ||= order.endTime
+      }
+      for (const address of saved.addresses) {
+        address.longitude ??= null
+        address.latitude ??= null
       }
       saved.orders.forEach((stored: { order: Schema['OrderVO'] }) => migrateOrder(stored.order))
       for (const cached of Object.values(saved.idempotency) as {

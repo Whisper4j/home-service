@@ -1,33 +1,26 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue'
+import { ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { request } from '../../api/client'
 import type { Schema } from '../../api/types'
-import { useTask } from '../../composables/useTask'
-import { useRefresh } from '../../composables/useRefresh'
+import { useAutoSync } from '../../composables/useAutoSync'
 import { label } from '../../utils/labels'
 import { displayTime } from '../../utils/format'
-import Feedback from '../../components/Feedback.vue'
 const id = String(useRoute().params.id),
-  order = ref<Schema['OrderVO']>(),
-  task = useTask()
-function load() {
-  return task.run(async () => {
-    order.value = await request('customerGetOrder', { id })
-  })
-}
-useRefresh(load)
-function progress(event: Event) {
-  if ((event as CustomEvent<Schema['WsEvent']>).detail.orderId === id) void load()
-}
-onMounted(() => window.addEventListener('business-notification', progress))
-onUnmounted(() => window.removeEventListener('business-notification', progress))
+  order = ref<Schema['OrderVO']>()
+const { sync, error, loading } = useAutoSync(async (active) => {
+  const fresh = await request('customerGetOrder', { id })
+  if (active()) order.value = fresh
+})
 </script>
 <template>
-  <Feedback :busy="task.busy.value" :error="task.error.value" />
-  <button @click="load">查询支付与安排结果</button>
+  <p v-if="loading">正在查询支付与安排结果…</p>
+  <p v-if="error">
+    {{ error }}
+    <button @click="sync">重新查询结果</button>
+  </p>
   <section v-if="order" class="booking-section">
-    <h2>{{ label(order.paymentStatus) }}</h2>
+    <h2>{{ order.paymentStatus === 'PAID' ? '模拟支付成功' : label(order.paymentStatus) }}</h2>
     <p>{{ order.service.skuName }} · ¥{{ order.currentPrice }}</p>
     <p>{{ label(order.status) }}</p>
     <p v-if="order.workerName">已安排：{{ order.workerName }}</p>

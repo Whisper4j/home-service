@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import { request } from '../../api/client'
-import type { Schema } from '../../api/types'
-import { useTask } from '../../composables/useTask'
-import Feedback from '../../components/CustomerFeedback.vue'
+import { request } from '../api/client'
+import type { Schema } from '../api/types'
+import { useTask } from '../composables/useTask'
+import Feedback from '../components/CustomerFeedback.vue'
 const rules = ref<Schema['BookingRulesVO']>(),
   { busy, error, run } = useTask()
 function load() {

@@ -145,7 +145,13 @@ it('多状态筛选保持精确状态且与单状态互斥，默认地址始终�
       query: { statuses: ['COMPLETED'], status: 'CANCELLED' },
     }),
   ).rejects.toMatchObject({ code: 'VALIDATION_ERROR' })
-  const { id: _id, customerId: _customer, ...dto } = engine.db.addresses[0]
+  const {
+    id: _id,
+    customerId: _customer,
+    longitude: _longitude,
+    latitude: _latitude,
+    ...dto
+  } = engine.db.addresses[0]
   const added = (await write('createAddress', customer, {
     ...dto,
     detail: '第二地址',

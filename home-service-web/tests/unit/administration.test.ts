@@ -60,7 +60,13 @@ it('注册及账号资料维护，拒绝未知字段、空白名称、重复账�
 })
 
 it('地址默认唯一、区域校验与订单快照隔离', async () => {
-  const { id: _id, customerId: _customerId, ...address } = engine.db.addresses[0]
+  const {
+    id: _id,
+    customerId: _customerId,
+    longitude: _longitude,
+    latitude: _latitude,
+    ...address
+  } = engine.db.addresses[0]
   const second = (await call('createAddress', customer, {
     ...address,
     detail: '另一个虚构地址',

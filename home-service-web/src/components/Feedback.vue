@@ -25,5 +25,5 @@ const critical = computed(
   <p v-if="error && critical" class="feedback error" role="alert">
     {{ error.replace(/（[A-Z_]+）/g, '') }}
   </p>
-  <p v-if="success" class="feedback" role="status">{{ success }}</p>
+  <p v-if="success && persistent" class="feedback" role="status">{{ success }}</p>
 </template>

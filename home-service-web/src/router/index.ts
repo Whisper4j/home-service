@@ -60,24 +60,29 @@ export const router = createRouter({
         },
         {
           path: 'addresses',
-          component: () => import('../views/customer/AddressesView.vue'),
-          meta: { title: '地址簿' },
+          redirect: (to) => {
+            const target =
+              typeof to.query.returnTo === 'string' &&
+              /^\/customer\/booking\/[0-9]+(?:\?|$)/.test(to.query.returnTo)
+                ? to.query.returnTo
+                : '/customer/me'
+            const resolved = new URL(target, 'https://local.invalid')
+            return {
+              path: resolved.pathname,
+              query: {
+                ...Object.fromEntries(resolved.searchParams),
+                panel: to.query.add === '1' ? 'address-add' : 'addresses',
+              },
+            }
+          },
         },
         {
           path: 'me',
           component: () => import('../views/customer/MyView.vue'),
           meta: { public: true, title: '我的' },
         },
-        {
-          path: 'profile',
-          component: () => import('../views/customer/ProfileView.vue'),
-          meta: { title: '个人信息' },
-        },
-        {
-          path: 'rules',
-          component: () => import('../views/customer/RulesView.vue'),
-          meta: { public: true, title: '预约说明' },
-        },
+        { path: 'profile', redirect: '/customer/me?panel=profile' },
+        { path: 'rules', redirect: '/customer/me?panel=rules' },
         {
           path: 'development',
           component: () => import('../views/customer/DevelopmentView.vue'),
@@ -132,26 +137,10 @@ export const router = createRouter({
           component: () => import('../views/worker/MyView.vue'),
           meta: { title: '我的' },
         },
-        {
-          path: 'profile',
-          component: () => import('../views/worker/ProfileView.vue'),
-          meta: { title: '个人资料' },
-        },
-        {
-          path: 'statistics',
-          component: () => import('../views/worker/StatisticsView.vue'),
-          meta: { title: '服务数据' },
-        },
-        {
-          path: 'rules',
-          component: () => import('../views/worker/RulesView.vue'),
-          meta: { title: '服务规则' },
-        },
-        {
-          path: 'schedule',
-          component: () => import('../views/worker/ScheduleView.vue'),
-          meta: { title: '工作时间与请假' },
-        },
+        { path: 'profile', redirect: '/worker/me?panel=profile' },
+        { path: 'statistics', redirect: '/worker/me' },
+        { path: 'rules', redirect: '/worker/me?panel=rules' },
+        { path: 'schedule', redirect: '/worker/me?panel=schedule' },
       ],
     },
     {
@@ -188,7 +177,9 @@ export const router = createRouter({
   ],
 })
 router.beforeEach(async (to) => {
-  if (to.meta.public) return true
+  const privateCustomerPanel =
+    to.path === '/customer/me' && ['profile', 'addresses'].includes(String(to.query.panel))
+  if (to.meta.public && !privateCustomerPanel) return true
   const role = to.meta.role as RolePath
   if (!sessions[role]) return { path: `/${role}/login`, query: { redirect: to.fullPath } }
   try {

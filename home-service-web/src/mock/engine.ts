@@ -212,8 +212,6 @@ export class MockEngine extends MockContext {
       !region.districts.some((d) => d.code === dto.districtCode && d.name === dto.districtName)
     )
       fail('OUTSIDE_SERVICE_AREA', '仅支持广东省广州市，区编码和名称需一致', 422)
-    if ((dto.latitude === null) !== (dto.longitude === null))
-      fail('VALIDATION_ERROR', '经纬度应同时填写或同时留空', 400)
   }
   private dispatch(op: OperationId, r: MockRequest, account?: Schema['AccountVO']): unknown {
     const route = routes[op],
@@ -313,7 +311,24 @@ export class MockEngine extends MockContext {
           .forEach((a) => {
             a.isDefault = false
           })
-      const address = { id: existing?.id || this.nextId(), ...dto, isDefault }
+      const locationFields = [
+        'provinceCode',
+        'provinceName',
+        'cityCode',
+        'cityName',
+        'districtCode',
+        'districtName',
+        'detail',
+      ] as const
+      const sameLocation =
+        existing && locationFields.every((field) => existing[field] === dto[field])
+      const address = {
+        id: existing?.id || this.nextId(),
+        ...dto,
+        isDefault,
+        longitude: sameLocation ? (existing.longitude ?? null) : null,
+        latitude: sameLocation ? (existing.latitude ?? null) : null,
+      }
       if (existing) Object.assign(existing, address)
       else this.db.addresses.push({ ...address, customerId: actor })
       const owned = this.db.addresses.filter((a) => a.customerId === actor)
@@ -398,13 +413,7 @@ export class MockEngine extends MockContext {
                 (!q.to || o.startTime.slice(0, 10) <= String(q.to)),
             )
             .map(offerView)
-            .sort(
-              (a, b) =>
-                (q.sort === 'LATEST'
-                  ? b.publishedAt.localeCompare(a.publishedAt)
-                  : a.offerDeadline.localeCompare(b.offerDeadline) ||
-                    a.publishedAt.localeCompare(b.publishedAt)) || compareIds(a.id, b.id),
-            ),
+            .sort((a, b) => a.publishedAt.localeCompare(b.publishedAt) || compareIds(a.id, b.id)),
           q,
         )
       const order = this.db.orders.find((s) => s.order.id === id)?.order

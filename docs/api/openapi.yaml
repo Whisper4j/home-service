@@ -620,8 +620,8 @@ paths:
       summary: 新增地址
       description: >-
         
-        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循 Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。
-        首个地址自动设为默认；默认地址始终唯一。
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循
+        Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。 首个地址自动设为默认；默认地址始终唯一。
       parameters:
         - $ref: "#/components/parameters/IdempotencyKey"
       requestBody:
@@ -659,7 +659,8 @@ paths:
       summary: 修改地址与默认标记
       description: >-
         
-        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循 Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循
+        Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。
         设置默认时原默认自动取消；若把当前默认设为非默认且有其他地址，则自动选择最早创建的剩余地址为默认。
       parameters:
         - name: id
@@ -703,8 +704,8 @@ paths:
       description: >-
         不影响历史订单地址快照；删除默认地址后自动选最早剩余地址为默认。
 
-        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循 Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。
-        删除默认地址时最早创建的剩余地址成为默认，无剩余地址则无默认地址。
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循
+        Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。 删除默认地址时最早创建的剩余地址成为默认，无剩余地址则无默认地址。
       parameters:
         - name: id
           in: path
@@ -1246,7 +1247,8 @@ paths:
         WAITING_DISPATCH，每30秒扫描，5分钟超时取消全额退款。OFFER 进入 WAITING_ACCEPTANCE，截止
         min(支付成功+2小时,开始-6小时)。支付成功与分配成功分别表达。
 
-        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循 Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循
+        Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。
       parameters:
         - name: id
           in: path
@@ -1543,10 +1545,11 @@ paths:
       operationId: updateSchedule
       summary: 设置统一每日区间和固定休息日
       description: >-
-        所有非休息日复用相同区间；首次设置生成未来30天槽，后续仅更新空闲/非工作槽。不得覆盖请假或已占用槽，缩短区间/新增休息日影响 SERVICE/BUFFER 返回409
-        SCHEDULE_CONFLICT。生成幂等、启动补漏、零点补齐。
+        所有非休息日复用相同区间；首次设置生成未来30天槽，后续仅更新空闲/非工作槽。不得覆盖请假或已占用槽，缩短区间/新增休息日影响
+        SERVICE/BUFFER 返回409 SCHEDULE_CONFLICT。生成幂等、启动补漏、零点补齐。
 
-        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循 Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。
+        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。写操作遵循
+        Idempotency-Key；业务写入、流水及资源占用须在同一事务内完成。
       parameters:
         - $ref: "#/components/parameters/IdempotencyKey"
       requestBody:
@@ -1742,8 +1745,7 @@ paths:
       operationId: listEligibleOffers
       summary: 符合资格的优惠抢单池
       description: |-
-        账号启用、允许派单、技能覆盖、城市匹配、服务及全部缓冲槽可用才可见。不泄漏详细地址/电话。
-        校验 JWT、对应角色和账号启用状态；资源所属关系在服务端校验。 全量资格过滤后排序再分页。DEADLINE：截止时间升序、发布时间升序、数值ID升序；LATEST：发布时间降序、数值ID升序。仅为本项目规则。通知不替代HTTP结果；重连重新查询；确认期间不得静默更换报价。
+        仅账号启用、允许派单、技能覆盖、城市匹配、服务及全部缓冲槽可用的人员可见。完整资格过滤后按publishedAt升序、同时间按数值意义的字符串订单ID升序稳定排序，再分页；大整数ID不得转浮点数比较。不提供排序选择。发布时间是优惠订单支付成功正式进入抢单池的首次时间，调价不改变发布时间。抢单前隐藏完整门牌、电话和开始码，私有图片仍需资格鉴权。客户端自动同步并保留阅读位置，新订单在全局后部，不绕过未加载旧单；失效订单移除。确认中的报价与版本保持快照，变化或失效必须重新确认或禁用提交。WebSocket只通知，HTTP决定结果；重连、页面恢复可见、网络恢复重新查询，约30秒可见页面补漏。不宣称为手机后台推送或外部平台内部排序。
       parameters:
         - name: pageNo
           in: query
@@ -1778,14 +1780,6 @@ paths:
           required: false
           schema:
             $ref: "#/components/schemas/LocalDate"
-        - name: sort
-          in: query
-          schema: &a5
-            type: string
-            enum:
-              - DEADLINE
-              - LATEST
-            default: DEADLINE
       x-query-schema: OfferQuery
       responses:
         "200":
@@ -3449,8 +3443,9 @@ paths:
         - customer
       operationId: uploadSceneImage
       summary: 上传一张预约现场图片
-      description: multipart/form-data，字段 file。仅客户上传本人图片，单张不超过5 MiB，仅JPEG/PNG/WebP且验证真实内容并清理EXIF。相同
-        Idempotency-Key 的指纹包含文件内容摘要和 MIME，重试返回相同引用，不重复存储；不同内容返回
+      description: multipart/form-data，字段 file。仅客户上传本人图片，单张不超过5
+        MiB，仅JPEG/PNG/WebP且验证真实内容并清理EXIF。相同 Idempotency-Key 的指纹包含文件内容摘要和
+        MIME，重试返回相同引用，不重复存储；不同内容返回
         IDEMPOTENCY_CONFLICT。上传成功并不创建订单，创建订单最多关联3张。原型仅浏览器存储，正式服务端存储和鉴权待实现。
       parameters:
         - $ref: "#/components/parameters/IdempotencyKey"
@@ -3526,11 +3521,13 @@ paths:
         - customer
       operationId: customerGetSceneImage
       summary: 鉴权读取现场图片内容
-      description: "图片流成功响应是统一 JSON 响应的唯一例外：返回二进制图片、准确 Content-Type、Cache-Control: private, no-store 和
-        X-Content-Type-Options: nosniff。失败仍返回统一 ErrorResponse。必须 JWT/角色/账号启用校验，禁止公开 URL
-        和无权限列表。客户仅本人图片；服务人员必须为当前订单已分配人员，或订单仍待抢单且当前满足全部接单资格；管理员仅可读取指定订单已关联图片。人员/管理员必须提供
-        orderId，图片必须属于该订单。每次读取重新判权（接单、取消、排班变化后不再有抢单资格即拒绝）。不存在或无权均404。前端通过 Bearer fetch 得到 Blob
-        后创建临时对象 URL，退出/离页撤销。"
+      description: "图片流成功响应是统一 JSON 响应的唯一例外：返回二进制图片、准确 Content-Type、Cache-Control:
+        private, no-store 和 X-Content-Type-Options: nosniff。失败仍返回统一
+        ErrorResponse。必须 JWT/角色/账号启用校验，禁止公开 URL
+        和无权限列表。客户仅本人图片；服务人员必须为当前订单已分配人员，或订单仍待抢单且当前满足全部接单资格；管理员仅可读取指定订单已关联图片。人员/\
+        管理员必须提供
+        orderId，图片必须属于该订单。每次读取重新判权（接单、取消、排班变化后不再有抢单资格即拒绝）。不存在或无权均404。前端通过 Bearer
+        fetch 得到 Blob 后创建临时对象 URL，退出/离页撤销。"
       responses:
         "200":
           description: 授权图片内容（无 JSON 包裹）
@@ -3590,11 +3587,13 @@ paths:
         - worker
       operationId: workerGetSceneImage
       summary: 鉴权读取现场图片内容
-      description: "图片流成功响应是统一 JSON 响应的唯一例外：返回二进制图片、准确 Content-Type、Cache-Control: private, no-store 和
-        X-Content-Type-Options: nosniff。失败仍返回统一 ErrorResponse。必须 JWT/角色/账号启用校验，禁止公开 URL
-        和无权限列表。客户仅本人图片；服务人员必须为当前订单已分配人员，或订单仍待抢单且当前满足全部接单资格；管理员仅可读取指定订单已关联图片。人员/管理员必须提供
-        orderId，图片必须属于该订单。每次读取重新判权（接单、取消、排班变化后不再有抢单资格即拒绝）。不存在或无权均404。前端通过 Bearer fetch 得到 Blob
-        后创建临时对象 URL，退出/离页撤销。"
+      description: "图片流成功响应是统一 JSON 响应的唯一例外：返回二进制图片、准确 Content-Type、Cache-Control:
+        private, no-store 和 X-Content-Type-Options: nosniff。失败仍返回统一
+        ErrorResponse。必须 JWT/角色/账号启用校验，禁止公开 URL
+        和无权限列表。客户仅本人图片；服务人员必须为当前订单已分配人员，或订单仍待抢单且当前满足全部接单资格；管理员仅可读取指定订单已关联图片。人员/\
+        管理员必须提供
+        orderId，图片必须属于该订单。每次读取重新判权（接单、取消、排班变化后不再有抢单资格即拒绝）。不存在或无权均404。前端通过 Bearer
+        fetch 得到 Blob 后创建临时对象 URL，退出/离页撤销。"
       responses:
         "200":
           description: 授权图片内容（无 JSON 包裹）
@@ -3654,11 +3653,13 @@ paths:
         - admin
       operationId: adminGetSceneImage
       summary: 鉴权读取现场图片内容
-      description: "图片流成功响应是统一 JSON 响应的唯一例外：返回二进制图片、准确 Content-Type、Cache-Control: private, no-store 和
-        X-Content-Type-Options: nosniff。失败仍返回统一 ErrorResponse。必须 JWT/角色/账号启用校验，禁止公开 URL
-        和无权限列表。客户仅本人图片；服务人员必须为当前订单已分配人员，或订单仍待抢单且当前满足全部接单资格；管理员仅可读取指定订单已关联图片。人员/管理员必须提供
-        orderId，图片必须属于该订单。每次读取重新判权（接单、取消、排班变化后不再有抢单资格即拒绝）。不存在或无权均404。前端通过 Bearer fetch 得到 Blob
-        后创建临时对象 URL，退出/离页撤销。"
+      description: "图片流成功响应是统一 JSON 响应的唯一例外：返回二进制图片、准确 Content-Type、Cache-Control:
+        private, no-store 和 X-Content-Type-Options: nosniff。失败仍返回统一
+        ErrorResponse。必须 JWT/角色/账号启用校验，禁止公开 URL
+        和无权限列表。客户仅本人图片；服务人员必须为当前订单已分配人员，或订单仍待抢单且当前满足全部接单资格；管理员仅可读取指定订单已关联图片。人员/\
+        管理员必须提供
+        orderId，图片必须属于该订单。每次读取重新判权（接单、取消、排班变化后不再有抢单资格即拒绝）。不存在或无权均404。前端通过 Bearer
+        fetch 得到 Blob 后创建临时对象 URL，退出/离页撤销。"
       responses:
         "200":
           description: 授权图片内容（无 JSON 包裹）
@@ -3830,7 +3831,8 @@ components:
         maxLength: 128
         pattern: ^[A-Za-z0-9_-]{8,128}$
       example: request_20261003_0001
-      description: 以账号+方法+路径+Key为作用域。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409
+      description: 以账号+方法+路径+Key为作用域。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409
+        IDEMPOTENCY_CONFLICT；执行中返回409
         REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
   responses:
     Error400:
@@ -4269,7 +4271,7 @@ components:
     AddressDTO:
       type: object
       additionalProperties: false
-      description: 仅支持广东省广州市及其全部区。行政区编码与名称必须匹配；经纬度同时为空或同时提供。不按距离计价。设置默认地址原子清除旧默认。
+      description: 客户仅提交联系人、电话、行政区、详细地址及默认标记，不接受经纬度。仅支持广东省广州市，编码和名称必须匹配。设置默认地址原子清除旧默认；首个地址自动默认，删除或取消默认后最早创建的其他地址成为默认。
       required:
         - contactName
         - contactPhone
@@ -4280,8 +4282,6 @@ components:
         - districtCode
         - districtName
         - detail
-        - longitude
-        - latitude
         - isDefault
       properties:
         contactName:
@@ -4321,16 +4321,6 @@ components:
           type: string
           minLength: 1
           maxLength: 200
-        longitude:
-          type: number
-          minimum: -180
-          maximum: 180
-          nullable: true
-        latitude:
-          type: number
-          minimum: -90
-          maximum: 90
-          nullable: true
         isDefault:
           type: boolean
     AddressVO:
@@ -4402,6 +4392,7 @@ components:
           nullable: true
         isDefault:
           type: boolean
+      description: 坐标由系统维护，当前未接地图服务，新地址坐标同时为空且可正常按城市预约。只改联系人、电话或默认标记保留已有系统坐标；行政区或详细地址变化后旧坐标同时失效为空，未来由地图服务重新解析。禁止随机坐标或用0,0冒充解析成功。地址解析与两位置间距离计算是不同能力，本接口不返回距离。
     RegionVO:
       type: object
       additionalProperties: false
@@ -4487,7 +4478,8 @@ components:
     ServiceItemDTO:
       type: object
       additionalProperties: false
-      description: 业务性质独立于可维护分类名称和ID。当前只有 CLEANING 可支持优惠，REPAIR 和 OTHER 仅标准；有支持优惠的SKU时不能改为非清洁。新增分类无需新增订单流程。
+      description: 业务性质独立于可维护分类名称和ID。当前只有 CLEANING 可支持优惠，REPAIR 和 OTHER
+        仅标准；有支持优惠的SKU时不能改为非清洁。新增分类无需新增订单流程。
       required:
         - categoryId
         - name
@@ -4651,7 +4643,8 @@ components:
             - AC_CLEAN
             - null
           description: 显式绑定的客户端入口；同一入口最多绑定一个 SKU（含已下架 SKU），null 为不绑定。更新时省略保持已有绑定；解除须显式
-            null。日常套餐时长须匹配入口，清洁入口只能绑定 CLEANING，维修入口只能绑定 REPAIR。删除/下架后入口不可预约，不自动回退其他 SKU。
+            null。日常套餐时长须匹配入口，清洁入口只能绑定 CLEANING，维修入口只能绑定
+            REPAIR。删除/下架后入口不可预约，不自动回退其他 SKU。
     SkuVO:
       type: object
       additionalProperties: false
@@ -5258,9 +5251,11 @@ components:
       type: object
       additionalProperties: false
       description: 客户仅自己的订单；人员仅分配给自己的订单；管理员可查看全部。未发生的可选时间/人员/成交字段省略，不传 null。已支付订单禁止修改
-        SKU、地址和预约时间。开始码单独返回，不泄漏给人员。 contactName/contactPhone 为本次履约使用的订单联系人，address
-        内联系人为创建时地址簿快照，两者职责独立。sceneImages 为客户自愿提交的现场图片，附件不可替换或删除历史关联。 offerPublishedAt
-        为优惠支付成功进入抢单池的首次发布时间。closedAt 为完成确认（含自动完成）或取消的实际时间；终态必须返回，用于历史排序及完成统计。预约 endTime 不等同于完成时间。
+        SKU、地址和预约时间。开始码单独返回，不泄漏给人员。 contactName/contactPhone
+        为本次履约使用的订单联系人，address 内联系人为创建时地址簿快照，两者职责独立。sceneImages
+        为客户自愿提交的现场图片，附件不可替换或删除历史关联。 offerPublishedAt
+        为优惠支付成功进入抢单池的首次发布时间。closedAt 为完成确认（含自动完成）或取消的实际时间；终态必须返回，用于历史排序及完成统计。预约
+        endTime 不等同于完成时间。
       required:
         - id
         - customerId
@@ -5302,7 +5297,7 @@ components:
         service:
           $ref: "#/components/schemas/ServiceSnapshotVO"
         address:
-          $ref: "#/components/schemas/AddressDTO"
+          $ref: "#/components/schemas/OrderAddressSnapshotVO"
         startTime:
           $ref: "#/components/schemas/DateTime"
         endTime:
@@ -5359,8 +5354,8 @@ components:
     OrderQuery:
       type: object
       additionalProperties: false
-      description: 日期按预约开始时间在 Asia/Shanghai 的自然日闭区间筛选；from 不得晚于 to。keyword 搜索订单 ID 或服务名称。 statuses
-        以逗号分隔传输，可筛选多个精确状态；与 status 互斥。仅用于页面浏览分组，不改变正式状态。
+      description: 日期按预约开始时间在 Asia/Shanghai 的自然日闭区间筛选；from 不得晚于 to。keyword 搜索订单 ID
+        或服务名称。 statuses 以逗号分隔传输，可筛选多个精确状态；与 status 互斥。仅用于页面浏览分组，不改变正式状态。
       properties:
         pageNo:
           type: integer
@@ -5407,7 +5402,6 @@ components:
           $ref: "#/components/schemas/LocalDate"
         to:
           $ref: "#/components/schemas/LocalDate"
-        sort: *a5
     OfferVO:
       type: object
       additionalProperties: false
@@ -5489,7 +5483,8 @@ components:
       type: object
       additionalProperties: false
       description: 只有 WAITING_ACCEPTANCE 且未截止可调价。newPrice 与旧价相差非零 5 元整数倍且在订单快照范围内；涨价需
-        confirmSimulatedPayment=true。涨价补差或降价退款、报价历史、版本递增在同一事务提交，失败全部回滚。 调价遵守订单 offerPriceRule
+        confirmSimulatedPayment=true。涨价补差或降价退款、报价历史、版本递增在同一事务提交，失败全部回滚。 调价遵守订单
+        offerPriceRule
         与价格范围快照；报价不变不可提交。涨价须明确确认模拟补付，降价明确退款。冲突须保留原报价并展示最新报价，用户重新确认后发起新请求。
       required:
         - newPrice
@@ -5617,7 +5612,8 @@ components:
     PaymentVO:
       type: object
       additionalProperties: false
-      description: 所有金额为正；流水不可修改或删除。模拟支付同步成功或整体失败，不存在真实渠道回调。净收款为 PAYMENT+TOP_UP-PARTIAL_REFUND-FULL_REFUND。
+      description: 所有金额为正；流水不可修改或删除。模拟支付同步成功或整体失败，不存在真实渠道回调。净收款为
+        PAYMENT+TOP_UP-PARTIAL_REFUND-FULL_REFUND。
       required:
         - id
         - orderId
@@ -5862,8 +5858,8 @@ components:
     WsAuthFrame:
       type: object
       additionalProperties: false
-      description: 浏览器原生 WebSocket 不能设置 Authorization 请求头。连接同源 /ws 后 5 秒内发首帧 AUTH，服务端在校验前不发送业务数据；不得把 JWT 放
-        URL。认证失败或过期以 4401 关闭，账号禁用/角色非法以 4403 关闭。
+      description: 浏览器原生 WebSocket 不能设置 Authorization 请求头。连接同源 /ws 后 5 秒内发首帧
+        AUTH，服务端在校验前不发送业务数据；不得把 JWT 放 URL。认证失败或过期以 4401 关闭，账号禁用/角色非法以 4403 关闭。
       required:
         - type
         - accessToken
@@ -6845,8 +6841,9 @@ components:
         file:
           type: string
           format: binary
-          description: 单张 JPEG/PNG/WebP，1 字节至 5 MiB。服务端验证真实图片内容和 MIME，移除 EXIF 等元数据，不接受 SVG 或其他可执行内容。
-            解码后最多4000万像素，超过按 IMAGE_TOO_LARGE 返回413；客户端可在上传前进行同样校验和元数据清理，服务端仍须独立验证。
+          description: 单张 JPEG/PNG/WebP，1 字节至 5 MiB。服务端验证真实图片内容和 MIME，移除 EXIF 等元数据，不接受 SVG
+            或其他可执行内容。 解码后最多4000万像素，超过按 IMAGE_TOO_LARGE
+            返回413；客户端可在上传前进行同样校验和元数据清理，服务端仍须独立验证。
     SceneImageVOResponse:
       type: object
       additionalProperties: false
@@ -7071,3 +7068,70 @@ components:
           type: string
         data:
           $ref: "#/components/schemas/WorkerProfileVO"
+    OrderAddressSnapshotVO:
+      type: object
+      additionalProperties: false
+      description: 订单创建时保存的不可变地址输出快照，独立于客户地址写入DTO。地址簿编辑、删除或未来坐标解析均不改变历史订单快照。坐标由系统维护且允许同时为空；isDefault仅为创建时快照，不表示当前默认地址。
+      required:
+        - contactName
+        - contactPhone
+        - provinceCode
+        - provinceName
+        - cityCode
+        - cityName
+        - districtCode
+        - districtName
+        - detail
+        - longitude
+        - latitude
+        - isDefault
+      properties:
+        contactName:
+          type: string
+          minLength: 1
+          maxLength: 40
+        contactPhone:
+          type: string
+          minLength: 1
+          maxLength: 11
+          pattern: ^1[0-9]{10}$
+        provinceCode:
+          type: string
+          minLength: 1
+          maxLength: 6
+        provinceName:
+          type: string
+          minLength: 1
+          maxLength: 40
+        cityCode:
+          type: string
+          minLength: 1
+          maxLength: 6
+        cityName:
+          type: string
+          minLength: 1
+          maxLength: 40
+        districtCode:
+          type: string
+          minLength: 1
+          maxLength: 6
+        districtName:
+          type: string
+          minLength: 1
+          maxLength: 40
+        detail:
+          type: string
+          minLength: 1
+          maxLength: 200
+        longitude:
+          type: number
+          minimum: -180
+          maximum: 180
+          nullable: true
+        latitude:
+          type: number
+          minimum: -90
+          maximum: 90
+          nullable: true
+        isDefault:
+          type: boolean

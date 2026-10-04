@@ -2,7 +2,7 @@ import { ref } from 'vue'
 import { ApiError, errorMessage } from '../api/errors'
 import { createIdempotencyKey } from '../api/client'
 import type { Schema } from '../api/types'
-import { showError } from '../stores/feedback'
+import { showError, showSuccess } from '../stores/feedback'
 
 export function useTask() {
   const busy = ref(false),
@@ -30,6 +30,7 @@ export function useTask() {
       const result = await action(retryKey)
       retryKey = undefined
       success.value = message
+      if (message) showSuccess(message)
       return result
     } catch (err) {
       error.value = errorMessage(err)

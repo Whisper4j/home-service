@@ -8,6 +8,7 @@ import { displayTime } from '../../utils/format'
 import { label } from '../../utils/labels'
 import { sessions } from '../../stores/session'
 import QuoteDialog from '../../components/QuoteDialog.vue'
+import OrderGroups from '../../components/OrderGroups.vue'
 import Feedback from '../../components/CustomerFeedback.vue'
 const groups: { name: string; statuses?: Schema['OrderStatus'][] }[] = [
   { name: '全部' },
@@ -62,17 +63,7 @@ function action(order: Schema['OrderVO']) {
 useRefresh(load)
 </script>
 <template>
-  <div class="order-groups" aria-label="订单分组">
-    <button
-      v-for="(item, index) in groups"
-      :key="item.name"
-      :aria-pressed="index === group"
-      :disabled="busy"
-      @click="select(index)"
-    >
-      {{ item.name }}
-    </button>
-  </div>
+  <OrderGroups :groups="groups" :selected="group" :busy="busy" @select="select" />
   <Feedback :busy="busy" :error="error" />
   <button v-if="error" @click="load">重新加载订单</button>
   <article v-for="order in page.list" :key="order.id" class="panel order-card">

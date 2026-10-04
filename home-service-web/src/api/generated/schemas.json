@@ -424,7 +424,7 @@
   "AddressDTO": {
     "type": "object",
     "additionalProperties": false,
-    "description": "仅支持广东省广州市及其全部区。行政区编码与名称必须匹配；经纬度同时为空或同时提供。不按距离计价。设置默认地址原子清除旧默认。",
+    "description": "客户仅提交联系人、电话、行政区、详细地址及默认标记，不接受经纬度。仅支持广东省广州市，编码和名称必须匹配。设置默认地址原子清除旧默认；首个地址自动默认，删除或取消默认后最早创建的其他地址成为默认。",
     "required": [
       "contactName",
       "contactPhone",
@@ -435,8 +435,6 @@
       "districtCode",
       "districtName",
       "detail",
-      "longitude",
-      "latitude",
       "isDefault"
     ],
     "properties": {
@@ -485,18 +483,6 @@
         "type": "string",
         "minLength": 1,
         "maxLength": 200
-      },
-      "longitude": {
-        "type": "number",
-        "minimum": -180,
-        "maximum": 180,
-        "nullable": true
-      },
-      "latitude": {
-        "type": "number",
-        "minimum": -90,
-        "maximum": 90,
-        "nullable": true
       },
       "isDefault": {
         "type": "boolean"
@@ -586,7 +572,8 @@
       "isDefault": {
         "type": "boolean"
       }
-    }
+    },
+    "description": "坐标由系统维护，当前未接地图服务，新地址坐标同时为空且可正常按城市预约。只改联系人、电话或默认标记保留已有系统坐标；行政区或详细地址变化后旧坐标同时失效为空，未来由地图服务重新解析。禁止随机坐标或用0,0冒充解析成功。地址解析与两位置间距离计算是不同能力，本接口不返回距离。"
   },
   "RegionVO": {
     "type": "object",
@@ -1768,7 +1755,7 @@
         "$ref": "#/components/schemas/ServiceSnapshotVO"
       },
       "address": {
-        "$ref": "#/components/schemas/AddressDTO"
+        "$ref": "#/components/schemas/OrderAddressSnapshotVO"
       },
       "startTime": {
         "$ref": "#/components/schemas/DateTime"
@@ -1928,14 +1915,6 @@
       },
       "to": {
         "$ref": "#/components/schemas/LocalDate"
-      },
-      "sort": {
-        "type": "string",
-        "enum": [
-          "DEADLINE",
-          "LATEST"
-        ],
-        "default": "DEADLINE"
       }
     }
   },
@@ -4217,6 +4196,88 @@
       },
       "data": {
         "$ref": "#/components/schemas/WorkerProfileVO"
+      }
+    }
+  },
+  "OrderAddressSnapshotVO": {
+    "type": "object",
+    "additionalProperties": false,
+    "description": "订单创建时保存的不可变地址输出快照，独立于客户地址写入DTO。地址簿编辑、删除或未来坐标解析均不改变历史订单快照。坐标由系统维护且允许同时为空；isDefault仅为创建时快照，不表示当前默认地址。",
+    "required": [
+      "contactName",
+      "contactPhone",
+      "provinceCode",
+      "provinceName",
+      "cityCode",
+      "cityName",
+      "districtCode",
+      "districtName",
+      "detail",
+      "longitude",
+      "latitude",
+      "isDefault"
+    ],
+    "properties": {
+      "contactName": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 40
+      },
+      "contactPhone": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 11,
+        "pattern": "^1[0-9]{10}$"
+      },
+      "provinceCode": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 6
+      },
+      "provinceName": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 40
+      },
+      "cityCode": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 6
+      },
+      "cityName": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 40
+      },
+      "districtCode": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 6
+      },
+      "districtName": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 40
+      },
+      "detail": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "longitude": {
+        "type": "number",
+        "minimum": -180,
+        "maximum": 180,
+        "nullable": true
+      },
+      "latitude": {
+        "type": "number",
+        "minimum": -90,
+        "maximum": 90,
+        "nullable": true
+      },
+      "isDefault": {
+        "type": "boolean"
       }
     }
   }
