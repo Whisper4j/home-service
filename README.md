@@ -2,7 +2,7 @@
 
 面向客户、家政服务人员和平台管理员的家政预约与履约调度系统，用于 Java 后端实习求职项目展示。
 
-Git仓库名为 `home-service`，前端子工程为 `home-service-web`，后端子工程为 `home-service-server`。
+Git仓库名为 `home-service`。当前只有前端子工程 `home-service-web`；开始实现 Java 后端时，再在仓库根目录创建与前端平级的 `home-service-server`，当前不提前创建空工程目录。
 
 ## 项目特点
 
@@ -24,6 +24,19 @@ Git仓库名为 `home-service`，前端子工程为 `home-service-web`，后端�
 - [项目说明](docs/PROJECT.md)
 - [当前状态](docs/STATUS.md)
 - `docs/api/openapi.yaml`：接口设计阶段创建的正式接口契约
+
+## 当前仓库结构
+
+```text
+home-service/
+├── docs/                    # 项目说明、状态和唯一 OpenAPI 契约
+├── home-service-web/        # Vue 3 + Vite + TypeScript 前端独立工程
+├── .gitignore
+├── AGENTS.md
+└── README.md
+```
+
+`home-service-web/src` 只存放前端源码，不用于存放 Java 后端代码。后续真正开始后端时，再新增平级的 `home-service-server`；开始部署工作时，再根据实际组件新增部署目录。
 
 ## 仓库
 

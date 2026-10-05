@@ -238,16 +238,28 @@ WebSocket只负责在线实时通知，写操作仍使用 HTTP。需要覆盖新
 
 ### 10.1 仓库结构
 
-仓库根目录为 `home-service`，前后端分离并作为两个独立子工程：
+仓库根目录为 `home-service`。当前只有前端子工程；后端开始实施时再新增平级的独立子工程，不提前创建空目录：
 
 ```text
 home-service/
-├── home-service-server/   # Java模块化单体后端
 ├── home-service-web/      # Vue三端低保真前端
 ├── docs/
 ├── AGENTS.md
 └── README.md
 ```
+
+后端开始实施后的目标结构为：
+
+```text
+home-service/
+├── home-service-server/   # Java模块化单体后端，一个应用和部署单元
+├── home-service-web/      # Vue前端独立工程
+├── docs/
+├── AGENTS.md
+└── README.md
+```
+
+各子工程拥有自己的 `src`、构建文件和测试目录。仓库根目录不创建含义不明的公共 `src`；数据库迁移随未来后端工程管理，部署配置在真正开始部署时按实际组件创建。
 
 ### 10.2 技术方向
 
