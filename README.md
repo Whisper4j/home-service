@@ -2,7 +2,7 @@
 
 面向客户、家政服务人员和平台管理员的家政预约与履约调度系统，用于 Java 后端实习求职项目展示。
 
-Git仓库名为 `home-service`。当前只有前端子工程 `home-service-web`；开始实现 Java 后端时，再在仓库根目录创建与前端平级的 `home-service-server`，当前不提前创建空工程目录。
+Git仓库名为 `home-service`。当前已有前端子工程 `home-service-web`、OpenAPI 契约和27张表的数据库设计。`home-service-server` 目前只包含空库初始化 SQL，Java/Maven 后端骨架尚未实现。
 
 ## 项目特点
 
@@ -23,6 +23,8 @@ Git仓库名为 `home-service`。当前只有前端子工程 `home-service-web`�
 
 - [项目说明](docs/PROJECT.md)
 - [当前状态](docs/STATUS.md)
+- [数据库设计文档](docs/database/数据库设计文档.md)
+- [空库初始化 SQL](home-service-server/database/init/home_service.sql)
 - `docs/api/openapi.yaml`：接口设计阶段创建的正式接口契约
 
 ## 当前仓库结构
@@ -30,13 +32,17 @@ Git仓库名为 `home-service`。当前只有前端子工程 `home-service-web`�
 ```text
 home-service/
 ├── docs/                    # 项目说明、状态和唯一 OpenAPI 契约
+│   └── database/            # 数据库中文设计文档
+├── home-service-server/
+│   └── database/
+│       └── init/home_service.sql # 空库建表，无基础数据或测试数据
 ├── home-service-web/        # Vue 3 + Vite + TypeScript 前端独立工程
 ├── .gitignore
 ├── AGENTS.md
 └── README.md
 ```
 
-`home-service-web/src` 只存放前端源码，不用于存放 Java 后端代码。后续真正开始后端时，再新增平级的 `home-service-server`；开始部署工作时，再根据实际组件新增部署目录。
+`home-service-web/src` 只存放前端源码；后续 Java 工程在平级的 `home-service-server` 内创建。初始化 SQL 需手动选择空项目库执行，不自动建库或清理已有表；此次重设计没有执行数据库操作。以后已有数据需要变更结构时，再新增 `database/migrations` 增量脚本；部署目录在开始部署时按实际组件创建。
 
 ## 仓库
 

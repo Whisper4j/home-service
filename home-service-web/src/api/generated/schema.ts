@@ -2727,7 +2727,7 @@ export interface components {
     };
     parameters: {
         /**
-         * @description 以账号+方法+路径+Key为作用域。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
+         * @description 认证请求以账号+方法+路径+Key为作用域。匿名客户注册没有账号ID，使用“ANONYMOUS_REGISTER + 规范化用户名的SHA-256摘要 + 方法 + 路径 + Key”作为作用域，不伪造账号，也不保存密码或完整敏感请求。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
          * @example request_20261003_0001
          */
         IdempotencyKey: string;
@@ -2917,7 +2917,7 @@ export interface operations {
             query?: never;
             header: {
                 /**
-                 * @description 以账号+方法+路径+Key为作用域。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
+                 * @description 认证请求以账号+方法+路径+Key为作用域。匿名客户注册没有账号ID，使用“ANONYMOUS_REGISTER + 规范化用户名的SHA-256摘要 + 方法 + 路径 + Key”作为作用域，不伪造账号，也不保存密码或完整敏感请求。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
                  * @example request_20261003_0001
                  */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
@@ -3160,7 +3160,7 @@ export interface operations {
             query?: never;
             header: {
                 /**
-                 * @description 以账号+方法+路径+Key为作用域。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
+                 * @description 认证请求以账号+方法+路径+Key为作用域。匿名客户注册没有账号ID，使用“ANONYMOUS_REGISTER + 规范化用户名的SHA-256摘要 + 方法 + 路径 + Key”作为作用域，不伪造账号，也不保存密码或完整敏感请求。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
                  * @example request_20261003_0001
                  */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
@@ -3197,7 +3197,7 @@ export interface operations {
             query?: never;
             header: {
                 /**
-                 * @description 以账号+方法+路径+Key为作用域。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
+                 * @description 认证请求以账号+方法+路径+Key为作用域。匿名客户注册没有账号ID，使用“ANONYMOUS_REGISTER + 规范化用户名的SHA-256摘要 + 方法 + 路径 + Key”作为作用域，不伪造账号，也不保存密码或完整敏感请求。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
                  * @example request_20261003_0001
                  */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
@@ -3236,7 +3236,7 @@ export interface operations {
             query?: never;
             header: {
                 /**
-                 * @description 以账号+方法+路径+Key为作用域。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
+                 * @description 认证请求以账号+方法+路径+Key为作用域。匿名客户注册没有账号ID，使用“ANONYMOUS_REGISTER + 规范化用户名的SHA-256摘要 + 方法 + 路径 + Key”作为作用域，不伪造账号，也不保存密码或完整敏感请求。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
                  * @example request_20261003_0001
                  */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
@@ -3307,7 +3307,7 @@ export interface operations {
             query?: never;
             header: {
                 /**
-                 * @description 以账号+方法+路径+Key为作用域。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
+                 * @description 认证请求以账号+方法+路径+Key为作用域。匿名客户注册没有账号ID，使用“ANONYMOUS_REGISTER + 规范化用户名的SHA-256摘要 + 方法 + 路径 + Key”作为作用域，不伪造账号，也不保存密码或完整敏感请求。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
                  * @example request_20261003_0001
                  */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
@@ -3590,7 +3590,7 @@ export interface operations {
             query?: never;
             header: {
                 /**
-                 * @description 以账号+方法+路径+Key为作用域。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
+                 * @description 认证请求以账号+方法+路径+Key为作用域。匿名客户注册没有账号ID，使用“ANONYMOUS_REGISTER + 规范化用户名的SHA-256摘要 + 方法 + 路径 + Key”作为作用域，不伪造账号，也不保存密码或完整敏感请求。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
                  * @example request_20261003_0001
                  */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
@@ -3625,7 +3625,7 @@ export interface operations {
             query?: never;
             header: {
                 /**
-                 * @description 以账号+方法+路径+Key为作用域。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
+                 * @description 认证请求以账号+方法+路径+Key为作用域。匿名客户注册没有账号ID，使用“ANONYMOUS_REGISTER + 规范化用户名的SHA-256摘要 + 方法 + 路径 + Key”作为作用域，不伪造账号，也不保存密码或完整敏感请求。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
                  * @example request_20261003_0001
                  */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
@@ -3664,7 +3664,7 @@ export interface operations {
             query?: never;
             header: {
                 /**
-                 * @description 以账号+方法+路径+Key为作用域。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
+                 * @description 认证请求以账号+方法+路径+Key为作用域。匿名客户注册没有账号ID，使用“ANONYMOUS_REGISTER + 规范化用户名的SHA-256摘要 + 方法 + 路径 + Key”作为作用域，不伪造账号，也不保存密码或完整敏感请求。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
                  * @example request_20261003_0001
                  */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
@@ -3732,7 +3732,7 @@ export interface operations {
             query?: never;
             header: {
                 /**
-                 * @description 以账号+方法+路径+Key为作用域。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
+                 * @description 认证请求以账号+方法+路径+Key为作用域。匿名客户注册没有账号ID，使用“ANONYMOUS_REGISTER + 规范化用户名的SHA-256摘要 + 方法 + 路径 + Key”作为作用域，不伪造账号，也不保存密码或完整敏感请求。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
                  * @example request_20261003_0001
                  */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
@@ -3767,7 +3767,7 @@ export interface operations {
             query?: never;
             header: {
                 /**
-                 * @description 以账号+方法+路径+Key为作用域。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
+                 * @description 认证请求以账号+方法+路径+Key为作用域。匿名客户注册没有账号ID，使用“ANONYMOUS_REGISTER + 规范化用户名的SHA-256摘要 + 方法 + 路径 + Key”作为作用域，不伪造账号，也不保存密码或完整敏感请求。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
                  * @example request_20261003_0001
                  */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
@@ -3860,7 +3860,7 @@ export interface operations {
             query?: never;
             header: {
                 /**
-                 * @description 以账号+方法+路径+Key为作用域。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
+                 * @description 认证请求以账号+方法+路径+Key为作用域。匿名客户注册没有账号ID，使用“ANONYMOUS_REGISTER + 规范化用户名的SHA-256摘要 + 方法 + 路径 + Key”作为作用域，不伪造账号，也不保存密码或完整敏感请求。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
                  * @example request_20261003_0001
                  */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
@@ -3956,7 +3956,7 @@ export interface operations {
             query?: never;
             header: {
                 /**
-                 * @description 以账号+方法+路径+Key为作用域。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
+                 * @description 认证请求以账号+方法+路径+Key为作用域。匿名客户注册没有账号ID，使用“ANONYMOUS_REGISTER + 规范化用户名的SHA-256摘要 + 方法 + 路径 + Key”作为作用域，不伪造账号，也不保存密码或完整敏感请求。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
                  * @example request_20261003_0001
                  */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
@@ -3993,7 +3993,7 @@ export interface operations {
             query?: never;
             header: {
                 /**
-                 * @description 以账号+方法+路径+Key为作用域。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
+                 * @description 认证请求以账号+方法+路径+Key为作用域。匿名客户注册没有账号ID，使用“ANONYMOUS_REGISTER + 规范化用户名的SHA-256摘要 + 方法 + 路径 + Key”作为作用域，不伪造账号，也不保存密码或完整敏感请求。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
                  * @example request_20261003_0001
                  */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
@@ -4061,7 +4061,7 @@ export interface operations {
             query?: never;
             header: {
                 /**
-                 * @description 以账号+方法+路径+Key为作用域。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
+                 * @description 认证请求以账号+方法+路径+Key为作用域。匿名客户注册没有账号ID，使用“ANONYMOUS_REGISTER + 规范化用户名的SHA-256摘要 + 方法 + 路径 + Key”作为作用域，不伪造账号，也不保存密码或完整敏感请求。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
                  * @example request_20261003_0001
                  */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
@@ -4100,7 +4100,7 @@ export interface operations {
             query?: never;
             header: {
                 /**
-                 * @description 以账号+方法+路径+Key为作用域。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
+                 * @description 认证请求以账号+方法+路径+Key为作用域。匿名客户注册没有账号ID，使用“ANONYMOUS_REGISTER + 规范化用户名的SHA-256摘要 + 方法 + 路径 + Key”作为作用域，不伪造账号，也不保存密码或完整敏感请求。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
                  * @example request_20261003_0001
                  */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
@@ -4135,7 +4135,7 @@ export interface operations {
             query?: never;
             header: {
                 /**
-                 * @description 以账号+方法+路径+Key为作用域。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
+                 * @description 认证请求以账号+方法+路径+Key为作用域。匿名客户注册没有账号ID，使用“ANONYMOUS_REGISTER + 规范化用户名的SHA-256摘要 + 方法 + 路径 + Key”作为作用域，不伪造账号，也不保存密码或完整敏感请求。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
                  * @example request_20261003_0001
                  */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
@@ -4170,7 +4170,7 @@ export interface operations {
             query?: never;
             header: {
                 /**
-                 * @description 以账号+方法+路径+Key为作用域。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
+                 * @description 认证请求以账号+方法+路径+Key为作用域。匿名客户注册没有账号ID，使用“ANONYMOUS_REGISTER + 规范化用户名的SHA-256摘要 + 方法 + 路径 + Key”作为作用域，不伪造账号，也不保存密码或完整敏感请求。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
                  * @example request_20261003_0001
                  */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
@@ -4209,7 +4209,7 @@ export interface operations {
             query?: never;
             header: {
                 /**
-                 * @description 以账号+方法+路径+Key为作用域。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
+                 * @description 认证请求以账号+方法+路径+Key为作用域。匿名客户注册没有账号ID，使用“ANONYMOUS_REGISTER + 规范化用户名的SHA-256摘要 + 方法 + 路径 + Key”作为作用域，不伪造账号，也不保存密码或完整敏感请求。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
                  * @example request_20261003_0001
                  */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
@@ -4276,7 +4276,7 @@ export interface operations {
             query?: never;
             header: {
                 /**
-                 * @description 以账号+方法+路径+Key为作用域。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
+                 * @description 认证请求以账号+方法+路径+Key为作用域。匿名客户注册没有账号ID，使用“ANONYMOUS_REGISTER + 规范化用户名的SHA-256摘要 + 方法 + 路径 + Key”作为作用域，不伪造账号，也不保存密码或完整敏感请求。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
                  * @example request_20261003_0001
                  */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
@@ -4313,7 +4313,7 @@ export interface operations {
             query?: never;
             header: {
                 /**
-                 * @description 以账号+方法+路径+Key为作用域。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
+                 * @description 认证请求以账号+方法+路径+Key为作用域。匿名客户注册没有账号ID，使用“ANONYMOUS_REGISTER + 规范化用户名的SHA-256摘要 + 方法 + 路径 + Key”作为作用域，不伪造账号，也不保存密码或完整敏感请求。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
                  * @example request_20261003_0001
                  */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
@@ -4352,7 +4352,7 @@ export interface operations {
             query?: never;
             header: {
                 /**
-                 * @description 以账号+方法+路径+Key为作用域。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
+                 * @description 认证请求以账号+方法+路径+Key为作用域。匿名客户注册没有账号ID，使用“ANONYMOUS_REGISTER + 规范化用户名的SHA-256摘要 + 方法 + 路径 + Key”作为作用域，不伪造账号，也不保存密码或完整敏感请求。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
                  * @example request_20261003_0001
                  */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
@@ -4420,7 +4420,7 @@ export interface operations {
             query?: never;
             header: {
                 /**
-                 * @description 以账号+方法+路径+Key为作用域。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
+                 * @description 认证请求以账号+方法+路径+Key为作用域。匿名客户注册没有账号ID，使用“ANONYMOUS_REGISTER + 规范化用户名的SHA-256摘要 + 方法 + 路径 + Key”作为作用域，不伪造账号，也不保存密码或完整敏感请求。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
                  * @example request_20261003_0001
                  */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
@@ -4457,7 +4457,7 @@ export interface operations {
             query?: never;
             header: {
                 /**
-                 * @description 以账号+方法+路径+Key为作用域。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
+                 * @description 认证请求以账号+方法+路径+Key为作用域。匿名客户注册没有账号ID，使用“ANONYMOUS_REGISTER + 规范化用户名的SHA-256摘要 + 方法 + 路径 + Key”作为作用域，不伪造账号，也不保存密码或完整敏感请求。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
                  * @example request_20261003_0001
                  */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
@@ -4496,7 +4496,7 @@ export interface operations {
             query?: never;
             header: {
                 /**
-                 * @description 以账号+方法+路径+Key为作用域。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
+                 * @description 认证请求以账号+方法+路径+Key为作用域。匿名客户注册没有账号ID，使用“ANONYMOUS_REGISTER + 规范化用户名的SHA-256摘要 + 方法 + 路径 + Key”作为作用域，不伪造账号，也不保存密码或完整敏感请求。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
                  * @example request_20261003_0001
                  */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
@@ -4565,7 +4565,7 @@ export interface operations {
             query?: never;
             header: {
                 /**
-                 * @description 以账号+方法+路径+Key为作用域。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
+                 * @description 认证请求以账号+方法+路径+Key为作用域。匿名客户注册没有账号ID，使用“ANONYMOUS_REGISTER + 规范化用户名的SHA-256摘要 + 方法 + 路径 + Key”作为作用域，不伪造账号，也不保存密码或完整敏感请求。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
                  * @example request_20261003_0001
                  */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
@@ -4602,7 +4602,7 @@ export interface operations {
             query?: never;
             header: {
                 /**
-                 * @description 以账号+方法+路径+Key为作用域。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
+                 * @description 认证请求以账号+方法+路径+Key为作用域。匿名客户注册没有账号ID，使用“ANONYMOUS_REGISTER + 规范化用户名的SHA-256摘要 + 方法 + 路径 + Key”作为作用域，不伪造账号，也不保存密码或完整敏感请求。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
                  * @example request_20261003_0001
                  */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
@@ -4641,7 +4641,7 @@ export interface operations {
             query?: never;
             header: {
                 /**
-                 * @description 以账号+方法+路径+Key为作用域。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
+                 * @description 认证请求以账号+方法+路径+Key为作用域。匿名客户注册没有账号ID，使用“ANONYMOUS_REGISTER + 规范化用户名的SHA-256摘要 + 方法 + 路径 + Key”作为作用域，不伪造账号，也不保存密码或完整敏感请求。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
                  * @example request_20261003_0001
                  */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
@@ -4707,7 +4707,7 @@ export interface operations {
             query?: never;
             header: {
                 /**
-                 * @description 以账号+方法+路径+Key为作用域。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
+                 * @description 认证请求以账号+方法+路径+Key为作用域。匿名客户注册没有账号ID，使用“ANONYMOUS_REGISTER + 规范化用户名的SHA-256摘要 + 方法 + 路径 + Key”作为作用域，不伪造账号，也不保存密码或完整敏感请求。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
                  * @example request_20261003_0001
                  */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
@@ -4744,7 +4744,7 @@ export interface operations {
             query?: never;
             header: {
                 /**
-                 * @description 以账号+方法+路径+Key为作用域。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
+                 * @description 认证请求以账号+方法+路径+Key为作用域。匿名客户注册没有账号ID，使用“ANONYMOUS_REGISTER + 规范化用户名的SHA-256摘要 + 方法 + 路径 + Key”作为作用域，不伪造账号，也不保存密码或完整敏感请求。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
                  * @example request_20261003_0001
                  */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
@@ -4783,7 +4783,7 @@ export interface operations {
             query?: never;
             header: {
                 /**
-                 * @description 以账号+方法+路径+Key为作用域。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
+                 * @description 认证请求以账号+方法+路径+Key为作用域。匿名客户注册没有账号ID，使用“ANONYMOUS_REGISTER + 规范化用户名的SHA-256摘要 + 方法 + 路径 + Key”作为作用域，不伪造账号，也不保存密码或完整敏感请求。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
                  * @example request_20261003_0001
                  */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
@@ -4851,7 +4851,7 @@ export interface operations {
             query?: never;
             header: {
                 /**
-                 * @description 以账号+方法+路径+Key为作用域。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
+                 * @description 认证请求以账号+方法+路径+Key为作用域。匿名客户注册没有账号ID，使用“ANONYMOUS_REGISTER + 规范化用户名的SHA-256摘要 + 方法 + 路径 + Key”作为作用域，不伪造账号，也不保存密码或完整敏感请求。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
                  * @example request_20261003_0001
                  */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
@@ -4890,7 +4890,7 @@ export interface operations {
             query?: never;
             header: {
                 /**
-                 * @description 以账号+方法+路径+Key为作用域。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
+                 * @description 认证请求以账号+方法+路径+Key为作用域。匿名客户注册没有账号ID，使用“ANONYMOUS_REGISTER + 规范化用户名的SHA-256摘要 + 方法 + 路径 + Key”作为作用域，不伪造账号，也不保存密码或完整敏感请求。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
                  * @example request_20261003_0001
                  */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
@@ -4962,7 +4962,7 @@ export interface operations {
             query?: never;
             header: {
                 /**
-                 * @description 以账号+方法+路径+Key为作用域。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
+                 * @description 认证请求以账号+方法+路径+Key为作用域。匿名客户注册没有账号ID，使用“ANONYMOUS_REGISTER + 规范化用户名的SHA-256摘要 + 方法 + 路径 + Key”作为作用域，不伪造账号，也不保存密码或完整敏感请求。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
                  * @example request_20261003_0001
                  */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
@@ -4999,7 +4999,7 @@ export interface operations {
             query?: never;
             header: {
                 /**
-                 * @description 以账号+方法+路径+Key为作用域。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
+                 * @description 认证请求以账号+方法+路径+Key为作用域。匿名客户注册没有账号ID，使用“ANONYMOUS_REGISTER + 规范化用户名的SHA-256摘要 + 方法 + 路径 + Key”作为作用域，不伪造账号，也不保存密码或完整敏感请求。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
                  * @example request_20261003_0001
                  */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
@@ -5069,7 +5069,7 @@ export interface operations {
             query?: never;
             header: {
                 /**
-                 * @description 以账号+方法+路径+Key为作用域。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
+                 * @description 认证请求以账号+方法+路径+Key为作用域。匿名客户注册没有账号ID，使用“ANONYMOUS_REGISTER + 规范化用户名的SHA-256摘要 + 方法 + 路径 + Key”作为作用域，不伪造账号，也不保存密码或完整敏感请求。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
                  * @example request_20261003_0001
                  */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
@@ -5231,7 +5231,7 @@ export interface operations {
             query?: never;
             header: {
                 /**
-                 * @description 以账号+方法+路径+Key为作用域。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
+                 * @description 认证请求以账号+方法+路径+Key为作用域。匿名客户注册没有账号ID，使用“ANONYMOUS_REGISTER + 规范化用户名的SHA-256摘要 + 方法 + 路径 + Key”作为作用域，不伪造账号，也不保存密码或完整敏感请求。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
                  * @example request_20261003_0001
                  */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
@@ -5295,7 +5295,7 @@ export interface operations {
             query?: never;
             header: {
                 /**
-                 * @description 以账号+方法+路径+Key为作用域。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
+                 * @description 认证请求以账号+方法+路径+Key为作用域。匿名客户注册没有账号ID，使用“ANONYMOUS_REGISTER + 规范化用户名的SHA-256摘要 + 方法 + 路径 + Key”作为作用域，不伪造账号，也不保存密码或完整敏感请求。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
                  * @example request_20261003_0001
                  */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
@@ -5332,7 +5332,7 @@ export interface operations {
             query?: never;
             header: {
                 /**
-                 * @description 以账号+方法+路径+Key为作用域。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
+                 * @description 认证请求以账号+方法+路径+Key为作用域。匿名客户注册没有账号ID，使用“ANONYMOUS_REGISTER + 规范化用户名的SHA-256摘要 + 方法 + 路径 + Key”作为作用域，不伪造账号，也不保存密码或完整敏感请求。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
                  * @example request_20261003_0001
                  */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
@@ -5371,7 +5371,7 @@ export interface operations {
             query?: never;
             header: {
                 /**
-                 * @description 以账号+方法+路径+Key为作用域。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
+                 * @description 认证请求以账号+方法+路径+Key为作用域。匿名客户注册没有账号ID，使用“ANONYMOUS_REGISTER + 规范化用户名的SHA-256摘要 + 方法 + 路径 + Key”作为作用域，不伪造账号，也不保存密码或完整敏感请求。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
                  * @example request_20261003_0001
                  */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
@@ -5511,7 +5511,7 @@ export interface operations {
             query?: never;
             header: {
                 /**
-                 * @description 以账号+方法+路径+Key为作用域。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
+                 * @description 认证请求以账号+方法+路径+Key为作用域。匿名客户注册没有账号ID，使用“ANONYMOUS_REGISTER + 规范化用户名的SHA-256摘要 + 方法 + 路径 + Key”作为作用域，不伪造账号，也不保存密码或完整敏感请求。相同载荷重放首次成功状态码/响应且不重复执行；不同载荷返回409 IDEMPOTENCY_CONFLICT；执行中返回409 REQUEST_IN_PROGRESS。至少保留24小时；不可逆业务还需永久业务唯一约束兜底。失败不缓存，重试原操作沿用Key，变更载荷生成新Key。
                  * @example request_20261003_0001
                  */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
