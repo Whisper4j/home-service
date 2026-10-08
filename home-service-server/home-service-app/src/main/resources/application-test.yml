@@ -1,0 +1,11 @@
+# 协议测试用测试源集配置及账号替身；MySQL IT 显式使用 dev + 环境变量。
+# 此文件不包含测试密码、固定密钥或自动建表配置。
+home:
+  database:
+    host: ${TEST_DB_HOST:127.0.0.1}
+    port: ${TEST_DB_PORT:3306}
+    name: ${TEST_DB_NAME:home_service_test}
+    username: ${TEST_DB_USERNAME:root}
+    password: ${TEST_DB_PASSWORD:}
+    ssl-mode: DISABLED
+    allow-public-key-retrieval: true

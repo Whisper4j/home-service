@@ -340,7 +340,7 @@ paths:
       operationId: listCustomerCategory
       summary: 浏览上架服务目录
       description: |-
-        仅返回本层及父级均上架数据；status 只能省略或 ON_SHELF。
+        仅返回本层及父级均上架数据；公开查询不接受 status 参数。
         无需登录。
       security: []
       parameters:
@@ -396,7 +396,7 @@ paths:
       operationId: listCustomerServiceItem
       summary: 浏览上架服务目录
       description: |-
-        仅返回本层及父级均上架数据；status 只能省略或 ON_SHELF。
+        仅返回本层及父级均上架数据；公开查询不接受 status 参数。
         无需登录。
       security: []
       parameters:
@@ -457,7 +457,7 @@ paths:
       operationId: listCustomerSku
       summary: 浏览上架服务目录
       description: |-
-        仅返回本层及父级均上架数据；status 只能省略或 ON_SHELF。
+        仅返回本层及父级均上架数据；公开查询不接受 status 参数。
         无需登录。
       security: []
       parameters:
@@ -3925,7 +3925,7 @@ components:
       maxLength: 19
       pattern: ^[1-9][0-9]{0,18}$
       example: "10001"
-      description: 十进制字符串 ID，路径、查询、JSON 中均不得转为 JS number。
+      description: 正十进制字符串 ID，最大 9223372036854775807（MySQL 有符号 BIGINT）；路径、查询、JSON 中均不得转为 JS number。
     Money:
       type: string
       minLength: 1
@@ -4125,6 +4125,7 @@ components:
           minLength: 8
           maxLength: 72
           format: password
+          description: 密码不裁剪；8—72个字符，且 UTF-8 编码不得超过72字节。超限返回 VALIDATION_ERROR，不允许 BCrypt 静默截断。
     RegisterDTO:
       type: object
       additionalProperties: false
@@ -4144,6 +4145,7 @@ components:
           minLength: 8
           maxLength: 72
           format: password
+          description: 密码不裁剪；8—72个字符，且 UTF-8 编码不得超过72字节。超限返回 VALIDATION_ERROR，不允许 BCrypt 静默截断。
         displayName:
           type: string
           minLength: 1
@@ -4750,6 +4752,7 @@ components:
           minLength: 8
           maxLength: 72
           format: password
+          description: 密码不裁剪；8—72个字符，且 UTF-8 编码不得超过72字节。超限返回 VALIDATION_ERROR，不允许 BCrypt 静默截断。
         displayName:
           type: string
           minLength: 1

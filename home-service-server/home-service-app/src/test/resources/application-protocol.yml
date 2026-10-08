@@ -1,0 +1,7 @@
+# 独立协议测试上下文，无数据源和生产账号替身配置。
+spring:
+  main:
+    banner-mode: off
+logging:
+  level:
+    com.homeservice: warn

@@ -1,0 +1,11 @@
+home:
+  database:
+    host: ${DB_HOST}
+    port: ${DB_PORT:3306}
+    name: ${DB_NAME}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    ssl-mode: ${DB_SSL_MODE:VERIFY_IDENTITY}
+    allow-public-key-retrieval: false
+  upload:
+    directory: ${UPLOAD_DIRECTORY}

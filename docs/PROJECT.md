@@ -243,13 +243,16 @@ WebSocket只负责在线实时通知，写操作仍使用 HTTP。需要覆盖新
 
 ### 10.1 仓库结构
 
-仓库根目录为 `home-service`。当前已有前端、接口契约、数据库初始化结构和设计文档，尚未创建 Java/Maven 工程：
+仓库包含前端、接口契约、数据库基线和可运行的 Java/Maven 基础工程：
 
 ```text
 home-service/
 ├── home-service-server/
-│   └── database/
-│       └── init/home_service.sql  # 空库初始化建表，不含测试数据
+│   ├── pom.xml                    # packaging=pom，继承与聚合
+│   ├── home-service-common/       # 通用响应、分页、基础异常
+│   ├── home-service-app/          # 唯一 Spring Boot 应用
+│   ├── application-local.example.yml
+│   └── database/init/home_service.sql  # 唯一初始化入口，不自动执行
 ├── home-service-web/      # Vue三端低保真前端
 ├── docs/
 │   └── database/数据库设计文档.md
@@ -257,23 +260,14 @@ home-service/
 └── README.md
 ```
 
-后端开始实施后的目标结构为：
-
-```text
-home-service/
-├── home-service-server/   # Java模块化单体后端，一个应用和部署单元
-├── home-service-web/      # Vue前端独立工程
-├── docs/
-├── AGENTS.md
-└── README.md
-```
+依赖方向固定为 `home-service-app → home-service-common`；两个子模块继承父 POM，只有 app 执行 Spring Boot repackage。业务模型、枚举、Mapper、认证及 Web/WebSocket 配置全部属于 app，common 不依赖 app 或业务模型。
 
 各子工程拥有自己的 `src`、构建文件和测试目录。仓库根目录不创建含义不明的公共 `src`；SQL随后端工程管理，当前使用 `database/init` 存放空库初始化脚本，已有数据的结构演进以后再新增 `database/migrations`。部署配置在真正开始部署时按实际组件创建。
 
 ### 10.2 技术方向
 
 - JDK 17；本机已有 `17.0.12 LTS`。
-- Spring Boot 3.5.x 稳定补丁版本、Maven、MyBatis-Plus 3.5.x、MySQL 8.x、Lombok。
+- Spring Boot 3.5.16、MyBatis-Plus 3.5.17（Boot 3 starter 与分页 jsqlparser）、Hutool core 5.8.47、JJWT 0.13.0；Maven、MySQL 8.0.16+、Lombok。底层 Jackson、MySQL 驱动和 Spring 版本由 Boot BOM 管理，子模块按用途声明依赖。
 - `home-service-web` 使用 Vue 3 + Vite + TypeScript，承载客户、服务人员和管理员三套路由与布局。
 - `home-service-server` 使用 Spring Boot 模块化单体结构，可由 IDEA 直接打开运行。
 - OpenAPI 3.0.3 作为唯一正式 HTTP 接口契约；WebSocket事件在同一契约的描述和 Schema 中说明。
@@ -309,7 +303,7 @@ home-service/
 - 预约时间、报价步长、缓冲、截止规则、地区和上传限制从规则/区域接口读取；目录、服务入口及账号不得以写死的演示数据替代接口响应。普通文案、状态中文映射和正式枚举可以作为代码常量。
 - 订单历史包含状态变化及操作者类型、可选原因。客户与人员只能看到经过权限裁剪的历史，不暴露内部账号ID。分配历史以释放时间/原因或完成时间解释 RELEASED/FINISHED；审计使用 targetType + targetId，订单关联查询明确使用 orderId。
 - 分类、项目、SKU、技能分别使用 CategoryQuery、ServiceItemQuery、SkuQuery、SkillQuery；公开目录查询不暴露 status，服务端只返回可用目录。
-- 前端单元测试限于纯函数边界及静态契约检查，不建立模拟业务数据库。当前27表初始化结构仅完成静态检查，未执行MySQL验证，也不包含种子数据；Java后端尚未创建。端到端、权限、状态机、调度与业务并发测试须等待真实后端及新结构初始化，不能沿用旧35表的执行记录作为新结构或业务闭环结论。
+- 前端单元测试限于纯函数边界及静态契约检查，不建立模拟业务数据库。Java 基础工程已建立，27 表结构与真实 MySQL 映射验证结果见 STATUS；不包含种子数据。基础设施验收不代表端到端业务、资源归属、状态机、调度或业务并发验证通过，也不沿用旧35表的执行记录。
 
 ## 11. 实施里程碑
 
@@ -346,12 +340,12 @@ home-service/
 
 ### 13.1 初始化边界与简化原则
 
-- 当前设计为27张InnoDB表，使用MySQL 8.0.16及以上、utf8mb4_0900_ai_ci。脚本只面向空项目库，尚未执行，不包含基础数据、模拟数据、删库或删表语句，也不在应用启动时自动运行。
+- 当前设计为27张InnoDB表，使用MySQL 8.0.16及以上、utf8mb4_0900_ai_ci。脚本只面向空项目库，不包含基础数据、模拟数据、删库或删表语句，也不在应用启动时自动运行。实际初始化状态必须连接后核验，不能从 SQL 文件存在推断。
 - 原35表建表文件与开发种子已移除；本地旧表由用户手动处理。新建表文件不是旧库的增量升级脚本，未来已有数据的演进再新增 `database/migrations` 迁移，不反复重跑初始化文件。
 - 删除只有身份映射的客户资料表；人员排班区间和每周休息日合并到人员资料；服务和地址快照合并成一对一 `order_detail`；评价标签和允许图片MIME使用结构明确的JSON数组；标准派单重试状态合并到订单。
 - 地址簿、技能关系、请假、半小时时间槽以及接口需要的资金/报价/派单/分配/状态/审计历史仍独立保存。没有购物车，也不为未知需求设计万能JSON、预留字段或扩展表。
 - 表间采用逻辑外键，不建立物理FOREIGN KEY；Service负责引用存在、角色归属、删除限制和跨表事务，不级联删除业务历史。目录和地址使用逻辑删除，账号使用停用，已有订单始终读取自己的快照。
-- 建表结构保留27个主键和14个额外唯一索引，不设置普通查询二级索引，也不添加其他性能索引替代。查询字段、筛选条件、排序和分页规则保持一致；缺少查询索引可能改变性能、扫描范围和锁竞争，不能承诺速度或超时表现不变。当前没有真实后端查询或数据库执行验证，后续如需性能优化，应以实际查询和测量为依据另行迁移。
+- 建表结构保留27个主键和14个额外唯一索引，不设置普通查询二级索引，也不添加其他性能索引替代。查询字段、筛选条件、排序和分页规则保持一致；缺少查询索引可能改变性能、扫描范围和锁竞争，不能承诺速度或超时表现不变。基础 Mapper 映射验证不等于业务查询性能测试，后续如需性能优化，应以实际查询和测量为依据另行迁移。
 
 ### 13.2 ID、时间、金额和状态
 
@@ -375,6 +369,49 @@ home-service/
 - audit_log区分USER与SYSTEM，订单相关操作保存明确order_id；资金操作可关联流水、类型和金额。日志只追加并脱敏，不保存密码、JWT或完整敏感请求。
 - HTTP幂等作用域为账号+方法+路径+Key；匿名注册使用ANONYMOUS_REGISTER+规范化用户名SHA-256+方法+路径+Key，规范化不改变用户名大小写语义。保存请求指纹和首次成功响应，敏感请求使用带服务端密钥的HMAC-SHA-256指纹，不保存原始敏感内容；失败不缓存，过期记录安全清理后才可重用Key。
 - 成功幂等结果与业务写入同事务提交，记录至少保留24小时；不可逆动作仍由业务唯一键、来源状态和条件更新兜底。数据库不使用触发器、存储过程或事件提前实现Service、派单或定时任务。
+
+## 14. 后端基础工程使用与边界
+
+### 14.1 分层和模型
+
+- 基础包 `com.homeservice`，采用 hmall 的 `controller`、`domain/{dto,po,query,vo}`、`service/impl`、`mapper`、`config`、`handler`、`interceptor`、`enums`、`utils`；按账号、目录、订单等职责分子包。Controller 分 customer/worker/admin，依赖 `IXxxService`，实现命名 `XxxServiceImpl`，注入统一 `@RequiredArgsConstructor + private final`。
+- 27 个 PO 和 27 个 BaseMapper 覆盖唯一 SQL 基线；明确 Mapper 扫描、MySQL 分页插件与时间填充。自增、字符串主键、订单 ID 主键、设置固定主键分别映射。枚举用明确字符串值，`ClientEntryCode` 保持数据库维护的字符串。
+- `deleted_at` 只在原有逻辑删除表上使用 NULL/时间语义；生成列 `scope_identity` 可读但禁止 ORM 插入、更新。通用 Mapper 删除 SKU 不等于完成“删除并释放入口”的事务规则。
+- JSON 使用明确集合元素和专用 Jackson 类型处理器；两个排班字段的 SQL NULL 表示未配置，空集合含义与 NULL 不同。默认 NOT_NULL 更新策略下，需要清空可空列时由未来 Service 显式 `.set(column, null)`，不能依靠 `updateById` 的 null 值清空。
+- DTO、Query、VO 与 PO 分离，响应为 `R<T>`，分页为 `PageQuery/PageDTO<T>`。包装响应不按每个接口重复创建类；覆盖命名 Schema、嵌套对象和 WebSocket 帧，业务接口仍未实现。
+- ID 仅对 ID 字段转为十进制字符串，范围为正的有符号 BIGINT；金额用 BigDecimal/两位小数字符串；时间严格 `+08:00`、精确到秒。统计及分页数值保持数值。可选未发生字段省略，必需 nullable 字段保留 null；`SkuDTO.clientEntryCode` 缺失非法、显式 null 合法。
+- JSON 拒绝未知字段、重复键、非法枚举、数字金额、浮点整数和无偏移时间；路径、查询也使用严格转换，公开目录 Query 不接受 status/sortBy/isAsc。普通字符串裁剪后校验，密码保留原文；密码同时满足契约字符长度与 BCrypt 的 UTF-8 72 字节上限，超限拒绝、不截断。
+
+### 14.2 认证、异常与通知
+
+- 全局异常输出 `code/message/data` 并保留真实 HTTP 状态，业务码来自 OpenAPI；未知异常不暴露 SQL、堆栈和凭证。生产仅有框架错误处理入口，没有登录、注册、me、订单等业务 Controller，也没有开发登录后门。
+- HS256 JWT 配置化签名密钥和有效期，载荷使用 accountId/role/exp；请求校验 Bearer 格式、算法、签名、过期和载荷，并经最小只读 `IAccountQueryService` 查询真实账号的存在、状态和角色。UserContext 只保存账号身份，完成、异常及异步移交后清理；workerId 必须另查人员资料，不能当成 accountId。
+- 公开白名单精确到 HTTP 方法和路径且只能取 OpenAPI 公开集合。三端路径角色检查不代替资源归属、状态迁移或优惠资格校验，这些由未来 Service 实现。
+- `/ws` 握手拒绝 URL 查询参数；5 秒内首帧 AUTH，认证前无业务数据，成功返回 AUTHENTICATED。按契约使用 4401/4403，管理认证超时、Token 到期及断线清理。身份保存在独立会话绑定中，不读取 HTTP ThreadLocal。
+- Origin 默认同源；跨源开发在配置中逐项填写明确的 http(s) Origin，不使用 `*` 或全局 CORS 放行。`NotificationSender.afterCommit` 只能在业务事务中登记明确 accountId/role 接收者，提交后发送，回滚不发；没有全局广播或抢单资格过滤，未来必须先做业务接收者筛选。
+- 仅准备私有上传目录配置，没有上传存储、内容检查或附件业务鉴权接口。未增加审计 AOP、业务定时任务、Redis、MQ、真实支付或地图 SDK。
+
+### 14.3 IDEA 与 Maven 启动
+
+1. IDEA 打开 `home-service-server/pom.xml` 并导入父工程及两个模块；Project SDK、Maven Importer/Runner 均选 JDK 17，启用 Lombok 注解处理。运行主类 `com.homeservice.HomeServiceApplication`，模块 classpath 选 app，工作目录为 `home-service-server`，profile 为 dev。
+2. 将 `application-local.example.yml` 复制成同目录的 `application-local.yml`，填本机数据库密码和至少 32 随机字节的 Base64 JWT 密钥；该文件已 Git 忽略，不能加入版本控制。也可直接提供 `DB_PASSWORD`、`JWT_SECRET_BASE64` 环境变量。开发默认数据库 `127.0.0.1:3306/home_service`、用户 root、HTTP 8080；可用 `DB_HOST/DB_PORT/DB_NAME/DB_USERNAME/SERVER_PORT` 覆盖。
+3. dev 从**运行工作目录**导入本机文件；test 用 `TEST_DB_*` 配置；prod 使用环境变量模板和默认 `VERIFY_IDENTITY`，不是部署结果。`JWT_TOKEN_TTL` 默认 2h，`UPLOAD_DIRECTORY` 配置私有目录，`WS_ALLOWED_ORIGINS` 配置逗号分隔的明确源。必需数据库/JWT 配置校验失败即拒绝启动。
+4. 数据库必须由用户手动初始化；应用、测试不执行初始化或迁移 SQL。启动时连接真实 MySQL 并只读探测账号表，失败直接启动失败；这一步不代替下述全表一致性验收。连接会话显式设置 `+08:00`，不依赖 MySQL 命名时区表。
+
+在 `home-service-server` 工作目录执行（确保 `java -version`、`mvn -version` 都使用 JDK 17）：
+
+```powershell
+mvn clean verify
+# 另需通过环境变量提供真实库的 DB_PASSWORD 等配置；密钥由测试进程随机生成。
+mvn clean verify -Pmysql-it
+java -jar home-service-app/target/home-service-app-1.0.0-SNAPSHOT.jar --spring.profiles.active=dev
+```
+
+普通 `clean verify` 运行静态映射、契约模型、MVC 和实际网络 WebSocket 协议测试；受控账号查询替身仅存在于测试源集的 protocol 配置，不能注入生产。`mysql-it` 额外启动真实应用、先比对全部表/列/主键/唯一索引/CHECK，再只读调用所有 Mapper，并在同线程事务内创建少量映射夹具，强制回滚并复核未留下记录；不依赖预置业务账号、不修改已有记录。事务回滚不会复原 MySQL 自增序列，可能留下正常 ID 间隙。
+
+配置文件的本机导入相对于工作目录；Maven 测试工作目录是 app 模块，因此数据库集成测试推荐使用环境变量。真实库未初始化或不匹配时不得运行映射夹具，测试会在结构检查处失败。测试没有 H2，不重建表、不导入种子。
+
+依赖选择参考 [Spring Boot 3.5 要求](https://docs.spring.io/spring-boot/3.5/system-requirements.html)、[MyBatis-Plus 安装](https://baomidou.com/getting-started/install/)、[分页插件](https://baomidou.com/plugins/pagination/) 和 [JJWT](https://github.com/jwtk/jjwt)，固定解析后的补丁版本；未覆盖 Boot 管理的底层版本。BCrypt 规则参考 [Spring Security 密码存储](https://docs.spring.io/spring-security/reference/features/authentication/password-storage.html)。工程组织主要参考本机 hmall，苍穹补充多端/配置/DTO/VO，黑马点评补充 MyBatis-Plus 使用习惯，未复制课程全套依赖。
 
 ## 人员端交互与聚合口径
 

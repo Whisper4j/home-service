@@ -1,0 +1,13 @@
+# 复制为运行工作目录中的 application-local.yml（已 Git 忽略）。
+# dev 环境自动导入复制后的 application-local.yml；本示例文件本身不导入。
+# 必须填写本机值；上传只配置目录，本阶段不开放上传接口。
+home:
+  database:
+    password: ''
+  jwt:
+    secret-base64: '' # 至少 32 随机字节的 Base64，不能使用示例口令
+    token-ttl: 2h
+  upload:
+    directory: ./data/uploads
+  websocket:
+    allowed-origins: [] # 空列表为同源；跨源开发时显式填前端 Origin，禁止通配符

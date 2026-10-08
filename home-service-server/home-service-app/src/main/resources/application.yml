@@ -1,0 +1,67 @@
+spring:
+  application:
+    name: home-service-app
+  profiles:
+    default: dev
+  sql:
+    init:
+      mode: never
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${home.database.host}:${home.database.port}/${home.database.name}?connectionTimeZone=Asia/Shanghai&characterEncoding=UTF-8&sslMode=${home.database.ssl-mode}&allowPublicKeyRetrieval=${home.database.allow-public-key-retrieval}
+    username: ${home.database.username}
+    password: ${home.database.password}
+    hikari:
+      # 使用固定会话偏移，不依赖本机 MySQL 是否安装命名时区表。
+      connection-init-sql: SET time_zone = '+08:00'
+      maximum-pool-size: 10
+      connection-timeout: 5000
+      initialization-fail-timeout: 5000
+  jackson:
+    time-zone: Asia/Shanghai
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 6MB
+server:
+  port: ${SERVER_PORT:8080}
+  error:
+    include-message: never
+    include-stacktrace: never
+    include-binding-errors: never
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    default-enum-type-handler: com.baomidou.mybatisplus.core.handlers.MybatisEnumTypeHandler
+  global-config:
+    banner: false
+    db-config:
+      update-strategy: not_null
+home:
+  jwt:
+    secret-base64: ${JWT_SECRET_BASE64:}
+    token-ttl: ${JWT_TOKEN_TTL:2h}
+  upload:
+    directory: ${UPLOAD_DIRECTORY:./data/uploads}
+  websocket:
+    allowed-origins: ${WS_ALLOWED_ORIGINS:}
+  auth:
+    # 精确到 HTTP 方法；只能从契约公开操作中选择，启动时拒绝扩大白名单。
+    public-endpoints:
+      - 'POST /api/customer/auth/login'
+      - 'POST /api/worker/auth/login'
+      - 'POST /api/admin/auth/login'
+      - 'POST /api/customer/auth/register'
+      - 'GET /api/customer/regions'
+      - 'GET /api/customer/booking-rules'
+      - 'GET /api/customer/categories'
+      - 'GET /api/customer/service-items'
+      - 'GET /api/customer/skus'
+      - 'GET /api/customer/skus/{id}'
+      - 'GET /api/customer/service-entries'
+logging:
+  level:
+    com.homeservice: info
+    com.homeservice.mapper: info
+  pattern:
+    dateformat: yyyy-MM-dd HH:mm:ss.SSS,Asia/Shanghai

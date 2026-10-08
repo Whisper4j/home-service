@@ -191,7 +191,7 @@ export interface paths {
         };
         /**
          * 浏览上架服务目录
-         * @description 仅返回本层及父级均上架数据；status 只能省略或 ON_SHELF。
+         * @description 仅返回本层及父级均上架数据；公开查询不接受 status 参数。
          *     无需登录。
          */
         get: operations["listCustomerCategory"];
@@ -212,7 +212,7 @@ export interface paths {
         };
         /**
          * 浏览上架服务目录
-         * @description 仅返回本层及父级均上架数据；status 只能省略或 ON_SHELF。
+         * @description 仅返回本层及父级均上架数据；公开查询不接受 status 参数。
          *     无需登录。
          */
         get: operations["listCustomerServiceItem"];
@@ -233,7 +233,7 @@ export interface paths {
         };
         /**
          * 浏览上架服务目录
-         * @description 仅返回本层及父级均上架数据；status 只能省略或 ON_SHELF。
+         * @description 仅返回本层及父级均上架数据；公开查询不接受 status 参数。
          *     无需登录。
          */
         get: operations["listCustomerSku"];
@@ -1519,7 +1519,7 @@ export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         /**
-         * @description 十进制字符串 ID，路径、查询、JSON 中均不得转为 JS number。
+         * @description 正十进制字符串 ID，最大 9223372036854775807（MySQL 有符号 BIGINT）；路径、查询、JSON 中均不得转为 JS number。
          * @example 10001
          */
         Id: string;
@@ -1583,12 +1583,18 @@ export interface components {
         };
         LoginDTO: {
             username: string;
-            /** Format: password */
+            /**
+             * Format: password
+             * @description 密码不裁剪；8—72个字符，且 UTF-8 编码不得超过72字节。超限返回 VALIDATION_ERROR，不允许 BCrypt 静默截断。
+             */
             password: string;
         };
         RegisterDTO: {
             username: string;
-            /** Format: password */
+            /**
+             * Format: password
+             * @description 密码不裁剪；8—72个字符，且 UTF-8 编码不得超过72字节。超限返回 VALIDATION_ERROR，不允许 BCrypt 静默截断。
+             */
             password: string;
             displayName: string;
             phone: string;
@@ -1747,7 +1753,10 @@ export interface components {
         };
         WorkerCreateDTO: {
             username: string;
-            /** Format: password */
+            /**
+             * Format: password
+             * @description 密码不裁剪；8—72个字符，且 UTF-8 编码不得超过72字节。超限返回 VALIDATION_ERROR，不允许 BCrypt 静默截断。
+             */
             password: string;
             displayName: string;
             phone: string;

@@ -1,0 +1,12 @@
+spring:
+  config:
+    import: optional:file:./application-local.yml
+home:
+  database:
+    host: ${DB_HOST:127.0.0.1}
+    port: ${DB_PORT:3306}
+    name: ${DB_NAME:home_service}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:}
+    ssl-mode: DISABLED
+    allow-public-key-retrieval: true
