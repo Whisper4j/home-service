@@ -19,6 +19,9 @@ playwright-report/
 test-results/
 coverage/
 
+# Local Nginx runtime and packaged frontend
+.runtime/
+
 # Local configuration and secrets
 .env
 .env.*
