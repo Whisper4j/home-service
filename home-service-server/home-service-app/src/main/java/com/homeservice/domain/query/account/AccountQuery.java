@@ -1,30 +1,30 @@
 package com.homeservice.domain.query.account;
+
 import com.fasterxml.jackson.annotation.*;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.homeservice.enums.*;
 import com.homeservice.handler.json.*;
 import com.homeservice.validation.*;
-import com.homeservice.enums.*;
-import jakarta.validation.Valid;
+
 import jakarta.validation.constraints.*;
-import org.hibernate.validator.constraints.UniqueElements;
+
 import lombok.*;
-import java.math.BigDecimal;
+
 import java.time.*;
-import java.util.List;
-import org.springframework.web.multipart.MultipartFile;
 
-
-/** 对应 OpenAPI AccountQuery；仅定义数据边界，不实现业务。 */
+/**
+ * 账号查询类
+ * 封装账号相关查询条件
+ */
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class AccountQuery extends com.homeservice.common.domain.PageQuery {
+
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @Size(min = 1, max = 100)
     private String keyword;
-
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private Role role;
-
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private AccountStatus status;
+
 }

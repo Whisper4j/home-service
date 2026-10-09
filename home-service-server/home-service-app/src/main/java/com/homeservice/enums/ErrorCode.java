@@ -1,6 +1,13 @@
 package com.homeservice.enums;
+
 import com.homeservice.common.exception.ErrorType;
+
 import lombok.RequiredArgsConstructor;
+
+/**
+ * 错误码枚举类
+ * 定义错误码的固定取值
+ */
 @RequiredArgsConstructor
 public enum ErrorCode implements ErrorType {
     VALIDATION_ERROR(400, "请求格式或参数无效"),
@@ -35,7 +42,25 @@ public enum ErrorCode implements ErrorType {
     INTERNAL_ERROR(500, "服务暂时不可用");
     private final int status;
     private final String description;
-    public String code() { return name(); }
-    public int httpStatus() { return status; }
-    public String message() { return description; }
+
+    /**
+     * 获取业务错误码
+     */
+    public String code() {
+        return name();
+    }
+
+    /**
+     * 获取对应的HTTP状态
+     */
+    public int httpStatus() {
+        return status;
+    }
+
+    /**
+     * 获取业务错误提示
+     */
+    public String message() {
+        return description;
+    }
 }

@@ -1,6 +1,6 @@
 # 当前状态
 
-更新时间：2026-10-08
+更新时间：2026-10-09
 
 ## 当前阶段
 
@@ -12,7 +12,8 @@
 
 - 固定版本：Spring Boot 3.5.16、MyBatis-Plus 3.5.17（Boot 3 starter + jsqlparser）、Hutool core 5.8.47、JJWT 0.13.0；底层依赖沿用 Boot 管理。真实读取三个参考工程的全部 POM、配置及代表性分层/基础设施代码，以 hmall 为主要规范。
 - 27 个 PO、27 个 BaseMapper，覆盖所有关联表；主键策略、金额、时间、显式枚举值、NULL 逻辑删除、时间填充、JSON 类型处理、生成列禁止写入及分页插件均已配置。
-- OpenAPI 的 DTO/Query/VO、嵌套对象和 WebSocket 帧：79 个具体对象模型；响应和分页包装用 `R<T>`、`PageDTO<T>` 泛型等价表达。请求、持久化与输出分离；未实现 `allowedActions` 的业务计算。
+- OpenAPI 的 DTO/Query/VO、嵌套对象和 WebSocket 帧：79 个具体对象模型；响应和分页包装用 `Result<T>`、`PageDTO<T>` 泛型等价表达。`Result` 已改为苍穹外卖风格的 Lombok 普通类并实现 `Serializable`，只提供 `success` 和 `error` 重载；字段仍为契约要求的 `code/message/data`，成功码为字符串 `SUCCESS`。请求、持久化与输出分离；未实现 `allowedActions` 的业务计算。
+- 后端全部 243 个 Java 源文件统一采用四空格缩进，并在最后一条 import 后保留空行；245 个显式类型使用“中文类名 + 一句直接作用”的两行注释，260 个显式方法、构造器和注解成员使用一句话注释。类与方法注解各占一行，方法体展开书写；字段块前后留空行、连续字段之间不留空行，字段不添加重复职责注释。该调整覆盖 main 与 test 源码，不改变接口契约或业务行为。
 - 严格 ID/金额/+08:00 时间格式、必需 nullable 与可选省略、SKU 入口字段缺失/显式 null 区分、未知字段拒绝、字符串裁剪、密码不裁剪与 UTF-8 72 字节限制、查询/路径转换及基础交叉字段校验。
 - 统一字符串错误码、真实 HTTP 状态、字段错误、MVC 异常链路及脱敏日志；空结果和超末页保留真实 total/pages。
 - BCrypt、配置化 HS256 JWT、严格 Bearer/算法/签名/有效期/载荷检查、三端角色检查、真实账号只读查询服务、方法级公开白名单及请求上下文清理。
@@ -27,6 +28,7 @@
 
 | 实际命令或检查 | 结果 |
 | --- | --- |
+| `mvn -B -ntp -f home-service-server/pom.xml clean verify`（2026-10-09） | BUILD SUCCESS；common 2项、app 22项，共24项测试，0失败/错误/跳过；验证注释整理和 `Result` 重命名未改变既有行为 |
 | `mvn -B -ntp -f home-service-server/pom.xml clean verify -Pmysql-it` | BUILD SUCCESS；common 2 项 + app 22 项常规测试 + 3 项真实 MySQL 集成测试，共27项，0失败/错误/跳过 |
 | `mvn -B -ntp -f home-service-server/pom.xml dependency:tree` | SUCCESS；app→common，分页 jsqlparser 已解析，只有一套 MyBatis starter，没有 Redis/MQ/Cloud/PageHelper/Fastjson/H2 |
 | `java -jar home-service-app/target/home-service-app-1.0.0-SNAPSHOT.jar --spring.profiles.active=dev` | 独立进程真实启动，验证端口18080，成功连接 MySQL 8.0.45；不是只打包或测试上下文启动 |

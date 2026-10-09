@@ -1,11 +1,21 @@
 package com.homeservice.handler.json;
+
 import com.fasterxml.jackson.core.*;
 import com.fasterxml.jackson.databind.*;
+
 import java.io.IOException;
-/** 只接收 JSON 字符串，拒绝数字或布尔值的隐式转换。 */
+
+/**
+ * 去除首尾空格字符串反序列化器类
+ * 将JSON输入解析为去除首尾空格字符串
+ */
 public class TrimmedStringDeserializer extends JsonDeserializer<String> {
+    /**
+     * 反序列化并校验输入数据
+     */
     public String deserialize(JsonParser p, DeserializationContext context) throws IOException {
-        if (!p.hasToken(JsonToken.VALUE_STRING)) return (String) context.handleUnexpectedToken(String.class, p);
+        if (!p.hasToken(JsonToken.VALUE_STRING))
+            return (String) context.handleUnexpectedToken(String.class, p);
         return p.getText().strip();
     }
 }

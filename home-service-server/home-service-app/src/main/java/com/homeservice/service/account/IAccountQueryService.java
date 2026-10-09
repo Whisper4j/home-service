@@ -1,5 +1,16 @@
 package com.homeservice.service.account;
+
 import com.homeservice.domain.value.AccountIdentity;
+
 import java.util.Optional;
-/** 仅供 HTTP/WS 认证复核真实账号；不实现登录注册或人员业务。 */
-public interface IAccountQueryService { Optional<AccountIdentity> findByAccountId(long accountId); }
+
+/**
+ * 账号查询服务接口
+ * 定义账号查询相关服务能力
+ */
+public interface IAccountQueryService {
+    /**
+     * 根据账号编号查询账号身份
+     */
+    Optional<AccountIdentity> findByAccountId(long accountId);
+}

@@ -378,7 +378,8 @@ home-service/
 - 27 个 PO 和 27 个 BaseMapper 覆盖唯一 SQL 基线；明确 Mapper 扫描、MySQL 分页插件与时间填充。自增、字符串主键、订单 ID 主键、设置固定主键分别映射。枚举用明确字符串值，`ClientEntryCode` 保持数据库维护的字符串。
 - `deleted_at` 只在原有逻辑删除表上使用 NULL/时间语义；生成列 `scope_identity` 可读但禁止 ORM 插入、更新。通用 Mapper 删除 SKU 不等于完成“删除并释放入口”的事务规则。
 - JSON 使用明确集合元素和专用 Jackson 类型处理器；两个排班字段的 SQL NULL 表示未配置，空集合含义与 NULL 不同。默认 NOT_NULL 更新策略下，需要清空可空列时由未来 Service 显式 `.set(column, null)`，不能依靠 `updateById` 的 null 值清空。
-- DTO、Query、VO 与 PO 分离，响应为 `R<T>`，分页为 `PageQuery/PageDTO<T>`。包装响应不按每个接口重复创建类；覆盖命名 Schema、嵌套对象和 WebSocket 帧，业务接口仍未实现。
+- DTO、Query、VO 与 PO 分离，响应为 `Result<T>`，分页为 `PageQuery/PageDTO<T>`。`Result` 采用苍穹外卖风格的 Lombok 普通类并实现 `Serializable`，提供 `success` 和 `error` 常用重载；字段仍遵守本项目 OpenAPI 的 `code/message/data`，成功码为字符串 `SUCCESS`。包装响应不按每个接口重复创建类；覆盖命名 Schema、嵌套对象和 WebSocket 帧，业务接口仍未实现。
+- Java 源码采用四空格缩进；最后一条 import 后保留空行。类注释使用中文类名和一句直接的作用说明，方法注释用一句话说明行为；注解各占一行，方法体展开书写。类字段前后保留空行，连续字段之间不留空行，字段本身不添加重复职责注释。
 - ID 仅对 ID 字段转为十进制字符串，范围为正的有符号 BIGINT；金额用 BigDecimal/两位小数字符串；时间严格 `+08:00`、精确到秒。统计及分页数值保持数值。可选未发生字段省略，必需 nullable 字段保留 null；`SkuDTO.clientEntryCode` 缺失非法、显式 null 合法。
 - JSON 拒绝未知字段、重复键、非法枚举、数字金额、浮点整数和无偏移时间；路径、查询也使用严格转换，公开目录 Query 不接受 status/sortBy/isAsc。普通字符串裁剪后校验，密码保留原文；密码同时满足契约字符长度与 BCrypt 的 UTF-8 72 字节上限，超限拒绝、不截断。
 

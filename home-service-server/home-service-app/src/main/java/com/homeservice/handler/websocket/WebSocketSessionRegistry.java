@@ -1,39 +1,88 @@
 package com.homeservice.handler.websocket;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.homeservice.domain.value.*;
 import com.homeservice.domain.vo.notification.WsEvent;
 import com.homeservice.utils.AccountAuthenticator;
+
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.*;
 import org.springframework.web.socket.handler.ConcurrentWebSocketSessionDecorator;
+
 import java.time.Clock;
 import java.util.concurrent.ConcurrentHashMap;
-/** 仅存已认证会话；无按角色广播接口，避免泄露未做资格筛选的优惠池。 */
-@Component @RequiredArgsConstructor
+
+/**
+ * WebSocket会话管理类
+ * 管理已认证WebSocket会话并发送定向消息
+ */
+@Component
+@RequiredArgsConstructor
 public class WebSocketSessionRegistry {
+    /**
+     * WebSocket会话绑定记录类
+     * 保存WebSocket会话及其认证身份
+     */
     private record Binding(WebSocketSession session, AccountPrincipal principal) {}
+
     private final ConcurrentHashMap<String, Binding> sessions = new ConcurrentHashMap<>();
     private final ObjectMapper objectMapper;
     private final AccountAuthenticator authenticator;
     private final Clock clock;
+
+    /**
+     * 注册已认证WebSocket会话
+     */
     public void register(WebSocketSession session, AccountPrincipal principal) {
-        sessions.put(session.getId(), new Binding(new ConcurrentWebSocketSessionDecorator(session, 5000, 65536), principal));
+        sessions.put(
+                session.getId(),
+                new Binding(
+                        new ConcurrentWebSocketSessionDecorator(session, 5000, 65536), principal));
     }
-    public void remove(String sessionId) { sessions.remove(sessionId); }
-    public int size() { return sessions.size(); }
+
+    /**
+     * 移除WebSocket会话
+     */
+    public void remove(String sessionId) {
+        sessions.remove(sessionId);
+    }
+
+    /**
+     * 获取已认证WebSocket会话数量
+     */
+    public int size() {
+        return sessions.size();
+    }
+
+    /**
+     * 向明确接收者发送已提交事件
+     */
     void sendCommitted(NotificationRecipient recipient, WsEvent event) {
         for (Binding binding : sessions.values()) {
             var principal = binding.principal();
-            if (principal.accountId() != recipient.accountId() || principal.role() != recipient.role()) continue;
+            if (principal.accountId() != recipient.accountId()
+                    || principal.role() != recipient.role()) continue;
             try {
-                if (!clock.instant().isBefore(principal.expiresAt())) throw new com.homeservice.exception.ApiException(com.homeservice.enums.ErrorCode.TOKEN_EXPIRED);
+                if (!clock.instant().isBefore(principal.expiresAt()))
+                    throw new com.homeservice.exception.ApiException(
+                            com.homeservice.enums.ErrorCode.TOKEN_EXPIRED);
                 authenticator.check(principal);
-                binding.session().sendMessage(new TextMessage(objectMapper.writeValueAsString(event)));
+                binding.session()
+                        .sendMessage(new TextMessage(objectMapper.writeValueAsString(event)));
             } catch (Exception e) {
                 remove(binding.session().getId());
-                int code = e instanceof com.homeservice.exception.ApiException a && a.getErrorType().httpStatus() == 403 ? 4403 : 4401;
-                try { binding.session().close(new CloseStatus(code, "Session unavailable")); } catch (Exception ignored) { /* 已断开 */ }
+                int code =
+                        e instanceof com.homeservice.exception.ApiException a
+                                        && a.getErrorType().httpStatus() == 403
+                                ? 4403
+                                : 4401;
+                try {
+                    binding.session().close(new CloseStatus(code, "Session unavailable"));
+                } catch (Exception ignored) {
+                    /* 已断开 */
+                }
             }
         }
     }

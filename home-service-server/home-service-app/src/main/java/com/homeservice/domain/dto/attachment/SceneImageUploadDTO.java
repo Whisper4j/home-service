@@ -1,24 +1,25 @@
 package com.homeservice.domain.dto.attachment;
+
 import com.fasterxml.jackson.annotation.*;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.homeservice.enums.*;
 import com.homeservice.handler.json.*;
 import com.homeservice.validation.*;
-import com.homeservice.enums.*;
-import jakarta.validation.Valid;
+
 import jakarta.validation.constraints.*;
-import org.hibernate.validator.constraints.UniqueElements;
+
 import lombok.*;
-import java.math.BigDecimal;
-import java.time.*;
-import java.util.List;
+
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.*;
 
-/** 对应 OpenAPI SceneImageUploadDTO；仅定义数据边界，不实现业务。 */
+/**
+ * 现场图片上传请求类
+ * 接收现场图片上传相关请求参数
+ */
 @Builder
 public record SceneImageUploadDTO(
-    @JsonProperty(value = "file", required = true)
-    @JsonSetter(nulls = Nulls.FAIL)
-    @NotNull
-    MultipartFile file
-) {}
+        @JsonProperty(value = "file", required = true)
+        @JsonSetter(nulls = Nulls.FAIL)
+        @NotNull
+        MultipartFile file) {}

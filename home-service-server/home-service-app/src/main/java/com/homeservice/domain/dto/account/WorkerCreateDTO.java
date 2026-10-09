@@ -1,71 +1,77 @@
 package com.homeservice.domain.dto.account;
+
 import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.homeservice.enums.*;
 import com.homeservice.handler.json.*;
 import com.homeservice.validation.*;
-import com.homeservice.enums.*;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
-import org.hibernate.validator.constraints.UniqueElements;
+
 import lombok.*;
-import java.math.BigDecimal;
+
+import org.hibernate.validator.constraints.UniqueElements;
+
 import java.time.*;
 import java.util.List;
-import org.springframework.web.multipart.MultipartFile;
 
-
-/** 对应 OpenAPI WorkerCreateDTO；仅定义数据边界，不实现业务。 */
+/**
+ * 服务人员创建请求类
+ * 接收服务人员创建相关请求参数
+ */
 @Builder
 public record WorkerCreateDTO(
-    @JsonProperty(value = "username", required = true)
-    @JsonSetter(nulls = Nulls.FAIL)
-    @NotNull
-    @Size(min = 1, max = 32)
-    @NotBlank
-    @Pattern(regexp = "^[A-Za-z][A-Za-z0-9_]{2,31}$")
-    String username,
-
-    @JsonProperty(value = "password", required = true)
-    @JsonSetter(nulls = Nulls.FAIL)
-    @NotNull
-    @Size(min = 8, max = 72)
-    @Utf8Password
-    @JsonDeserialize(using = PasswordDeserializer.class)
-    String password,
-
-    @JsonProperty(value = "displayName", required = true)
-    @JsonSetter(nulls = Nulls.FAIL)
-    @NotNull
-    @Size(min = 1, max = 40)
-    @NotBlank
-    String displayName,
-
-    @JsonProperty(value = "phone", required = true)
-    @JsonSetter(nulls = Nulls.FAIL)
-    @NotNull
-    @Size(min = 1, max = 11)
-    @NotBlank
-    @Pattern(regexp = "^1[0-9]{10}$")
-    String phone,
-
-    @JsonProperty(value = "cityCode", required = true)
-    @JsonSetter(nulls = Nulls.FAIL)
-    @NotNull
-    @Size(min = 1, max = 6)
-    @NotBlank
-    String cityCode,
-
-    @JsonProperty(value = "skillIds", required = true)
-    @JsonSetter(nulls = Nulls.FAIL, contentNulls = Nulls.FAIL)
-    @NotNull
-    @Size(min = 1, max = 2147483647)
-    @UniqueElements
-    @ApiIds
-    @Valid
-    List<@NotNull @Positive Long> skillIds,
-
-    @JsonProperty(value = "dispatchEnabled", required = true)
-    @JsonSetter(nulls = Nulls.FAIL)
-    @NotNull
-    Boolean dispatchEnabled
-) { @Override public String toString() { return "WorkerCreateDTO[credentials=REDACTED]"; } }
+        @JsonProperty(value = "username", required = true)
+        @JsonSetter(nulls = Nulls.FAIL)
+        @NotNull
+        @Size(min = 1, max = 32)
+        @NotBlank
+        @Pattern(regexp = "^[A-Za-z][A-Za-z0-9_]{2,31}$")
+        String username,
+        @JsonProperty(value = "password", required = true)
+        @JsonSetter(nulls = Nulls.FAIL)
+        @NotNull
+        @Size(min = 8, max = 72)
+        @Utf8Password
+        @JsonDeserialize(using = PasswordDeserializer.class)
+        String password,
+        @JsonProperty(value = "displayName", required = true)
+        @JsonSetter(nulls = Nulls.FAIL)
+        @NotNull
+        @Size(min = 1, max = 40)
+        @NotBlank
+        String displayName,
+        @JsonProperty(value = "phone", required = true)
+        @JsonSetter(nulls = Nulls.FAIL)
+        @NotNull
+        @Size(min = 1, max = 11)
+        @NotBlank
+        @Pattern(regexp = "^1[0-9]{10}$")
+        String phone,
+        @JsonProperty(value = "cityCode", required = true)
+        @JsonSetter(nulls = Nulls.FAIL)
+        @NotNull
+        @Size(min = 1, max = 6)
+        @NotBlank
+        String cityCode,
+        @JsonProperty(value = "skillIds", required = true)
+        @JsonSetter(nulls = Nulls.FAIL, contentNulls = Nulls.FAIL)
+        @NotNull
+        @Size(min = 1, max = 2147483647)
+        @UniqueElements
+        @ApiIds
+        @Valid
+        List<@NotNull @Positive Long> skillIds,
+        @JsonProperty(value = "dispatchEnabled", required = true)
+        @JsonSetter(nulls = Nulls.FAIL)
+        @NotNull
+        Boolean dispatchEnabled) {
+    /**
+     * 生成对象的安全文本描述
+     */
+    @Override
+    public String toString() {
+        return "WorkerCreateDTO[credentials=REDACTED]";
+    }
+}

@@ -1,5 +1,10 @@
 package com.homeservice.mapper.schedule;
+
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.homeservice.domain.po.schedule.WorkerLeave;
-/** 基础持久化操作不等于业务规则，调用方须遵守 Service 事务边界。 */
+
+/**
+ * 服务人员请假数据访问接口
+ * 提供服务人员请假的基础数据库访问能力
+ */
 public interface WorkerLeaveMapper extends BaseMapper<WorkerLeave> {}

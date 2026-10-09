@@ -1,5 +1,10 @@
 package com.homeservice.mapper.region;
+
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.homeservice.domain.po.region.AdministrativeRegion;
-/** 基础持久化操作不等于业务规则，调用方须遵守 Service 事务边界。 */
+
+/**
+ * 行政地区数据访问接口
+ * 提供行政地区的基础数据库访问能力
+ */
 public interface AdministrativeRegionMapper extends BaseMapper<AdministrativeRegion> {}
