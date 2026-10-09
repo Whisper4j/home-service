@@ -30,7 +30,6 @@ public class WorkerCreateDTO {
 
     @NotNull(message = MessageConstant.PASSWORD_REQUIRED)
     @Size(min = 8, max = 72, message = MessageConstant.PASSWORD_LENGTH_INVALID)
-    @Utf8Password(message = MessageConstant.PASSWORD_BYTES_TOO_LONG)
     @JsonDeserialize(using = PasswordDeserializer.class)
     private String password; // 密码
 
