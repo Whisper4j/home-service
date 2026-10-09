@@ -97,7 +97,7 @@ public class ProtocolTestApplication {
          */
         @GetMapping({"/api/customer/probe", "/api/worker/probe", "/api/admin/probe"})
         public Result<String> identity() {
-            return Result.success(Long.toString(UserContext.require().accountId()));
+            return Result.success(Long.toString(UserContext.require().getAccountId()));
         }
 
         /**
@@ -129,7 +129,7 @@ public class ProtocolTestApplication {
          */
         @PostMapping("/api/customer/auth/login")
         public Result<String> loginShape(@Valid @RequestBody LoginDTO body) {
-            return Result.success(body.username());
+            return Result.success(body.getUsername());
         }
 
         /**
@@ -145,7 +145,7 @@ public class ProtocolTestApplication {
          */
         @PostMapping("/api/customer/skus")
         public Result<String> protectedWrite() {
-            return Result.success(UserContext.require().role().name());
+            return Result.success(UserContext.require().getRole().name());
         }
 
         /**
@@ -177,7 +177,7 @@ public class ProtocolTestApplication {
          */
         @GetMapping("/api/customer/probe/async")
         public Callable<Result<String>> async() {
-            long accountId = UserContext.require().accountId();
+            long accountId = UserContext.require().getAccountId();
             return () -> {
                 if (UserContext.get() != null)
                     throw new IllegalStateException("ThreadLocal leaked");

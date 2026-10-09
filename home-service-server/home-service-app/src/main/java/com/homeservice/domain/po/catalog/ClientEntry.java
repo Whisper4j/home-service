@@ -1,45 +1,35 @@
 package com.homeservice.domain.po.catalog;
 
-import com.baomidou.mybatisplus.annotation.*;
-import com.homeservice.domain.value.*;
-import com.homeservice.enums.*;
-import com.homeservice.handler.mybatis.*;
-
-import lombok.Data;
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.FieldStrategy;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.homeservice.enums.ServiceKind;
 
 import java.time.LocalDateTime;
 
-/**
- * 客户端入口持久化类
- * 映射client_entry表数据
- */
+import lombok.Data;
+
 @Data
-@TableName(value = "client_entry", autoResultMap = true)
+@TableName("client_entry")
 public class ClientEntry {
 
-    @TableId(value = "code", type = IdType.INPUT)
-    private String code;
-    @TableField(value = "service_kind")
-    private ServiceKind serviceKind;
-    @TableField(value = "group_code")
-    private String groupCode;
-    @TableField(value = "group_name")
-    private String groupName;
-    @TableField(value = "group_description")
-    private String groupDescription;
-    @TableField(value = "group_sort")
-    private Integer groupSort;
-    @TableField(value = "name")
-    private String name;
-    @TableField(value = "description")
-    private String description;
-    @TableField(value = "sort_no")
-    private Integer sortNo;
-    @TableField(value = "enabled")
-    private Boolean enabled;
-    @TableField(value = "created_at", fill = FieldFill.INSERT, updateStrategy = FieldStrategy.NEVER)
-    private LocalDateTime createdAt;
-    @TableField(value = "updated_at", fill = FieldFill.INSERT_UPDATE)
-    private LocalDateTime updatedAt;
+    @TableId(type = IdType.INPUT)
+    private String code; // 编码
+    private ServiceKind serviceKind; // 服务类型
+    private String groupCode; // 分组编码
+    private String groupName; // 分组名称
+    private String groupDescription; // 分组说明
+    private Integer groupSort; // 分组排序
+    private String name; // 名称
+    private String description; // 说明
+    private Integer sortNo; // 排序号
+    private Boolean enabled; // 是否启用
+    @TableField(fill = FieldFill.INSERT, updateStrategy = FieldStrategy.NEVER)
+    private LocalDateTime createdAt; // 创建时间
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    private LocalDateTime updatedAt; // 更新时间
 
 }

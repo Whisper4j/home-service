@@ -1,39 +1,20 @@
 package com.homeservice.domain.vo.attachment;
 
-import com.fasterxml.jackson.annotation.*;
-import com.homeservice.enums.*;
-import com.homeservice.handler.json.*;
-import com.homeservice.validation.*;
+import com.homeservice.handler.json.ApiId;
 
-import jakarta.validation.constraints.*;
+import java.time.OffsetDateTime;
 
-import lombok.*;
+import lombok.Data;
 
-import java.time.*;
+@Data
+public class SceneImageVO {
 
-/**
- * 现场图片响应类
- * 封装现场图片相关响应数据
- */
-@Builder
-public record SceneImageVO(
-        @JsonProperty(value = "id", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @ApiId
-        @Positive
-        Long id,
-        @JsonProperty(value = "mimeType", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        ImageMimeType mimeType,
-        @JsonProperty(value = "size", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @Min(1)
-        @Max(5242880)
-        Integer size,
-        @JsonProperty(value = "createdAt", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        OffsetDateTime createdAt) {}
+    @ApiId
+    private Long id; // 主键ID
+
+    private String mimeType; // MIME类型
+
+    private Integer size; // 文件字节数
+
+    private OffsetDateTime createdAt; // 创建时间
+}

@@ -4,18 +4,22 @@ import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 /**
  * 目录状态枚举类
  * 定义目录状态的固定取值
  */
+@Getter
 @RequiredArgsConstructor
 public enum CatalogStatus {
-    ON_SHELF("ON_SHELF"),
-    OFF_SHELF("OFF_SHELF");
+    ON_SHELF("ON_SHELF", "上架"),
+    OFF_SHELF("OFF_SHELF", "下架");
+
     @EnumValue
     private final String value;
+    private final String description;
 
     /**
      * 获取枚举对应的数据库和JSON值

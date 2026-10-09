@@ -1,86 +1,58 @@
 package com.homeservice.domain.po.order;
 
-import com.baomidou.mybatisplus.annotation.*;
-import com.homeservice.domain.value.*;
-import com.homeservice.enums.*;
-import com.homeservice.handler.mybatis.*;
-
-import lombok.Data;
-import lombok.ToString;
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.FieldStrategy;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.homeservice.enums.BookingType;
+import com.homeservice.enums.OrderStatus;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-/**
- * 服务订单持久化类
- * 映射service_order表数据
- */
+import lombok.Data;
+import lombok.ToString;
+
 @Data
-@TableName(value = "service_order", autoResultMap = true)
+@TableName("service_order")
 public class ServiceOrder {
 
-    @TableId(value = "id", type = IdType.AUTO)
-    private Long id;
-    @TableField(value = "customer_id")
-    private Long customerId;
-    @TableField(value = "sku_id")
-    private Long skuId;
-    @TableField(value = "address_id")
-    private Long addressId;
-    @TableField(value = "booking_type")
-    private BookingType bookingType;
-    @TableField(value = "status")
-    private OrderStatus status;
-    @TableField(value = "payment_status")
-    private PaymentStatus paymentStatus;
-    @TableField(value = "dispatch_status")
-    private DispatchStatus dispatchStatus;
-    @TableField(value = "start_time")
-    private LocalDateTime startTime;
-    @TableField(value = "end_time")
-    private LocalDateTime endTime;
-    @TableField(value = "buffer_end_time")
-    private LocalDateTime bufferEndTime;
-    @TableField(value = "payment_deadline")
-    private LocalDateTime paymentDeadline;
-    @TableField(value = "offer_deadline")
-    private LocalDateTime offerDeadline;
-    @TableField(value = "dispatch_deadline")
-    private LocalDateTime dispatchDeadline;
-    @TableField(value = "confirmation_deadline")
-    private LocalDateTime confirmationDeadline;
-    @TableField(value = "offer_published_at")
-    private LocalDateTime offerPublishedAt;
-    @TableField(value = "next_dispatch_at")
-    private LocalDateTime nextDispatchAt;
-    @TableField(value = "dispatch_attempt_count")
-    private Long dispatchAttemptCount;
-    @TableField(value = "dispatch_failure_reason")
-    private String dispatchFailureReason;
-    @TableField(value = "current_price")
-    private BigDecimal currentPrice;
-    @TableField(value = "deal_price")
-    private BigDecimal dealPrice;
-    @TableField(value = "price_version")
-    private Integer priceVersion;
-    @TableField(value = "state_version")
-    private Integer stateVersion;
-    @TableField(value = "contact_name")
-    private String contactName;
-    @TableField(value = "contact_phone")
-    private String contactPhone;
-    @TableField(value = "start_code")
+    @TableId(type = IdType.AUTO)
+    private Long id; // 主键ID
+    private Long customerId; // 客户ID
+    private Long skuId; // 服务规格ID
+    private Long addressId; // 地址ID
+    private BookingType bookingType; // 预约类型
+    private OrderStatus status; // 状态
+    private String paymentStatus; // 支付状态
+    private String dispatchStatus; // 派单状态
+    private LocalDateTime startTime; // 开始时间
+    private LocalDateTime endTime; // 结束时间
+    private LocalDateTime bufferEndTime; // 缓冲结束时间
+    private LocalDateTime paymentDeadline; // 支付截止时间
+    private LocalDateTime offerDeadline; // 抢单截止时间
+    private LocalDateTime dispatchDeadline; // 派单截止时间
+    private LocalDateTime confirmationDeadline; // 确认截止时间
+    private LocalDateTime offerPublishedAt; // 优惠发布时间
+    private LocalDateTime nextDispatchAt; // 下次派单时间
+    private Long dispatchAttemptCount; // 派单尝试次数
+    private String dispatchFailureReason; // 派单失败原因
+    private BigDecimal currentPrice; // 当前价格
+    private BigDecimal dealPrice; // 成交价格
+    private Integer priceVersion; // 价格版本
+    private Integer stateVersion; // 状态版本
+    private String contactName; // 联系人
+    private String contactPhone; // 联系电话
     @ToString.Exclude
-    private String startCode;
-    @TableField(value = "remark")
-    private String remark;
-    @TableField(value = "cancellation_reason")
-    private String cancellationReason;
-    @TableField(value = "closed_at")
-    private LocalDateTime closedAt;
-    @TableField(value = "created_at", fill = FieldFill.INSERT, updateStrategy = FieldStrategy.NEVER)
-    private LocalDateTime createdAt;
-    @TableField(value = "updated_at", fill = FieldFill.INSERT_UPDATE)
-    private LocalDateTime updatedAt;
+    private String startCode; // 服务开始码（日志隐藏）
+    private String remark; // 备注
+    private String cancellationReason; // 取消原因
+    private LocalDateTime closedAt; // 关闭时间
+    @TableField(fill = FieldFill.INSERT, updateStrategy = FieldStrategy.NEVER)
+    private LocalDateTime createdAt; // 创建时间
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    private LocalDateTime updatedAt; // 更新时间
 
 }

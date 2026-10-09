@@ -40,8 +40,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<Result<ErrorDetailsVO>> business(BusinessException e) {
-        var details =
-                e instanceof ApiException api ? api.getDetails() : ErrorDetailsVO.builder().build();
+        var details = e instanceof ApiException api ? api.getDetails() : new ErrorDetailsVO();
         return ResponseEntity.status(e.getErrorType().httpStatus())
                 .body(Result.error(e.getErrorType().code(), e.getErrorType().message(), details));
     }
@@ -51,26 +50,10 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(BindException.class)
     public ResponseEntity<Result<ErrorDetailsVO>> validation(BindException e) {
-        var fields =
-                e.getBindingResult().getAllErrors().stream()
-                        .map(
-                                error ->
-                                        new FieldErrorVO(
-                                                error
-                                                                instanceof
-                                                                org.springframework.validation
-                                                                                .FieldError
-                                                                        f
-                                                        ? f.getField()
-                                                        : "request",
-                                                error.getDefaultMessage() == null
-                                                        ? "参数无效"
-                                                        : error.getDefaultMessage()))
-                        .toList();
-        return business(
-                new ApiException(
-                        ErrorCode.VALIDATION_ERROR,
-                        ErrorDetailsVO.builder().fieldErrors(fields).build()));
+        var fields = e.getBindingResult().getAllErrors().stream().map(this::fieldError).toList();
+        ErrorDetailsVO details = new ErrorDetailsVO();
+        details.setFieldErrors(fields);
+        return business(new ApiException(ErrorCode.VALIDATION_ERROR, details));
     }
 
     /**
@@ -87,12 +70,12 @@ public class GlobalExceptionHandler {
     })
     public ResponseEntity<Result<ErrorDetailsVO>> invalid(Exception e) {
         // 不回显 Jackson/绑定异常原文，其中可能包含密码、Token 或完整请求。
-        return business(
-                new ApiException(
-                        ErrorCode.VALIDATION_ERROR,
-                        ErrorDetailsVO.builder()
-                                .fieldErrors(List.of(new FieldErrorVO("request", "请求格式或字段值无效")))
-                                .build()));
+        FieldErrorVO field = new FieldErrorVO();
+        field.setField("request");
+        field.setMessage("请求格式或字段值无效");
+        ErrorDetailsVO details = new ErrorDetailsVO();
+        details.setFieldErrors(List.of(field));
+        return business(new ApiException(ErrorCode.VALIDATION_ERROR, details));
     }
 
     /**
@@ -117,7 +100,7 @@ public class GlobalExceptionHandler {
                         Result.error(
                                 ErrorCode.VALIDATION_ERROR.code(),
                                 "不支持的请求方法",
-                                ErrorDetailsVO.builder().build()));
+                                new ErrorDetailsVO()));
     }
 
     /**
@@ -130,7 +113,7 @@ public class GlobalExceptionHandler {
                         Result.error(
                                 "VALIDATION_ERROR",
                                 "不支持的请求媒体类型",
-                                ErrorDetailsVO.builder().build()));
+                                new ErrorDetailsVO()));
     }
 
     /**
@@ -144,7 +127,7 @@ public class GlobalExceptionHandler {
                         Result.error(
                                 "VALIDATION_ERROR",
                                 "不支持的响应媒体类型",
-                                ErrorDetailsVO.builder().build()));
+                                new ErrorDetailsVO()));
     }
 
     /**
@@ -174,5 +157,15 @@ public class GlobalExceptionHandler {
                 e.getClass().getName(),
                 location);
         return business(new ApiException(ErrorCode.INTERNAL_ERROR));
+    }
+
+    private FieldErrorVO fieldError(org.springframework.validation.ObjectError error) {
+        FieldErrorVO field = new FieldErrorVO();
+        field.setField(
+                error instanceof org.springframework.validation.FieldError value
+                        ? value.getField()
+                        : "request");
+        field.setMessage(error.getDefaultMessage() == null ? "参数无效" : error.getDefaultMessage());
+        return field;
     }
 }

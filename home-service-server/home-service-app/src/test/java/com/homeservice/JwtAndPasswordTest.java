@@ -70,7 +70,7 @@ class JwtAndPasswordTest {
     @Test
     void jwtEnforcesSignatureAlgorithmExpiryAndPayload() {
         String token = tool(now).createToken(9007199254740993L, Role.WORKER);
-        assertThat(tool(now).parse(token).accountId()).isEqualTo(9007199254740993L);
+        assertThat(tool(now).parse(token).getAccountId()).isEqualTo(9007199254740993L);
         assertCode(() -> tool(now.plusSeconds(7200)).parse(token), ErrorCode.TOKEN_EXPIRED);
         String[] parts = token.split("\\.");
         parts[1] =

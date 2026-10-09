@@ -1,26 +1,16 @@
 package com.homeservice.domain.dto.account;
 
-import com.fasterxml.jackson.annotation.*;
-import com.homeservice.enums.*;
-import com.homeservice.handler.json.*;
-import com.homeservice.validation.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
-import jakarta.validation.constraints.*;
+import lombok.Data;
 
-import lombok.*;
+@Data
+public class WorkerContactDTO {
 
-import java.time.*;
-
-/**
- * 服务人员联系方式请求类
- * 接收服务人员联系方式相关请求参数
- */
-@Builder
-public record WorkerContactDTO(
-        @JsonProperty(value = "phone", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @Size(min = 1, max = 11)
-        @NotBlank
-        @Pattern(regexp = "^1[0-9]{10}$")
-        String phone) {}
+    @Size(max = 11, message = "手机号长度不能超过11")
+    @NotBlank(message = "手机号不能为空")
+    @Pattern(regexp = "^1[0-9]{10}$", message = "手机号格式不正确")
+    private String phone; // 手机号
+}

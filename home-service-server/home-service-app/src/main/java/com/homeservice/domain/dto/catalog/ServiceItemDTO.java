@@ -1,45 +1,35 @@
 package com.homeservice.domain.dto.catalog;
 
-import com.fasterxml.jackson.annotation.*;
-import com.homeservice.enums.*;
-import com.homeservice.handler.json.*;
-import com.homeservice.validation.*;
+import com.homeservice.enums.CatalogStatus;
+import com.homeservice.enums.ServiceKind;
+import com.homeservice.handler.json.ApiId;
 
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 
-import lombok.*;
+import lombok.Data;
 
-import java.time.*;
+@Data
+public class ServiceItemDTO {
 
-/**
- * 服务项目请求类
- * 接收服务项目相关请求参数
- */
-@Builder
-public record ServiceItemDTO(
-        @JsonProperty(value = "categoryId", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @ApiId
-        @Positive
-        Long categoryId,
-        @JsonProperty(value = "name", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @Size(min = 1, max = 60)
-        @NotBlank
-        String name,
-        @JsonProperty(value = "serviceKind", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        ServiceKind serviceKind,
-        @JsonProperty(value = "description", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @Size(min = 1, max = 1000)
-        @NotBlank
-        String description,
-        @JsonProperty(value = "status", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        CatalogStatus status) {}
+    @NotNull(message = "分类ID不能为空")
+    @ApiId
+    @Positive(message = "分类ID必须大于0")
+    private Long categoryId; // 分类ID
+
+    @Size(max = 60, message = "名称长度不能超过60")
+    @NotBlank(message = "名称不能为空")
+    private String name; // 名称
+
+    @NotNull(message = "服务类型不能为空")
+    private ServiceKind serviceKind; // 服务类型
+
+    @Size(max = 1000, message = "说明长度不能超过1000")
+    @NotBlank(message = "说明不能为空")
+    private String description; // 说明
+
+    @NotNull(message = "状态不能为空")
+    private CatalogStatus status; // 状态
+}

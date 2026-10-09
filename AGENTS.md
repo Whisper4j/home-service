@@ -11,8 +11,10 @@
 - Service 接口使用 `IXxxService`，实现类使用 `XxxServiceImpl`；Mapper 使用 `XxxMapper`；类、方法和字段使用清晰业务名称。
 - Controller 按 `customer`、`worker`、`admin` 分组并保持轻量；事务、状态校验和业务规则放在 Service。
 - 输入使用 DTO/Query，数据库映射使用 PO，输出使用 VO；接口禁止直接暴露 PO。
+- `domain` 模型使用普通 Lombok 类，字段后写简短 `// 中文含义`；不使用 record 或 Builder 堆叠。DTO/Query 只保留输入格式校验并填写中文 `message`，VO 不承担输入校验，PO 只保留确有作用的 MyBatis-Plus 映射注解。
 - 简单 CRUD 使用 MyBatis-Plus；复杂联表、批量条件更新或性能敏感 SQL 才使用 Mapper XML。
 - 接口遵守 RESTful 语义，统一参数校验、响应、分页、异常和错误码；金额禁止使用 `double`。
+- Controller 正常路径只返回成功结果；依赖数据库和业务状态的规则由 Service 校验并抛业务异常，失败响应统一由全局异常处理器生成，不在 Controller/Service 中散落 `Result.error(...)`。
 - API统一以 `/api` 开头，三端前缀为 `/api/customer`、`/api/worker`、`/api/admin`；响应字段为 `code/message/data`，业务错误码使用字符串。
 - 分页请求使用 `pageNo/pageSize`，分页响应使用 `list/total/pages`；幂等写请求使用 `Idempotency-Key`。
 - 对外 ID 按字符串传输，金额按两位小数字符串传输，时间使用带 `+08:00` 偏移的 ISO 8601，业务时区统一为 `Asia/Shanghai`。
@@ -21,7 +23,7 @@
 - 写操作必须考虑事务、幂等和并发；MySQL 是最终正确性来源，Redis 不能作为唯一保障。
 - 不创建 `reserve1`、`reserve2` 或万能 JSON 预留未知需求；新需求通过迁移脚本和合理的新表演进。
 - 前端保持低保真，但路由、表单、筛选、分页、滚动、状态操作、异常提示和接口字段必须真实可用。
-- `docs/api/openapi.yaml` 创建后即为唯一正式接口契约；前后端不得各自猜测字段、状态或错误码。
+- `docs/api/openapi.yaml` 创建后即为唯一正式接口契约和代码生成来源；Java 模型不重复维护 Swagger 契约注解，前后端不得各自猜测字段、状态或错误码。
 - WebSocket只负责实时通知；任何抢单、报价和状态结果仍以 HTTP 接口与数据库为准。
 - 需求与文档足以支撑实现时直接工作；低风险的命名、文案、演示数据和实现细节由执行者合理决定并记录，不先停下来要求用户逐项确认。
 - 不提交密钥、真实个人数据或本机专用配置；保留用户已有修改，不执行破坏性 Git 操作。

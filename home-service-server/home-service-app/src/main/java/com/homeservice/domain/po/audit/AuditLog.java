@@ -1,46 +1,34 @@
 package com.homeservice.domain.po.audit;
 
-import com.baomidou.mybatisplus.annotation.*;
-import com.homeservice.domain.value.*;
-import com.homeservice.enums.*;
-import com.homeservice.handler.mybatis.*;
-
-import lombok.Data;
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.FieldStrategy;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-/**
- * 审计日志持久化类
- * 映射audit_log表数据
- */
+import lombok.Data;
+
 @Data
-@TableName(value = "audit_log", autoResultMap = true)
+@TableName("audit_log")
 public class AuditLog {
 
-    @TableId(value = "id", type = IdType.AUTO)
-    private Long id;
-    @TableField(value = "actor_type")
-    private ActorType actorType;
-    @TableField(value = "actor_account_id")
-    private Long actorAccountId;
-    @TableField(value = "action")
-    private String action;
-    @TableField(value = "target_type")
-    private AuditTargetType targetType;
-    @TableField(value = "target_id")
-    private Long targetId;
-    @TableField(value = "order_id")
-    private Long orderId;
-    @TableField(value = "related_payment_id")
-    private Long relatedPaymentId;
-    @TableField(value = "payment_type")
-    private PaymentType paymentType;
-    @TableField(value = "amount")
-    private BigDecimal amount;
-    @TableField(value = "detail")
-    private String detail;
-    @TableField(value = "created_at", fill = FieldFill.INSERT, updateStrategy = FieldStrategy.NEVER)
-    private LocalDateTime createdAt;
+    @TableId(type = IdType.AUTO)
+    private Long id; // 主键ID
+    private String actorType; // 操作者类型
+    private Long actorAccountId; // 操作者账号ID
+    private String action; // 操作名称
+    private String targetType; // 目标类型
+    private Long targetId; // 目标ID
+    private Long orderId; // 订单ID
+    private Long relatedPaymentId; // 关联支付ID
+    private String paymentType; // 支付类型
+    private BigDecimal amount; // 金额
+    private String detail; // 详细地址
+    @TableField(fill = FieldFill.INSERT, updateStrategy = FieldStrategy.NEVER)
+    private LocalDateTime createdAt; // 创建时间
 
 }

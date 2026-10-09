@@ -1,57 +1,42 @@
 package com.homeservice.domain.po.address;
 
-import com.baomidou.mybatisplus.annotation.*;
-import com.homeservice.domain.value.*;
-import com.homeservice.enums.*;
-import com.homeservice.handler.mybatis.*;
-
-import lombok.Data;
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.FieldStrategy;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableLogic;
+import com.baomidou.mybatisplus.annotation.TableName;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-/**
- * 客户地址持久化类
- * 映射customer_address表数据
- */
+import lombok.Data;
+
 @Data
-@TableName(value = "customer_address", autoResultMap = true)
+@TableName("customer_address")
 public class CustomerAddress {
 
-    @TableId(value = "id", type = IdType.AUTO)
-    private Long id;
-    @TableField(value = "customer_id")
-    private Long customerId;
-    @TableField(value = "contact_name")
-    private String contactName;
-    @TableField(value = "contact_phone")
-    private String contactPhone;
-    @TableField(value = "province_code")
-    private String provinceCode;
-    @TableField(value = "province_name")
-    private String provinceName;
-    @TableField(value = "city_code")
-    private String cityCode;
-    @TableField(value = "city_name")
-    private String cityName;
-    @TableField(value = "district_code")
-    private String districtCode;
-    @TableField(value = "district_name")
-    private String districtName;
-    @TableField(value = "detail")
-    private String detail;
-    @TableField(value = "longitude")
-    private BigDecimal longitude;
-    @TableField(value = "latitude")
-    private BigDecimal latitude;
-    @TableField(value = "is_default")
-    private Boolean isDefault;
-    @TableField(value = "deleted_at")
+    @TableId(type = IdType.AUTO)
+    private Long id; // 主键ID
+    private Long customerId; // 客户ID
+    private String contactName; // 联系人
+    private String contactPhone; // 联系电话
+    private String provinceCode; // 省编码
+    private String provinceName; // 省名称
+    private String cityCode; // 城市编码
+    private String cityName; // 城市名称
+    private String districtCode; // 区县编码
+    private String districtName; // 区县名称
+    private String detail; // 详细地址
+    private BigDecimal longitude; // 经度
+    private BigDecimal latitude; // 纬度
+    private Boolean isDefault; // 是否默认地址
     @TableLogic(value = "null", delval = "CURRENT_TIMESTAMP")
-    private LocalDateTime deletedAt;
-    @TableField(value = "created_at", fill = FieldFill.INSERT, updateStrategy = FieldStrategy.NEVER)
-    private LocalDateTime createdAt;
-    @TableField(value = "updated_at", fill = FieldFill.INSERT_UPDATE)
-    private LocalDateTime updatedAt;
+    private LocalDateTime deletedAt; // 删除时间（NULL有效）
+    @TableField(fill = FieldFill.INSERT, updateStrategy = FieldStrategy.NEVER)
+    private LocalDateTime createdAt; // 创建时间
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    private LocalDateTime updatedAt; // 更新时间
 
 }

@@ -1,39 +1,18 @@
 package com.homeservice.domain.vo.schedule;
 
-import com.fasterxml.jackson.annotation.*;
-import com.homeservice.enums.*;
-import com.homeservice.handler.json.*;
-import com.homeservice.validation.*;
-
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.*;
-
-import lombok.*;
-
-import java.time.*;
+import java.time.LocalDate;
 import java.util.List;
 
-/**
- * 服务人员日历响应类
- * 封装服务人员日历相关响应数据
- */
-@Builder
-public record WorkerCalendarVO(
-        @JsonProperty(value = "from", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        LocalDate from,
-        @JsonProperty(value = "to", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        LocalDate to,
-        @JsonProperty(value = "schedule", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @Valid
-        ScheduleVO schedule,
-        @JsonProperty(value = "days", required = true)
-        @JsonSetter(nulls = Nulls.FAIL, contentNulls = Nulls.FAIL)
-        @NotNull
-        @Valid
-        List<@NotNull @Valid CalendarDayVO> days) {}
+import lombok.Data;
+
+@Data
+public class WorkerCalendarVO {
+
+    private LocalDate from; // 开始日期
+
+    private LocalDate to; // 结束日期
+
+    private ScheduleVO schedule; // 排班设置
+
+    private List<CalendarDayVO> days; // 天数
+}

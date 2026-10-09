@@ -1,23 +1,14 @@
 package com.homeservice.domain.dto.account;
 
-import com.fasterxml.jackson.annotation.*;
-import com.homeservice.enums.*;
-import com.homeservice.handler.json.*;
-import com.homeservice.validation.*;
+import com.homeservice.enums.AccountStatus;
 
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.NotNull;
 
-import lombok.*;
+import lombok.Data;
 
-import java.time.*;
+@Data
+public class AccountStatusDTO {
 
-/**
- * 账号状态请求类
- * 接收账号状态相关请求参数
- */
-@Builder
-public record AccountStatusDTO(
-        @JsonProperty(value = "status", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        AccountStatus status) {}
+    @NotNull(message = "状态不能为空")
+    private AccountStatus status; // 状态
+}

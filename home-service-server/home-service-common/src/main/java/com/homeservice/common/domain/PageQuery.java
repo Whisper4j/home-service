@@ -1,23 +1,21 @@
 package com.homeservice.common.domain;
 
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 
 import lombok.Data;
 
-/**
- * 分页查询类
- * 接收并校验通用分页参数
- */
 @Data
 public class PageQuery {
 
-    @NotNull
-    @Min(1)
-    @Max(Integer.MAX_VALUE)
-    private Integer pageNo = 1;
-    @NotNull
-    @Min(1)
-    @Max(100)
-    private Integer pageSize = 20;
+    @NotNull(message = "页码不能为空")
+    @Min(value = 1, message = "页码不能小于1")
+    private Integer pageNo = 1; // 页码
+
+    @NotNull(message = "每页数量不能为空")
+    @Min(value = 1, message = "每页数量不能小于1")
+    @Max(value = 100, message = "每页数量不能超过100")
+    private Integer pageSize = 20; // 每页数量
 
 }

@@ -1,33 +1,23 @@
 package com.homeservice.domain.dto.schedule;
 
-import com.fasterxml.jackson.annotation.*;
-import com.homeservice.enums.*;
-import com.homeservice.handler.json.*;
-import com.homeservice.validation.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.AssertTrue;
+import jakarta.validation.constraints.NotNull;
 
-import lombok.*;
+import java.time.LocalTime;
 
-import java.time.*;
+import lombok.Data;
 
-/**
- * 工作时段请求类
- * 接收工作时段相关请求参数
- */
-@Builder
-public record WorkIntervalDTO(
-        @JsonProperty(value = "start", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        LocalTime start,
-        @JsonProperty(value = "end", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        LocalTime end) {
-    /**
-     * 校验工作时段是否合法
-     */
+@Data
+public class WorkIntervalDTO {
+
+    @NotNull(message = "开始时间不能为空")
+    private LocalTime start; // 开始时间
+
+    @NotNull(message = "结束时间不能为空")
+    private LocalTime end; // 结束时间
+
     @AssertTrue(message = "工作区间必须在 08:00—22:00 且开始早于结束")
     @JsonIgnore
     public boolean isValidInterval() {

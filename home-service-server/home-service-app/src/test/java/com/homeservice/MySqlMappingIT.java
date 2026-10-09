@@ -205,7 +205,7 @@ class MySqlMappingIT {
                                         accountQuery
                                                 .findByAccountId(account.getId())
                                                 .orElseThrow()
-                                                .accountId())
+                                                .getAccountId())
                                 .isEqualTo(account.getId());
                         WorkerProfile worker = new WorkerProfile();
                         worker.setAccountId(account.getId());
@@ -279,35 +279,29 @@ class MySqlMappingIT {
                         review.setTags(List.of());
                         reviews.insert(review);
                         assertThat(reviews.selectById(review.getId()).getTags()).isEmpty();
-                        review.setTags(List.of(ReviewTag.PUNCTUAL, ReviewTag.FRIENDLY));
+                        review.setTags(List.of("PUNCTUAL", "FRIENDLY"));
                         reviews.updateById(review);
                         assertThat(reviews.selectById(review.getId()).getTags())
-                                .containsExactly(ReviewTag.PUNCTUAL, ReviewTag.FRIENDLY);
+                                .containsExactly("PUNCTUAL", "FRIENDLY");
                         // 单例若已存在只读，不修改已有设置；空库才建立可回滚的一条最小设置。
                         if (settings.selectById(1) == null) {
                             PlatformSetting setting = new PlatformSetting();
                             setting.setId(1);
                             setting.setCityCode("440100");
                             setting.setSceneImageMimeTypes(
-                                    List.of(
-                                            ImageMimeType.JPEG,
-                                            ImageMimeType.PNG,
-                                            ImageMimeType.WEBP));
+                                    List.of("image/jpeg", "image/png", "image/webp"));
                             settings.insert(setting);
                             var read = settings.selectById(1);
                             assertThat(read.getSceneImageMimeTypes())
-                                    .containsExactly(
-                                            ImageMimeType.JPEG,
-                                            ImageMimeType.PNG,
-                                            ImageMimeType.WEBP);
+                                    .containsExactly("image/jpeg", "image/png", "image/webp");
                             assertThat(read.getWorkStart()).isEqualTo(LocalTime.of(8, 0));
                             assertThat(read.getPriceStep()).isEqualByComparingTo("5.00");
                         }
                         HttpIdempotencyRecord record = new HttpIdempotencyRecord();
-                        record.setScopeType(IdempotencyScope.ACCOUNT);
+                        record.setScopeType("ACCOUNT");
                         record.setAccountId(account.getId());
                         record.setScopeIdentity("must-not-be-written");
-                        record.setHttpMethod(WriteHttpMethod.POST);
+                        record.setHttpMethod("POST");
                         record.setRequestPath("/api/customer/orders");
                         record.setIdempotencyKey("it_" + UUID.randomUUID());
                         record.setRequestFingerprint("a".repeat(64));
@@ -318,7 +312,7 @@ class MySqlMappingIT {
                         idempotency.insert(record);
                         assertThat(idempotency.selectById(record.getId()).getScopeIdentity())
                                 .isEqualTo("ACCOUNT:" + account.getId());
-                        record.setExecutionStatus(IdempotencyStatus.SUCCEEDED);
+                        record.setExecutionStatus("SUCCEEDED");
                         record.setResponseHttpStatus(200);
                         record.setResponseContentType("application/json");
                         record.setResponseJson(
@@ -330,7 +324,7 @@ class MySqlMappingIT {
                                 LocalDateTime.now(ZoneId.of("Asia/Shanghai")).withNano(0));
                         idempotency.updateById(record);
                         var replay = idempotency.selectById(record.getId());
-                        assertThat(replay.getResponseJson().data().get("success").asBoolean())
+                        assertThat(replay.getResponseJson().getData().get("success").asBoolean())
                                 .isTrue();
                         assertThat(replay.getScopeIdentity())
                                 .isEqualTo("ACCOUNT:" + account.getId());

@@ -27,6 +27,9 @@ import java.util.concurrent.*;
 @Component
 @RequiredArgsConstructor
 public class AuthenticatedWebSocketHandler extends TextWebSocketHandler {
+    private static final String AUTH_TYPE = "AUTH";
+    private static final String AUTHENTICATED_TYPE = "AUTHENTICATED";
+
     /**
      * WebSocket连接状态类
      * 保存WebSocket连接的认证任务和到期任务
@@ -94,24 +97,22 @@ public class AuthenticatedWebSocketHandler extends TextWebSocketHandler {
             }
             try {
                 WsAuthFrame frame = objectMapper.readValue(message.getPayload(), WsAuthFrame.class);
-                if (!validator.validate(frame).isEmpty() || frame.type() != WsAuthType.AUTH) {
+                if (!validator.validate(frame).isEmpty() || !AUTH_TYPE.equals(frame.getType())) {
                     close(state, 4401, "Invalid AUTH");
                     return;
                 }
-                var principal = authenticator.authenticate(frame.accessToken());
-                if (!clock.instant().isBefore(principal.expiresAt())) {
+                var principal = authenticator.authenticate(frame.getAccessToken());
+                if (!clock.instant().isBefore(principal.getExpiresAt())) {
                     close(state, 4401, "Token expired");
                     return;
                 }
                 state.principal = principal;
                 if (state.timeout != null) state.timeout.cancel(false);
-                session.sendMessage(
-                        new TextMessage(
-                                objectMapper.writeValueAsString(
-                                        new WsAuthAck(
-                                                WsAuthAckType.AUTHENTICATED,
-                                                OffsetDateTime.ofInstant(
-                                                        clock.instant(), ZoneOffset.ofHours(8))))));
+                WsAuthAck ack = new WsAuthAck();
+                ack.setType(AUTHENTICATED_TYPE);
+                ack.setOccurredAt(
+                        OffsetDateTime.ofInstant(clock.instant(), ZoneOffset.ofHours(8)));
+                session.sendMessage(new TextMessage(objectMapper.writeValueAsString(ack)));
                 registry.register(session, principal);
                 state.expiry =
                         websocketScheduler.schedule(
@@ -120,7 +121,7 @@ public class AuthenticatedWebSocketHandler extends TextWebSocketHandler {
                                         close(state, 4401, "Token expired");
                                     }
                                 },
-                                principal.expiresAt());
+                                principal.getExpiresAt());
             } catch (ApiException e) {
                 close(
                         state,

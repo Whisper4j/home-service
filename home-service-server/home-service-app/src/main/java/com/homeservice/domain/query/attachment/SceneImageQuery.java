@@ -1,26 +1,15 @@
 package com.homeservice.domain.query.attachment;
 
-import com.fasterxml.jackson.annotation.*;
-import com.homeservice.enums.*;
-import com.homeservice.handler.json.*;
-import com.homeservice.validation.*;
+import com.homeservice.handler.json.ApiId;
 
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.Positive;
 
-import lombok.*;
+import lombok.Data;
 
-import java.time.*;
-
-/**
- * 现场图片查询类
- * 封装现场图片相关查询条件
- */
 @Data
 public class SceneImageQuery {
-
-    @JsonInclude(JsonInclude.Include.NON_NULL)
     @ApiId
-    @Positive
-    private Long orderId;
+    @Positive(message = "订单ID必须大于0")
+    private Long orderId; // 订单ID
 
 }

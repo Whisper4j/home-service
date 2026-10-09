@@ -1,58 +1,39 @@
 package com.homeservice.domain.vo.order;
 
-import com.fasterxml.jackson.annotation.*;
-import com.homeservice.enums.*;
-import com.homeservice.handler.json.*;
-import com.homeservice.validation.*;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.homeservice.enums.OrderStatus;
+import com.homeservice.enums.Role;
+import com.homeservice.handler.json.ApiId;
 
-import jakarta.validation.constraints.*;
+import java.time.OffsetDateTime;
 
-import lombok.*;
+import lombok.Data;
 
-import java.time.*;
+@Data
+public class OrderStatusHistoryVO {
 
-/**
- * 订单状态历史响应类
- * 封装订单状态历史相关响应数据
- */
-@Builder
-public record OrderStatusHistoryVO(
-        @JsonProperty(value = "id", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @ApiId
-        @Positive
-        Long id,
-        @JsonProperty(value = "orderId", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @ApiId
-        @Positive
-        Long orderId,
-        @JsonInclude(JsonInclude.Include.NON_NULL)
-        @RejectExplicitNull
-        OrderStatus fromStatus,
-        @JsonProperty(value = "toStatus", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        OrderStatus toStatus,
-        @JsonProperty(value = "actorType", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        ActorType actorType,
-        @JsonInclude(JsonInclude.Include.NON_NULL)
-        @RejectExplicitNull
-        @ApiId
-        @Positive
-        Long actorId,
-        @JsonInclude(JsonInclude.Include.NON_NULL)
-        @RejectExplicitNull
-        Role actorRole,
-        @JsonInclude(JsonInclude.Include.NON_NULL)
-        @RejectExplicitNull
-        @Size(min = 1, max = 300)
-        String reason,
-        @JsonProperty(value = "createdAt", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        OffsetDateTime createdAt) {}
+    @ApiId
+    private Long id; // 主键ID
+
+    @ApiId
+    private Long orderId; // 订单ID
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private OrderStatus fromStatus; // 原订单状态
+
+    private OrderStatus toStatus; // 新订单状态
+
+    private String actorType; // 操作者类型
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @ApiId
+    private Long actorId; // 操作者账号ID
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private Role actorRole; // 操作者角色
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private String reason; // 原因
+
+    private OffsetDateTime createdAt; // 创建时间
+}

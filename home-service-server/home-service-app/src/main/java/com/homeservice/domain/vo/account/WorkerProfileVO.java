@@ -1,88 +1,39 @@
 package com.homeservice.domain.vo.account;
 
-import com.fasterxml.jackson.annotation.*;
 import com.homeservice.domain.vo.catalog.SkillVO;
-import com.homeservice.enums.*;
-import com.homeservice.handler.json.*;
-import com.homeservice.validation.*;
+import com.homeservice.enums.AccountStatus;
+import com.homeservice.handler.json.ApiId;
+import com.homeservice.handler.json.ApiIds;
 
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.*;
-
-import lombok.*;
-
-import org.hibernate.validator.constraints.UniqueElements;
-
-import java.time.*;
 import java.util.List;
 
-/**
- * 服务人员资料响应类
- * 封装服务人员资料相关响应数据
- */
-@Builder
-public record WorkerProfileVO(
-        @JsonProperty(value = "id", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @ApiId
-        @Positive
-        Long id,
-        @JsonProperty(value = "accountId", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @ApiId
-        @Positive
-        Long accountId,
-        @JsonProperty(value = "username", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @Size(min = 1, max = 32)
-        @NotBlank
-        String username,
-        @JsonProperty(value = "status", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        AccountStatus status,
-        @JsonProperty(value = "displayName", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @Size(min = 1, max = 40)
-        @NotBlank
-        String displayName,
-        @JsonProperty(value = "phone", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @Size(min = 1, max = 11)
-        @NotBlank
-        @Pattern(regexp = "^1[0-9]{10}$")
-        String phone,
-        @JsonProperty(value = "cityCode", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @Size(min = 1, max = 6)
-        @NotBlank
-        String cityCode,
-        @JsonProperty(value = "skillIds", required = true)
-        @JsonSetter(nulls = Nulls.FAIL, contentNulls = Nulls.FAIL)
-        @NotNull
-        @Size(min = 1, max = 2147483647)
-        @UniqueElements
-        @ApiIds
-        @Valid
-        List<@NotNull @Positive Long> skillIds,
-        @JsonProperty(value = "dispatchEnabled", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        Boolean dispatchEnabled,
-        @JsonProperty(value = "skills", required = true)
-        @JsonSetter(nulls = Nulls.FAIL, contentNulls = Nulls.FAIL)
-        @NotNull
-        @Valid
-        List<@NotNull @Valid SkillVO> skills,
-        @JsonProperty(value = "cityName", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @Size(min = 1, max = 40)
-        @NotBlank
-        String cityName) {}
+import lombok.Data;
+
+@Data
+public class WorkerProfileVO {
+
+    @ApiId
+    private Long id; // 主键ID
+
+    @ApiId
+    private Long accountId; // 账号ID
+
+    private String username; // 用户名
+
+    private AccountStatus status; // 状态
+
+    private String displayName; // 显示名称
+
+    private String phone; // 手机号
+
+    private String cityCode; // 城市编码
+
+    @ApiIds
+    private List<Long> skillIds; // 技能ID列表
+
+    private Boolean dispatchEnabled; // 是否参与派单
+
+    private List<SkillVO> skills; // 技能列表
+
+    private String cityName; // 城市名称
+}

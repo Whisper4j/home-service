@@ -1,78 +1,51 @@
 package com.homeservice.domain.po.order;
 
-import com.baomidou.mybatisplus.annotation.*;
-import com.homeservice.domain.value.*;
-import com.homeservice.enums.*;
-import com.homeservice.handler.mybatis.*;
-
-import lombok.Data;
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.FieldStrategy;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.homeservice.enums.ServiceKind;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-/**
- * 订单详情持久化类
- * 映射order_detail表数据
- */
+import lombok.Data;
+
 @Data
-@TableName(value = "order_detail", autoResultMap = true)
+@TableName("order_detail")
 public class OrderDetail {
 
     @TableId(value = "order_id", type = IdType.INPUT)
-    private Long orderId;
-    @TableField(value = "category_id")
-    private Long categoryId;
-    @TableField(value = "item_id")
-    private Long itemId;
-    @TableField(value = "category_name")
-    private String categoryName;
-    @TableField(value = "item_name")
-    private String itemName;
-    @TableField(value = "sku_name")
-    private String skuName;
-    @TableField(value = "service_kind")
-    private ServiceKind serviceKind;
-    @TableField(value = "standard_price")
-    private BigDecimal standardPrice;
-    @TableField(value = "minimum_offer_price")
-    private BigDecimal minimumOfferPrice;
-    @TableField(value = "duration_minutes")
-    private Integer durationMinutes;
-    @TableField(value = "unit")
-    private String unit;
-    @TableField(value = "description")
-    private String description;
-    @TableField(value = "included")
-    private String included;
-    @TableField(value = "excluded")
-    private String excluded;
-    @TableField(value = "customer_supplies_parts")
-    private Boolean customerSuppliesParts;
-    @TableField(value = "address_contact_name")
-    private String addressContactName;
-    @TableField(value = "address_contact_phone")
-    private String addressContactPhone;
-    @TableField(value = "province_code")
-    private String provinceCode;
-    @TableField(value = "province_name")
-    private String provinceName;
-    @TableField(value = "city_code")
-    private String cityCode;
-    @TableField(value = "city_name")
-    private String cityName;
-    @TableField(value = "district_code")
-    private String districtCode;
-    @TableField(value = "district_name")
-    private String districtName;
-    @TableField(value = "detail")
-    private String detail;
-    @TableField(value = "longitude")
-    private BigDecimal longitude;
-    @TableField(value = "latitude")
-    private BigDecimal latitude;
-    @TableField(value = "was_default")
-    private Boolean wasDefault;
-    @TableField(value = "created_at", fill = FieldFill.INSERT, updateStrategy = FieldStrategy.NEVER)
-    private LocalDateTime createdAt;
+    private Long orderId; // 订单ID
+    private Long categoryId; // 分类ID
+    private Long itemId; // 服务项目ID
+    private String categoryName; // 分类名称
+    private String itemName; // 项目名称
+    private String skuName; // 规格名称
+    private ServiceKind serviceKind; // 服务类型
+    private BigDecimal standardPrice; // 标准价格
+    private BigDecimal minimumOfferPrice; // 最低优惠价
+    private Integer durationMinutes; // 服务时长（分钟）
+    private String unit; // 计价单位
+    private String description; // 说明
+    private String included; // 包含内容
+    private String excluded; // 不含内容
+    private Boolean customerSuppliesParts; // 是否客户自备配件
+    private String addressContactName; // 地址联系人
+    private String addressContactPhone; // 地址联系电话
+    private String provinceCode; // 省编码
+    private String provinceName; // 省名称
+    private String cityCode; // 城市编码
+    private String cityName; // 城市名称
+    private String districtCode; // 区县编码
+    private String districtName; // 区县名称
+    private String detail; // 详细地址
+    private BigDecimal longitude; // 经度
+    private BigDecimal latitude; // 纬度
+    private Boolean wasDefault; // 下单时是否默认地址
+    @TableField(fill = FieldFill.INSERT, updateStrategy = FieldStrategy.NEVER)
+    private LocalDateTime createdAt; // 创建时间
 
 }

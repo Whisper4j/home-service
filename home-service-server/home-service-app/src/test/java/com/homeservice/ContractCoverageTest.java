@@ -2,7 +2,6 @@ package com.homeservice;
 
 import static org.assertj.core.api.Assertions.*;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.homeservice.config.properties.AuthProperties;
@@ -19,6 +18,16 @@ import java.util.stream.Collectors;
  * 验证契约覆盖相关行为
  */
 class ContractCoverageTest {
+    private static final Set<String> JAVA_ENUMS =
+            Set.of(
+                    "Role",
+                    "AccountStatus",
+                    "CatalogStatus",
+                    "ServiceKind",
+                    "BookingType",
+                    "OrderStatus",
+                    "ErrorCode");
+
     /**
      * 验证everyNamed契约ObjectHasEquivalentJava结构场景
      */
@@ -46,7 +55,7 @@ class ContractCoverageTest {
             var schema = fields.next();
             String name = schema.getKey();
             JsonNode node = schema.getValue();
-            if (node.has("enum")) {
+            if (node.has("enum") && JAVA_ENUMS.contains(name)) {
                 Class<?> type = Class.forName("com.homeservice.enums." + name);
                 Set<String> actual =
                         Arrays.stream(type.getEnumConstants())
@@ -63,6 +72,13 @@ class ContractCoverageTest {
                                             }
                                         })
                                 .collect(Collectors.toSet());
+                for (Object value : type.getEnumConstants()) {
+                    String description =
+                            name.equals("ErrorCode")
+                                    ? ((ErrorCode) value).message()
+                                    : (String) type.getMethod("getDescription").invoke(value);
+                    assertThat(description).as(name).containsPattern("[\\p{IsHan}]");
+                }
                 Set<String> expected = new HashSet<>();
                 node.get("enum").forEach(x -> expected.add(x.asText()));
                 assertThat(actual).as(name).isEqualTo(expected);
@@ -76,29 +92,24 @@ class ContractCoverageTest {
             assertThat(type).as(name).isNotNull();
             Set<String> expected = new HashSet<>();
             node.path("properties").fieldNames().forEachRemaining(expected::add);
+            assertThat(type.isRecord()).as(name + " 应使用普通 Lombok 类").isFalse();
             Set<String> actual = new HashSet<>();
-            if (type.isRecord()) {
-                for (var component : type.getRecordComponents()) {
-                    actual.add(component.getName());
-                    JsonProperty annotation =
-                            component.getAccessor().getAnnotation(JsonProperty.class);
-                    boolean required = false;
-                    for (JsonNode r : node.path("required"))
-                        if (r.asText().equals(component.getName())) required = true;
-                    assertThat(annotation != null && annotation.required())
-                            .as(name + "." + component.getName())
-                            .isEqualTo(required);
-                }
-            } else
-                for (Class<?> cursor = type;
-                        cursor != Object.class;
-                        cursor = cursor.getSuperclass())
-                    for (var field : cursor.getDeclaredFields())
-                        if (!java.lang.reflect.Modifier.isStatic(field.getModifiers()))
-                            actual.add(field.getName());
+            for (Class<?> cursor = type;
+                    cursor != Object.class;
+                    cursor = cursor.getSuperclass())
+                for (var field : cursor.getDeclaredFields())
+                    if (!java.lang.reflect.Modifier.isStatic(field.getModifiers()))
+                        actual.add(field.getName());
             assertThat(actual).as(name).isEqualTo(expected);
         }
         assertThat(objects).isEqualTo(77);
+        try (var files = Files.list(Path.of("src/main/java/com/homeservice/enums"))) {
+            Set<String> actualEnums =
+                    files.filter(x -> x.toString().endsWith(".java"))
+                            .map(x -> x.getFileName().toString().replace(".java", ""))
+                            .collect(Collectors.toSet());
+            assertThat(actualEnums).isEqualTo(JAVA_ENUMS);
+        }
         Set<String> whitelist = new HashSet<>();
         contract.path("paths")
                 .fields()

@@ -1,43 +1,36 @@
 package com.homeservice.domain.po.account;
 
-import com.baomidou.mybatisplus.annotation.*;
-import com.homeservice.domain.value.*;
-import com.homeservice.enums.*;
-import com.homeservice.handler.mybatis.*;
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.FieldStrategy;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.homeservice.enums.AccountStatus;
+import com.homeservice.enums.Role;
+
+import java.time.LocalDateTime;
 
 import lombok.Data;
 import lombok.ToString;
 
-import java.time.LocalDateTime;
-
-/**
- * 认证账号持久化类
- * 映射auth_account表数据
- */
 @Data
-@TableName(value = "auth_account", autoResultMap = true)
+@TableName("auth_account")
 public class AuthAccount {
 
-    @TableId(value = "id", type = IdType.AUTO)
-    private Long id;
-    @TableField(value = "username")
-    private String username;
-    @TableField(value = "password_hash")
+    @TableId(type = IdType.AUTO)
+    private Long id; // 主键ID
+    private String username; // 用户名
     @ToString.Exclude
-    private String passwordHash;
-    @TableField(value = "role")
-    private Role role;
-    @TableField(value = "status")
-    private AccountStatus status;
-    @TableField(value = "display_name")
-    private String displayName;
-    @TableField(value = "phone")
-    private String phone;
-    @TableField(value = "protected_account")
-    private Boolean protectedAccount;
-    @TableField(value = "created_at", fill = FieldFill.INSERT, updateStrategy = FieldStrategy.NEVER)
-    private LocalDateTime createdAt;
-    @TableField(value = "updated_at", fill = FieldFill.INSERT_UPDATE)
-    private LocalDateTime updatedAt;
+    private String passwordHash; // 密码哈希（日志隐藏）
+    private Role role; // 账号角色
+    private AccountStatus status; // 状态
+    private String displayName; // 显示名称
+    private String phone; // 手机号
+    private Boolean protectedAccount; // 是否保护账号
+    @TableField(fill = FieldFill.INSERT, updateStrategy = FieldStrategy.NEVER)
+    private LocalDateTime createdAt; // 创建时间
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    private LocalDateTime updatedAt; // 更新时间
 
 }

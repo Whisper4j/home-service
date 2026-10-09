@@ -62,10 +62,10 @@ public class WebSocketSessionRegistry {
     void sendCommitted(NotificationRecipient recipient, WsEvent event) {
         for (Binding binding : sessions.values()) {
             var principal = binding.principal();
-            if (principal.accountId() != recipient.accountId()
-                    || principal.role() != recipient.role()) continue;
+            if (principal.getAccountId() != recipient.getAccountId()
+                    || principal.getRole() != recipient.getRole()) continue;
             try {
-                if (!clock.instant().isBefore(principal.expiresAt()))
+                if (!clock.instant().isBefore(principal.getExpiresAt()))
                     throw new com.homeservice.exception.ApiException(
                             com.homeservice.enums.ErrorCode.TOKEN_EXPIRED);
                 authenticator.check(principal);

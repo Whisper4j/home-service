@@ -1,30 +1,20 @@
 package com.homeservice.domain.query.audit;
 
-import com.fasterxml.jackson.annotation.*;
-import com.homeservice.enums.*;
-import com.homeservice.handler.json.*;
-import com.homeservice.validation.*;
+import com.homeservice.handler.json.ApiId;
 
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 
-import lombok.*;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
-import java.time.*;
-
-/**
- * 记录查询类
- * 封装记录相关查询条件
- */
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class RecordQuery extends com.homeservice.common.domain.PageQuery {
-
-    @JsonInclude(JsonInclude.Include.NON_NULL)
     @ApiId
-    @Positive
-    private Long orderId;
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    @Size(min = 1, max = 100)
-    private String keyword;
+    @Positive(message = "订单ID必须大于0")
+    private Long orderId; // 订单ID
+    @Size(min = 1, max = 100, message = "搜索关键词长度必须在1到100之间")
+    private String keyword; // 搜索关键词
 
 }

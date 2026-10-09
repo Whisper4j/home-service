@@ -1,172 +1,95 @@
 package com.homeservice.domain.vo.order;
 
-import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.homeservice.domain.vo.attachment.SceneImageVO;
-import com.homeservice.enums.*;
-import com.homeservice.handler.json.*;
-import com.homeservice.validation.*;
-
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.*;
-
-import lombok.*;
-
-import org.hibernate.validator.constraints.UniqueElements;
+import com.homeservice.enums.BookingType;
+import com.homeservice.enums.OrderStatus;
+import com.homeservice.handler.json.ApiId;
+import com.homeservice.handler.json.ApiMoney;
 
 import java.math.BigDecimal;
-import java.time.*;
+import java.time.OffsetDateTime;
 import java.util.List;
 
-/**
- * 订单响应类
- * 封装订单相关响应数据
- */
-@Builder
-public record OrderVO(
-        @JsonProperty(value = "id", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @ApiId
-        @Positive
-        Long id,
-        @JsonProperty(value = "customerId", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @ApiId
-        @Positive
-        Long customerId,
-        @JsonProperty(value = "skuId", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @ApiId
-        @Positive
-        Long skuId,
-        @JsonProperty(value = "bookingType", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        BookingType bookingType,
-        @JsonProperty(value = "status", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        OrderStatus status,
-        @JsonProperty(value = "paymentStatus", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        PaymentStatus paymentStatus,
-        @JsonProperty(value = "dispatchStatus", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        DispatchStatus dispatchStatus,
-        @JsonProperty(value = "service", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @Valid
-        ServiceSnapshotVO service,
-        @JsonProperty(value = "address", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @Valid
-        OrderAddressSnapshotVO address,
-        @JsonProperty(value = "startTime", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        OffsetDateTime startTime,
-        @JsonProperty(value = "endTime", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        OffsetDateTime endTime,
-        @JsonProperty(value = "bufferEndTime", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        OffsetDateTime bufferEndTime,
-        @JsonProperty(value = "createdAt", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        OffsetDateTime createdAt,
-        @JsonProperty(value = "paymentDeadline", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        OffsetDateTime paymentDeadline,
-        @JsonInclude(JsonInclude.Include.NON_NULL)
-        @RejectExplicitNull
-        OffsetDateTime offerDeadline,
-        @JsonInclude(JsonInclude.Include.NON_NULL)
-        @RejectExplicitNull
-        OffsetDateTime dispatchDeadline,
-        @JsonInclude(JsonInclude.Include.NON_NULL)
-        @RejectExplicitNull
-        OffsetDateTime confirmationDeadline,
-        @JsonProperty(value = "currentPrice", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @ApiMoney
-        @DecimalMin("0.00")
-        @DecimalMax("999999999.99")
-        @Digits(integer = 9, fraction = 2)
-        BigDecimal currentPrice,
-        @JsonInclude(JsonInclude.Include.NON_NULL)
-        @RejectExplicitNull
-        @ApiMoney
-        @DecimalMin("0.00")
-        @DecimalMax("999999999.99")
-        @Digits(integer = 9, fraction = 2)
-        BigDecimal dealPrice,
-        @JsonProperty(value = "priceVersion", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @Min(1)
-        @Max(2147483647)
-        Integer priceVersion,
-        @JsonInclude(JsonInclude.Include.NON_NULL)
-        @RejectExplicitNull
-        @ApiId
-        @Positive
-        Long workerId,
-        @JsonInclude(JsonInclude.Include.NON_NULL)
-        @RejectExplicitNull
-        @Size(min = 1, max = 40)
-        String workerName,
-        @JsonInclude(JsonInclude.Include.NON_NULL)
-        @RejectExplicitNull
-        @Size(min = 1, max = 300)
-        String cancellationReason,
-        @JsonProperty(value = "remark", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @Size(min = 0, max = 300)
-        String remark,
-        @JsonProperty(value = "reviewed", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        Boolean reviewed,
-        @JsonProperty(value = "sceneImages", required = true)
-        @JsonSetter(nulls = Nulls.FAIL, contentNulls = Nulls.FAIL)
-        @NotNull
-        @Size(min = 0, max = 3)
-        @Valid
-        List<@NotNull @Valid SceneImageVO> sceneImages,
-        @JsonProperty(value = "contactName", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @Size(min = 1, max = 40)
-        @NotBlank
-        String contactName,
-        @JsonProperty(value = "contactPhone", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @Size(min = 1, max = 11)
-        @NotBlank
-        @Pattern(regexp = "^1[0-9]{10}$")
-        String contactPhone,
-        @JsonInclude(JsonInclude.Include.NON_NULL)
-        @RejectExplicitNull
-        OffsetDateTime offerPublishedAt,
-        @JsonInclude(JsonInclude.Include.NON_NULL)
-        @RejectExplicitNull
-        OffsetDateTime closedAt,
-        @JsonProperty(value = "allowedActions", required = true)
-        @JsonSetter(nulls = Nulls.FAIL, contentNulls = Nulls.FAIL)
-        @NotNull
-        @UniqueElements
-        @Valid
-        List<@NotNull OrderAction> allowedActions) {}
+import lombok.Data;
+
+@Data
+public class OrderVO {
+
+    @ApiId
+    private Long id; // 主键ID
+
+    @ApiId
+    private Long customerId; // 客户ID
+
+    @ApiId
+    private Long skuId; // 服务规格ID
+
+    private BookingType bookingType; // 预约类型
+
+    private OrderStatus status; // 状态
+
+    private String paymentStatus; // 支付状态
+
+    private String dispatchStatus; // 派单状态
+
+    private ServiceSnapshotVO service; // 服务快照
+
+    private OrderAddressSnapshotVO address; // 地址快照
+
+    private OffsetDateTime startTime; // 开始时间
+
+    private OffsetDateTime endTime; // 结束时间
+
+    private OffsetDateTime bufferEndTime; // 缓冲结束时间
+
+    private OffsetDateTime createdAt; // 创建时间
+
+    private OffsetDateTime paymentDeadline; // 支付截止时间
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private OffsetDateTime offerDeadline; // 抢单截止时间
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private OffsetDateTime dispatchDeadline; // 派单截止时间
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private OffsetDateTime confirmationDeadline; // 确认截止时间
+
+    @ApiMoney
+    private BigDecimal currentPrice; // 当前价格
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @ApiMoney
+    private BigDecimal dealPrice; // 成交价格
+
+    private Integer priceVersion; // 价格版本
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @ApiId
+    private Long workerId; // 服务人员ID
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private String workerName; // 服务人员姓名
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private String cancellationReason; // 取消原因
+
+    private String remark; // 备注
+
+    private Boolean reviewed; // 是否已评价
+
+    private List<SceneImageVO> sceneImages; // 现场图片列表
+
+    private String contactName; // 联系人
+
+    private String contactPhone; // 联系电话
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private OffsetDateTime offerPublishedAt; // 优惠发布时间
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private OffsetDateTime closedAt; // 关闭时间
+
+    private List<String> allowedActions; // 允许操作列表
+}

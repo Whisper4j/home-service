@@ -4,18 +4,22 @@ import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 /**
  * 预约枚举类
  * 定义预约的固定取值
  */
+@Getter
 @RequiredArgsConstructor
 public enum BookingType {
-    STANDARD("STANDARD"),
-    OFFER("OFFER");
+    STANDARD("STANDARD", "标准预约"),
+    OFFER("OFFER", "优惠预约");
+
     @EnumValue
     private final String value;
+    private final String description;
 
     /**
      * 获取枚举对应的数据库和JSON值

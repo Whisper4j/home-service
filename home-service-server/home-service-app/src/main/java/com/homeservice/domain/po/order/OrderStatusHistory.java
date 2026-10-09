@@ -1,39 +1,32 @@
 package com.homeservice.domain.po.order;
 
-import com.baomidou.mybatisplus.annotation.*;
-import com.homeservice.domain.value.*;
-import com.homeservice.enums.*;
-import com.homeservice.handler.mybatis.*;
-
-import lombok.Data;
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.FieldStrategy;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.homeservice.enums.OrderStatus;
+import com.homeservice.enums.Role;
 
 import java.time.LocalDateTime;
 
-/**
- * 订单状态历史持久化类
- * 映射order_status_history表数据
- */
+import lombok.Data;
+
 @Data
-@TableName(value = "order_status_history", autoResultMap = true)
+@TableName("order_status_history")
 public class OrderStatusHistory {
 
-    @TableId(value = "id", type = IdType.AUTO)
-    private Long id;
-    @TableField(value = "order_id")
-    private Long orderId;
-    @TableField(value = "from_status")
-    private OrderStatus fromStatus;
-    @TableField(value = "to_status")
-    private OrderStatus toStatus;
-    @TableField(value = "actor_type")
-    private ActorType actorType;
-    @TableField(value = "actor_account_id")
-    private Long actorAccountId;
-    @TableField(value = "actor_role")
-    private Role actorRole;
-    @TableField(value = "reason")
-    private String reason;
-    @TableField(value = "created_at", fill = FieldFill.INSERT, updateStrategy = FieldStrategy.NEVER)
-    private LocalDateTime createdAt;
+    @TableId(type = IdType.AUTO)
+    private Long id; // 主键ID
+    private Long orderId; // 订单ID
+    private OrderStatus fromStatus; // 原订单状态
+    private OrderStatus toStatus; // 新订单状态
+    private String actorType; // 操作者类型
+    private Long actorAccountId; // 操作者账号ID
+    private Role actorRole; // 操作者角色
+    private String reason; // 原因
+    @TableField(fill = FieldFill.INSERT, updateStrategy = FieldStrategy.NEVER)
+    private LocalDateTime createdAt; // 创建时间
 
 }

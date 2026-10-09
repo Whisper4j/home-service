@@ -47,13 +47,11 @@ class ContractModelsTest extends ProtocolTestBase {
      */
     @Test
     void moneyIdsCountsAndSecondsHaveDifferentWireTypes() throws Exception {
-        var value =
-                OrderVO.builder()
-                        .id(9007199254740993L)
-                        .currentPrice(new BigDecimal("128"))
-                        .createdAt(OffsetDateTime.parse("2026-10-08T00:01:02.123Z"))
-                        .priceVersion(2)
-                        .build();
+        OrderVO value = new OrderVO();
+        value.setId(9007199254740993L);
+        value.setCurrentPrice(new BigDecimal("128"));
+        value.setCreatedAt(OffsetDateTime.parse("2026-10-08T00:01:02.123Z"));
+        value.setPriceVersion(2);
         JsonNode tree =
                 json.readTree(
                         json.writeValueAsString(
@@ -67,8 +65,8 @@ class ContractModelsTest extends ProtocolTestBase {
         assertThat(tree.at("/data/list/0/priceVersion").isIntegralNumber()).isTrue();
         Page<String> page = new Page<>(10, 20, 41);
         page.setRecords(List.of());
-        assertThat(Pages.response(page, x -> x).pages()).isEqualTo(3);
-        assertThat(Pages.response(page, x -> x).total()).isEqualTo(41);
+        assertThat(Pages.response(page, x -> x).getPages()).isEqualTo(3);
+        assertThat(Pages.response(page, x -> x).getTotal()).isEqualTo(41);
     }
 
     /**
@@ -76,24 +74,23 @@ class ContractModelsTest extends ProtocolTestBase {
      */
     @Test
     void requiredNullableAndOptionalFieldsRemainDistinct() throws Exception {
-        JsonNode address = json.readTree(json.writeValueAsString(AddressVO.builder().build()));
+        JsonNode address = json.readTree(json.writeValueAsString(new AddressVO()));
         assertThat(address.has("longitude")).isTrue();
         assertThat(address.get("longitude").isNull()).isTrue();
-        JsonNode order = json.readTree(json.writeValueAsString(OrderVO.builder().build()));
+        JsonNode order = json.readTree(json.writeValueAsString(new OrderVO()));
         assertThat(order.has("dealPrice")).isFalse();
         assertThat(order.has("closedAt")).isFalse();
-        assertThat(json.readTree(json.writeValueAsString(ErrorDetailsVO.builder().build())).size())
+        assertThat(json.readTree(json.writeValueAsString(new ErrorDetailsVO())).size())
                 .isZero();
+        OrderHistoryVO history = new OrderHistoryVO();
+        history.setAssignments(List.of());
         assertThat(
                         json.readTree(
-                                        json.writeValueAsString(
-                                                OrderHistoryVO.builder()
-                                                        .assignments(List.of())
-                                                        .build()))
+                                        json.writeValueAsString(history))
                                 .get("assignments")
                                 .isArray())
                 .isTrue();
-        assertThat(json.readValue(SKU, SkuDTO.class).clientEntryCode()).isNull();
+        assertThat(json.readValue(SKU, SkuDTO.class).getClientEntryCode()).isNull();
         assertThatThrownBy(
                         () ->
                                 json.readValue(
@@ -123,7 +120,7 @@ class ContractModelsTest extends ProtocolTestBase {
     @Test
     void unknownCoercedAndMalformedInputsAreRejected() throws Exception {
         String valid = "{\"expectedPrice\":\"128.00\",\"priceVersion\":1}";
-        assertThat(json.readValue(valid, ClaimOfferDTO.class).expectedPrice())
+        assertThat(json.readValue(valid, ClaimOfferDTO.class).getExpectedPrice())
                 .isEqualByComparingTo("128.00");
         for (String bad :
                 List.of(
@@ -178,12 +175,12 @@ class ContractModelsTest extends ProtocolTestBase {
                 json.readValue(
                         "{\"username\":\"  test_user  \",\"password\":\"  password  \"}",
                         LoginDTO.class);
-        assertThat(login.username()).isEqualTo("test_user");
-        assertThat(login.password()).isEqualTo("  password  ");
+        assertThat(login.getUsername()).isEqualTo("test_user");
+        assertThat(login.getPassword()).isEqualTo("  password  ");
         assertThat(login.toString()).doesNotContain("password  ");
-        assertThat(validator.validate(new LoginDTO("test_user", "汉".repeat(24)))).isEmpty();
-        assertThat(validator.validate(new LoginDTO("test_user", "汉".repeat(25)))).isNotEmpty();
-        assertThat(validator.validate(new LoginDTO("test_user", "short"))).isNotEmpty();
+        assertThat(validator.validate(login("test_user", "汉".repeat(24)))).isEmpty();
+        assertThat(validator.validate(login("test_user", "汉".repeat(25)))).isNotEmpty();
+        assertThat(validator.validate(login("test_user", "short"))).isNotEmpty();
     }
 
     /**
@@ -191,6 +188,12 @@ class ContractModelsTest extends ProtocolTestBase {
      */
     @Test
     void collectionAndCrossFieldValidationIsReal() throws Exception {
+        AccountProfileDTO profile = new AccountProfileDTO();
+        profile.setDisplayName("");
+        profile.setPhone("123");
+        assertThat(validator.validate(profile))
+                .extracting(jakarta.validation.ConstraintViolation::getMessage)
+                .contains("显示名称不能为空", "手机号格式不正确");
         assertThat(validator.validate(json.readValue(SKU, SkuDTO.class))).isEmpty();
         assertThat(validator.validate(json.readValue(SKU.replace("120,", "121,"), SkuDTO.class)))
                 .isNotEmpty();
@@ -199,13 +202,19 @@ class ContractModelsTest extends ProtocolTestBase {
                                 json.readValue(
                                         SKU.replace("[\"1\"]", "[\"1\",\"1\"]"), SkuDTO.class)))
                 .isNotEmpty();
-        ScheduleDTO bad =
-                new ScheduleDTO(
-                        List.of(
-                                new WorkIntervalDTO(LocalTime.of(8, 0), LocalTime.of(12, 0)),
-                                new WorkIntervalDTO(LocalTime.of(11, 0), LocalTime.of(13, 0))),
-                        List.of(8));
+        ScheduleDTO bad = new ScheduleDTO();
+        bad.setIntervals(
+                List.of(
+                        interval(LocalTime.of(8, 0), LocalTime.of(12, 0)),
+                        interval(LocalTime.of(11, 0), LocalTime.of(13, 0))));
+        bad.setRestWeekdays(List.of(8));
         assertThat(validator.validate(bad)).hasSizeGreaterThanOrEqualTo(2);
+        assertThat(
+                        validator.validate(
+                                json.readValue(
+                                        "{\"score\":5,\"tags\":[\"UNKNOWN\"],\"content\":\"\"}",
+                                        com.homeservice.domain.dto.review.ReviewDTO.class)))
+                .isNotEmpty();
         assertThatThrownBy(
                         () ->
                                 json.readValue(
@@ -215,5 +224,19 @@ class ContractModelsTest extends ProtocolTestBase {
         PageQuery page = new PageQuery();
         page.setPageSize(101);
         assertThat(validator.validate(page)).isNotEmpty();
+    }
+
+    private LoginDTO login(String username, String password) {
+        LoginDTO dto = new LoginDTO();
+        dto.setUsername(username);
+        dto.setPassword(password);
+        return dto;
+    }
+
+    private WorkIntervalDTO interval(LocalTime start, LocalTime end) {
+        WorkIntervalDTO dto = new WorkIntervalDTO();
+        dto.setStart(start);
+        dto.setEnd(end);
+        return dto;
     }
 }

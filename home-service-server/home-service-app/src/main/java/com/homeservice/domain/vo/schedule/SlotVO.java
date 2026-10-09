@@ -1,44 +1,30 @@
 package com.homeservice.domain.vo.schedule;
 
-import com.fasterxml.jackson.annotation.*;
-import com.homeservice.enums.*;
-import com.homeservice.handler.json.*;
-import com.homeservice.validation.*;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.homeservice.enums.BookingType;
+import com.homeservice.handler.json.ApiId;
 
-import jakarta.validation.constraints.*;
+import java.time.OffsetDateTime;
 
-import lombok.*;
+import lombok.Data;
 
-import java.time.*;
+@Data
+public class SlotVO {
 
-/**
- * 时间槽响应类
- * 封装时间槽相关响应数据
- */
-@Builder
-public record SlotVO(
-        @JsonProperty(value = "startTime", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        OffsetDateTime startTime,
-        @JsonProperty(value = "endTime", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        OffsetDateTime endTime,
-        @JsonProperty(value = "status", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        SlotStatus status,
-        @JsonInclude(JsonInclude.Include.NON_NULL)
-        @RejectExplicitNull
-        BookingType bookingType,
-        @JsonInclude(JsonInclude.Include.NON_NULL)
-        @RejectExplicitNull
-        @ApiId
-        @Positive
-        Long assignmentId,
-        @JsonInclude(JsonInclude.Include.NON_NULL)
-        @RejectExplicitNull
-        @ApiId
-        @Positive
-        Long orderId) {}
+    private OffsetDateTime startTime; // 开始时间
+
+    private OffsetDateTime endTime; // 结束时间
+
+    private String status; // 状态
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private BookingType bookingType; // 预约类型
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @ApiId
+    private Long assignmentId; // 分配记录ID
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @ApiId
+    private Long orderId; // 订单ID
+}

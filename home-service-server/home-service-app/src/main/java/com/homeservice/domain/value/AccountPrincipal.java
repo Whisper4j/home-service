@@ -4,8 +4,14 @@ import com.homeservice.enums.Role;
 
 import java.time.Instant;
 
-/**
- * 账号登录主体值对象类
- * 表达账号登录主体相关业务值
- */
-public record AccountPrincipal(long accountId, Role role, Instant expiresAt) {}
+import lombok.AllArgsConstructor;
+import lombok.Data;
+
+@Data
+@AllArgsConstructor
+public class AccountPrincipal {
+
+    private long accountId; // 账号ID
+    private Role role; // 账号角色
+    private Instant expiresAt; // 令牌过期时间
+}

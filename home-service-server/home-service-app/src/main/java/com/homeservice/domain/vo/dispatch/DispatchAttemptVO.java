@@ -1,60 +1,34 @@
 package com.homeservice.domain.vo.dispatch;
 
-import com.fasterxml.jackson.annotation.*;
-import com.homeservice.enums.*;
-import com.homeservice.handler.json.*;
-import com.homeservice.validation.*;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.homeservice.handler.json.ApiId;
 
-import jakarta.validation.constraints.*;
+import java.time.OffsetDateTime;
 
-import lombok.*;
+import lombok.Data;
 
-import java.time.*;
+@Data
+public class DispatchAttemptVO {
 
-/**
- * 派单尝试响应类
- * 封装派单尝试相关响应数据
- */
-@Builder
-public record DispatchAttemptVO(
-        @JsonProperty(value = "id", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @ApiId
-        @Positive
-        Long id,
-        @JsonProperty(value = "orderId", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @ApiId
-        @Positive
-        Long orderId,
-        @JsonInclude(JsonInclude.Include.NON_NULL)
-        @RejectExplicitNull
-        @ApiId
-        @Positive
-        Long workerId,
-        @JsonProperty(value = "result", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        DispatchAttemptResult result,
-        @JsonProperty(value = "reason", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @Size(min = 1, max = 300)
-        @NotBlank
-        String reason,
-        @JsonInclude(JsonInclude.Include.NON_NULL)
-        @RejectExplicitNull
-        @Min(0)
-        @Max(2147483647)
-        Integer serviceMinutes,
-        @JsonInclude(JsonInclude.Include.NON_NULL)
-        @RejectExplicitNull
-        @Min(0)
-        @Max(2147483647)
-        Integer orderCount,
-        @JsonProperty(value = "createdAt", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        OffsetDateTime createdAt) {}
+    @ApiId
+    private Long id; // 主键ID
+
+    @ApiId
+    private Long orderId; // 订单ID
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @ApiId
+    private Long workerId; // 服务人员ID
+
+    private String result; // 尝试结果
+
+    private String reason; // 原因
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private Integer serviceMinutes; // 预计服务分钟数
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private Integer orderCount; // 当日订单数
+
+    private OffsetDateTime createdAt; // 创建时间
+}

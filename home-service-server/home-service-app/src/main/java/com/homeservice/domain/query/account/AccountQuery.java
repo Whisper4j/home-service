@@ -1,30 +1,19 @@
 package com.homeservice.domain.query.account;
 
-import com.fasterxml.jackson.annotation.*;
-import com.homeservice.enums.*;
-import com.homeservice.handler.json.*;
-import com.homeservice.validation.*;
+import com.homeservice.enums.AccountStatus;
+import com.homeservice.enums.Role;
 
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.Size;
 
-import lombok.*;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
-import java.time.*;
-
-/**
- * 账号查询类
- * 封装账号相关查询条件
- */
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class AccountQuery extends com.homeservice.common.domain.PageQuery {
-
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    @Size(min = 1, max = 100)
-    private String keyword;
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    private Role role;
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    private AccountStatus status;
+    @Size(min = 1, max = 100, message = "搜索关键词长度必须在1到100之间")
+    private String keyword; // 搜索关键词
+    private Role role; // 账号角色
+    private AccountStatus status; // 状态
 
 }

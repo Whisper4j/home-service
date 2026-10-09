@@ -1,45 +1,35 @@
 package com.homeservice.domain.po.dispatch;
 
-import com.baomidou.mybatisplus.annotation.*;
-import com.homeservice.domain.value.*;
-import com.homeservice.enums.*;
-import com.homeservice.handler.mybatis.*;
-
-import lombok.Data;
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.FieldStrategy;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.homeservice.enums.BookingType;
 
 import java.time.LocalDateTime;
 
-/**
- * 订单分配持久化类
- * 映射order_assignment表数据
- */
+import lombok.Data;
+
 @Data
-@TableName(value = "order_assignment", autoResultMap = true)
+@TableName("order_assignment")
 public class OrderAssignment {
 
-    @TableId(value = "id", type = IdType.AUTO)
-    private Long id;
-    @TableField(value = "order_id")
-    private Long orderId;
-    @TableField(value = "worker_id")
-    private Long workerId;
-    @TableField(value = "worker_name")
-    private String workerName;
-    @TableField(value = "booking_type")
-    private BookingType bookingType;
-    @TableField(value = "status")
-    private AssignmentStatus status;
-    @TableField(value = "assigned_at")
-    private LocalDateTime assignedAt;
-    @TableField(value = "released_at")
-    private LocalDateTime releasedAt;
-    @TableField(value = "release_reason")
-    private String releaseReason;
-    @TableField(value = "finished_at")
-    private LocalDateTime finishedAt;
-    @TableField(value = "created_at", fill = FieldFill.INSERT, updateStrategy = FieldStrategy.NEVER)
-    private LocalDateTime createdAt;
-    @TableField(value = "updated_at", fill = FieldFill.INSERT_UPDATE)
-    private LocalDateTime updatedAt;
+    @TableId(type = IdType.AUTO)
+    private Long id; // 主键ID
+    private Long orderId; // 订单ID
+    private Long workerId; // 服务人员ID
+    private String workerName; // 服务人员姓名
+    private BookingType bookingType; // 预约类型
+    private String status; // 状态
+    private LocalDateTime assignedAt; // 分配时间
+    private LocalDateTime releasedAt; // 释放时间
+    private String releaseReason; // 释放原因
+    private LocalDateTime finishedAt; // 完成时间
+    @TableField(fill = FieldFill.INSERT, updateStrategy = FieldStrategy.NEVER)
+    private LocalDateTime createdAt; // 创建时间
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    private LocalDateTime updatedAt; // 更新时间
 
 }

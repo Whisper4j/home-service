@@ -1,49 +1,32 @@
 package com.homeservice.domain.vo.error;
 
-import com.fasterxml.jackson.annotation.*;
-import com.homeservice.enums.*;
-import com.homeservice.handler.json.*;
-import com.homeservice.validation.*;
-
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.*;
-
-import lombok.*;
-
-import org.hibernate.validator.constraints.UniqueElements;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.homeservice.enums.OrderStatus;
+import com.homeservice.handler.json.ApiIds;
+import com.homeservice.handler.json.ApiMoney;
 
 import java.math.BigDecimal;
-import java.time.*;
 import java.util.List;
 
-/**
- * 错误详情响应类
- * 封装错误详情相关响应数据
- */
-@Builder
-public record ErrorDetailsVO(
-        @JsonInclude(JsonInclude.Include.NON_NULL)
-        @RejectExplicitNull
-        @Valid
-        List<@NotNull @Valid FieldErrorVO> fieldErrors,
-        @JsonInclude(JsonInclude.Include.NON_NULL)
-        @RejectExplicitNull
-        @ApiMoney
-        @DecimalMin("0.00")
-        @DecimalMax("999999999.99")
-        @Digits(integer = 9, fraction = 2)
-        BigDecimal currentPrice,
-        @JsonInclude(JsonInclude.Include.NON_NULL)
-        @RejectExplicitNull
-        @Min(1)
-        @Max(2147483647)
-        Integer priceVersion,
-        @JsonInclude(JsonInclude.Include.NON_NULL)
-        @RejectExplicitNull
-        OrderStatus currentStatus,
-        @JsonInclude(JsonInclude.Include.NON_NULL)
-        @RejectExplicitNull
-        @UniqueElements
-        @ApiIds
-        @Valid
-        List<@NotNull @Positive Long> conflictingOrderIds) {}
+import lombok.Data;
+
+@Data
+public class ErrorDetailsVO {
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private List<FieldErrorVO> fieldErrors; // 字段错误列表
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @ApiMoney
+    private BigDecimal currentPrice; // 当前价格
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private Integer priceVersion; // 价格版本
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private OrderStatus currentStatus; // 当前状态
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @ApiIds
+    private List<Long> conflictingOrderIds; // 冲突订单ID列表
+}

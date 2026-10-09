@@ -1,131 +1,59 @@
 package com.homeservice.domain.vo.catalog;
 
-import com.fasterxml.jackson.annotation.*;
-import com.homeservice.enums.*;
-import com.homeservice.handler.json.*;
-import com.homeservice.validation.*;
-
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.*;
-
-import lombok.*;
-
-import org.hibernate.validator.constraints.UniqueElements;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.homeservice.enums.CatalogStatus;
+import com.homeservice.handler.json.ApiId;
+import com.homeservice.handler.json.ApiIds;
+import com.homeservice.handler.json.ApiMoney;
 
 import java.math.BigDecimal;
-import java.time.*;
 import java.util.List;
 
-/**
- * 服务规格响应类
- * 封装服务规格相关响应数据
- */
-@Builder
-public record SkuVO(
-        @JsonProperty(value = "id", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @ApiId
-        @Positive
-        Long id,
-        @JsonProperty(value = "categoryId", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @ApiId
-        @Positive
-        Long categoryId,
-        @JsonProperty(value = "categoryName", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @Size(min = 1, max = 60)
-        @NotBlank
-        String categoryName,
-        @JsonProperty(value = "itemName", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @Size(min = 1, max = 60)
-        @NotBlank
-        String itemName,
-        @JsonProperty(value = "itemId", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @ApiId
-        @Positive
-        Long itemId,
-        @JsonProperty(value = "name", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @Size(min = 1, max = 80)
-        @NotBlank
-        String name,
-        @JsonProperty(value = "standardPrice", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @ApiMoney
-        @DecimalMin("0.00")
-        @DecimalMax("999999999.99")
-        @Digits(integer = 9, fraction = 2)
-        BigDecimal standardPrice,
-        @JsonProperty(value = "minimumOfferPrice", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @ApiMoney
-        @DecimalMin("0.00")
-        @DecimalMax("999999999.99")
-        @Digits(integer = 9, fraction = 2)
-        BigDecimal minimumOfferPrice,
-        @JsonProperty(value = "durationMinutes", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @Min(30)
-        @Max(720)
-        @MultipleOf(30)
-        Integer durationMinutes,
-        @JsonProperty(value = "unit", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @Size(min = 1, max = 20)
-        @NotBlank
-        String unit,
-        @JsonProperty(value = "skillIds", required = true)
-        @JsonSetter(nulls = Nulls.FAIL, contentNulls = Nulls.FAIL)
-        @NotNull
-        @Size(min = 1, max = 2147483647)
-        @UniqueElements
-        @ApiIds
-        @Valid
-        List<@NotNull @Positive Long> skillIds,
-        @JsonProperty(value = "status", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        CatalogStatus status,
-        @JsonProperty(value = "supportsOffer", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        Boolean supportsOffer,
-        @JsonProperty(value = "description", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @Size(min = 1, max = 2000)
-        @NotBlank
-        String description,
-        @JsonProperty(value = "included", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @Size(min = 1, max = 1000)
-        @NotBlank
-        String included,
-        @JsonProperty(value = "excluded", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @Size(min = 1, max = 1000)
-        @NotBlank
-        String excluded,
-        @JsonProperty(value = "customerSuppliesParts", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        Boolean customerSuppliesParts,
-        @JsonInclude(JsonInclude.Include.NON_NULL)
-        @Size(min = 1, max = 64)
-        @Pattern(regexp = "^[A-Z][A-Z0-9_]{0,63}$")
-        String clientEntryCode) {}
+import lombok.Data;
+
+@Data
+public class SkuVO {
+
+    @ApiId
+    private Long id; // 主键ID
+
+    @ApiId
+    private Long categoryId; // 分类ID
+
+    private String categoryName; // 分类名称
+
+    private String itemName; // 项目名称
+
+    @ApiId
+    private Long itemId; // 服务项目ID
+
+    private String name; // 名称
+
+    @ApiMoney
+    private BigDecimal standardPrice; // 标准价格
+
+    @ApiMoney
+    private BigDecimal minimumOfferPrice; // 最低优惠价
+
+    private Integer durationMinutes; // 服务时长（分钟）
+
+    private String unit; // 计价单位
+
+    @ApiIds
+    private List<Long> skillIds; // 技能ID列表
+
+    private CatalogStatus status; // 状态
+
+    private Boolean supportsOffer; // 是否支持优惠
+
+    private String description; // 说明
+
+    private String included; // 包含内容
+
+    private String excluded; // 不含内容
+
+    private Boolean customerSuppliesParts; // 是否客户自备配件
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private String clientEntryCode; // 客户端入口编码
+}

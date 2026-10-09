@@ -19,7 +19,7 @@ public class ApiException extends BusinessException {
      * 创建接口异常实例
      */
     public ApiException(ErrorCode code) {
-        this(code, ErrorDetailsVO.builder().build());
+        this(code, new ErrorDetailsVO());
     }
 
     /**

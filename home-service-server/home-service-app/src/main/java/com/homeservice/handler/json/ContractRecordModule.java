@@ -1,6 +1,7 @@
 package com.homeservice.handler.json;
 
 import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.deser.BeanDeserializerModifier;
 import com.fasterxml.jackson.databind.deser.std.DelegatingDeserializer;
@@ -28,14 +29,22 @@ public class ContractRecordModule extends SimpleModule {
                             DeserializationConfig config,
                             BeanDescription bean,
                             JsonDeserializer<?> delegate) {
-                        if (!bean.getBeanClass().isRecord()) return delegate;
-                        Set<String> fields = new HashSet<>();
-                        for (var component : bean.getBeanClass().getRecordComponents())
-                            if (component.isAnnotationPresent(RejectExplicitNull.class))
-                                fields.add(component.getName());
-                        return fields.isEmpty()
+                        Set<String> rejectNullFields = new HashSet<>();
+                        Set<String> requiredFields = new HashSet<>();
+                        for (Class<?> type = bean.getBeanClass();
+                                type != null && type != Object.class;
+                                type = type.getSuperclass()) {
+                            for (var field : type.getDeclaredFields()) {
+                                if (field.isAnnotationPresent(RejectExplicitNull.class))
+                                    rejectNullFields.add(field.getName());
+                                JsonProperty property = field.getAnnotation(JsonProperty.class);
+                                if (property != null && property.required())
+                                    requiredFields.add(field.getName());
+                            }
+                        }
+                        return rejectNullFields.isEmpty() && requiredFields.isEmpty()
                                 ? delegate
-                                : new ShapeDeserializer(delegate, fields);
+                                : new ShapeDeserializer(delegate, rejectNullFields, requiredFields);
                     }
                 });
     }
@@ -46,14 +55,19 @@ public class ContractRecordModule extends SimpleModule {
      */
     private static class ShapeDeserializer extends DelegatingDeserializer {
 
-        private final Set<String> fields;
+        private final Set<String> rejectNullFields;
+        private final Set<String> requiredFields;
 
         /**
          * 创建结构Deserializer实例
          */
-        ShapeDeserializer(JsonDeserializer<?> delegate, Set<String> fields) {
+        ShapeDeserializer(
+                JsonDeserializer<?> delegate,
+                Set<String> rejectNullFields,
+                Set<String> requiredFields) {
             super(delegate);
-            this.fields = fields;
+            this.rejectNullFields = rejectNullFields;
+            this.requiredFields = requiredFields;
         }
 
         /**
@@ -61,7 +75,7 @@ public class ContractRecordModule extends SimpleModule {
          */
         @Override
         protected JsonDeserializer<?> newDelegatingInstance(JsonDeserializer<?> delegate) {
-            return new ShapeDeserializer(delegate, fields);
+            return new ShapeDeserializer(delegate, rejectNullFields, requiredFields);
         }
 
         /**
@@ -71,7 +85,10 @@ public class ContractRecordModule extends SimpleModule {
         public Object deserialize(JsonParser parser, DeserializationContext context)
                 throws IOException {
             JsonNode tree = context.readTree(parser);
-            for (String field : fields) {
+            for (String field : requiredFields)
+                if (!tree.has(field))
+                    throw JsonMappingException.from(parser, "缺少必需字段: " + field);
+            for (String field : rejectNullFields) {
                 JsonNode value = tree.get(field);
                 if (value != null && value.isNull())
                     throw JsonMappingException.from(parser, "字段不接受 null: " + field);

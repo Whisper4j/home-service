@@ -1,37 +1,29 @@
 package com.homeservice.domain.po.dispatch;
 
-import com.baomidou.mybatisplus.annotation.*;
-import com.homeservice.domain.value.*;
-import com.homeservice.enums.*;
-import com.homeservice.handler.mybatis.*;
-
-import lombok.Data;
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.FieldStrategy;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
 
 import java.time.LocalDateTime;
 
-/**
- * 派单尝试持久化类
- * 映射dispatch_attempt表数据
- */
+import lombok.Data;
+
 @Data
-@TableName(value = "dispatch_attempt", autoResultMap = true)
+@TableName("dispatch_attempt")
 public class DispatchAttempt {
 
-    @TableId(value = "id", type = IdType.AUTO)
-    private Long id;
-    @TableField(value = "order_id")
-    private Long orderId;
-    @TableField(value = "worker_id")
-    private Long workerId;
-    @TableField(value = "result")
-    private DispatchAttemptResult result;
-    @TableField(value = "reason")
-    private String reason;
-    @TableField(value = "service_minutes")
-    private Long serviceMinutes;
-    @TableField(value = "order_count")
-    private Long orderCount;
-    @TableField(value = "created_at", fill = FieldFill.INSERT, updateStrategy = FieldStrategy.NEVER)
-    private LocalDateTime createdAt;
+    @TableId(type = IdType.AUTO)
+    private Long id; // 主键ID
+    private Long orderId; // 订单ID
+    private Long workerId; // 服务人员ID
+    private String result; // 尝试结果
+    private String reason; // 原因
+    private Long serviceMinutes; // 预计服务分钟数
+    private Long orderCount; // 当日订单数
+    @TableField(fill = FieldFill.INSERT, updateStrategy = FieldStrategy.NEVER)
+    private LocalDateTime createdAt; // 创建时间
 
 }

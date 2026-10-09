@@ -1,31 +1,11 @@
 package com.homeservice.domain.vo.error;
 
-import com.fasterxml.jackson.annotation.*;
-import com.homeservice.enums.*;
-import com.homeservice.handler.json.*;
-import com.homeservice.validation.*;
+import lombok.Data;
 
-import jakarta.validation.constraints.*;
+@Data
+public class FieldErrorVO {
 
-import lombok.*;
+    private String field; // 字段名
 
-import java.time.*;
-
-/**
- * 字段错误响应类
- * 封装字段错误相关响应数据
- */
-@Builder
-public record FieldErrorVO(
-        @JsonProperty(value = "field", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @Size(min = 1, max = 100)
-        @NotBlank
-        String field,
-        @JsonProperty(value = "message", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @Size(min = 1, max = 300)
-        @NotBlank
-        String message) {}
+    private String message; // 提示信息
+}

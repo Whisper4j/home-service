@@ -1,65 +1,39 @@
 package com.homeservice.domain.vo.dispatch;
 
-import com.fasterxml.jackson.annotation.*;
-import com.homeservice.enums.*;
-import com.homeservice.handler.json.*;
-import com.homeservice.validation.*;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.homeservice.enums.BookingType;
+import com.homeservice.handler.json.ApiId;
 
-import jakarta.validation.constraints.*;
+import java.time.OffsetDateTime;
 
-import lombok.*;
+import lombok.Data;
 
-import java.time.*;
+@Data
+public class AssignmentVO {
 
-/**
- * 分配响应类
- * 封装分配相关响应数据
- */
-@Builder
-public record AssignmentVO(
-        @JsonProperty(value = "id", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @ApiId
-        @Positive
-        Long id,
-        @JsonProperty(value = "orderId", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @ApiId
-        @Positive
-        Long orderId,
-        @JsonProperty(value = "workerId", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @ApiId
-        @Positive
-        Long workerId,
-        @JsonProperty(value = "workerName", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @Size(min = 1, max = 40)
-        @NotBlank
-        String workerName,
-        @JsonProperty(value = "bookingType", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        BookingType bookingType,
-        @JsonProperty(value = "status", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        AssignmentStatus status,
-        @JsonProperty(value = "assignedAt", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        OffsetDateTime assignedAt,
-        @JsonInclude(JsonInclude.Include.NON_NULL)
-        @RejectExplicitNull
-        OffsetDateTime releasedAt,
-        @JsonInclude(JsonInclude.Include.NON_NULL)
-        @RejectExplicitNull
-        @Size(min = 1, max = 300)
-        String releaseReason,
-        @JsonInclude(JsonInclude.Include.NON_NULL)
-        @RejectExplicitNull
-        OffsetDateTime finishedAt) {}
+    @ApiId
+    private Long id; // 主键ID
+
+    @ApiId
+    private Long orderId; // 订单ID
+
+    @ApiId
+    private Long workerId; // 服务人员ID
+
+    private String workerName; // 服务人员姓名
+
+    private BookingType bookingType; // 预约类型
+
+    private String status; // 状态
+
+    private OffsetDateTime assignedAt; // 分配时间
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private OffsetDateTime releasedAt; // 释放时间
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private String releaseReason; // 释放原因
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private OffsetDateTime finishedAt; // 完成时间
+}

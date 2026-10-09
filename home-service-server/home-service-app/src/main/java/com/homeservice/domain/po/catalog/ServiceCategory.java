@@ -1,36 +1,32 @@
 package com.homeservice.domain.po.catalog;
 
-import com.baomidou.mybatisplus.annotation.*;
-import com.homeservice.domain.value.*;
-import com.homeservice.enums.*;
-import com.homeservice.handler.mybatis.*;
-
-import lombok.Data;
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.FieldStrategy;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableLogic;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.homeservice.enums.CatalogStatus;
 
 import java.time.LocalDateTime;
 
-/**
- * 服务分类持久化类
- * 映射service_category表数据
- */
+import lombok.Data;
+
 @Data
-@TableName(value = "service_category", autoResultMap = true)
+@TableName("service_category")
 public class ServiceCategory {
 
-    @TableId(value = "id", type = IdType.AUTO)
-    private Long id;
-    @TableField(value = "name")
-    private String name;
-    @TableField(value = "sort_no")
-    private Integer sortNo;
-    @TableField(value = "status")
-    private CatalogStatus status;
-    @TableField(value = "deleted_at")
+    @TableId(type = IdType.AUTO)
+    private Long id; // 主键ID
+    private String name; // 名称
+    private Integer sortNo; // 排序号
+    private CatalogStatus status; // 状态
     @TableLogic(value = "null", delval = "CURRENT_TIMESTAMP")
-    private LocalDateTime deletedAt;
-    @TableField(value = "created_at", fill = FieldFill.INSERT, updateStrategy = FieldStrategy.NEVER)
-    private LocalDateTime createdAt;
-    @TableField(value = "updated_at", fill = FieldFill.INSERT_UPDATE)
-    private LocalDateTime updatedAt;
+    private LocalDateTime deletedAt; // 删除时间（NULL有效）
+    @TableField(fill = FieldFill.INSERT, updateStrategy = FieldStrategy.NEVER)
+    private LocalDateTime createdAt; // 创建时间
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    private LocalDateTime updatedAt; // 更新时间
 
 }

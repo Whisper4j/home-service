@@ -114,7 +114,9 @@ class MvcInfrastructureTest extends ProtocolTestBase {
                                 .contentType("application/json")
                                 .content("{\"expectedPrice\":\"128.00\",\"priceVersion\":0}"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.data.fieldErrors[0].field").value("priceVersion"))
+                .andExpect(jsonPath("$.data.fieldErrors[0].message").value("价格版本不能小于1"));
         mvc.perform(get("/api/customer/probe/business").header("Authorization", auth))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value("STATE_CONFLICT"));

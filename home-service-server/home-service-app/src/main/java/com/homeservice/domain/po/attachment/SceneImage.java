@@ -1,42 +1,33 @@
 package com.homeservice.domain.po.attachment;
 
-import com.baomidou.mybatisplus.annotation.*;
-import com.homeservice.domain.value.*;
-import com.homeservice.enums.*;
-import com.homeservice.handler.mybatis.*;
-
-import lombok.Data;
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.FieldStrategy;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableLogic;
+import com.baomidou.mybatisplus.annotation.TableName;
 
 import java.time.LocalDateTime;
 
-/**
- * 现场图片持久化类
- * 映射scene_image表数据
- */
+import lombok.Data;
+
 @Data
-@TableName(value = "scene_image", autoResultMap = true)
+@TableName("scene_image")
 public class SceneImage {
 
-    @TableId(value = "id", type = IdType.AUTO)
-    private Long id;
-    @TableField(value = "customer_id")
-    private Long customerId;
-    @TableField(value = "storage_key")
-    private String storageKey;
-    @TableField(value = "content_sha256")
-    private String contentSha256;
-    @TableField(value = "mime_type")
-    private ImageMimeType mimeType;
-    @TableField(value = "size_bytes")
-    private Long sizeBytes;
-    @TableField(value = "width_px")
-    private Long widthPx;
-    @TableField(value = "height_px")
-    private Long heightPx;
-    @TableField(value = "deleted_at")
+    @TableId(type = IdType.AUTO)
+    private Long id; // 主键ID
+    private Long customerId; // 客户ID
+    private String storageKey; // 存储键
+    private String contentSha256; // 内容摘要
+    private String mimeType; // MIME类型
+    private Long sizeBytes; // 文件字节数
+    private Long widthPx; // 图片宽度
+    private Long heightPx; // 图片高度
     @TableLogic(value = "null", delval = "CURRENT_TIMESTAMP")
-    private LocalDateTime deletedAt;
-    @TableField(value = "created_at", fill = FieldFill.INSERT, updateStrategy = FieldStrategy.NEVER)
-    private LocalDateTime createdAt;
+    private LocalDateTime deletedAt; // 删除时间（NULL有效）
+    @TableField(fill = FieldFill.INSERT, updateStrategy = FieldStrategy.NEVER)
+    private LocalDateTime createdAt; // 创建时间
 
 }

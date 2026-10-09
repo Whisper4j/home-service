@@ -48,7 +48,7 @@ public class AuthenticationInterceptor implements AsyncHandlerInterceptor {
                         : path.startsWith("/api/worker/")
                                 ? Role.WORKER
                                 : path.startsWith("/api/admin/") ? Role.ADMIN : null;
-        if (required == null || required != principal.role())
+        if (required == null || required != principal.getRole())
             throw new ApiException(ErrorCode.FORBIDDEN);
         UserContext.set(principal);
         return true;

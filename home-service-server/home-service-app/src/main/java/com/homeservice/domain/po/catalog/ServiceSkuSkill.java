@@ -1,29 +1,25 @@
 package com.homeservice.domain.po.catalog;
 
-import com.baomidou.mybatisplus.annotation.*;
-import com.homeservice.domain.value.*;
-import com.homeservice.enums.*;
-import com.homeservice.handler.mybatis.*;
-
-import lombok.Data;
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.FieldStrategy;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
 
 import java.time.LocalDateTime;
 
-/**
- * 服务规格技能持久化类
- * 映射service_sku_skill表数据
- */
+import lombok.Data;
+
 @Data
-@TableName(value = "service_sku_skill", autoResultMap = true)
+@TableName("service_sku_skill")
 public class ServiceSkuSkill {
 
-    @TableId(value = "id", type = IdType.AUTO)
-    private Long id;
-    @TableField(value = "sku_id")
-    private Long skuId;
-    @TableField(value = "skill_id")
-    private Long skillId;
-    @TableField(value = "created_at", fill = FieldFill.INSERT, updateStrategy = FieldStrategy.NEVER)
-    private LocalDateTime createdAt;
+    @TableId(type = IdType.AUTO)
+    private Long id; // 主键ID
+    private Long skuId; // 服务规格ID
+    private Long skillId; // 技能ID
+    @TableField(fill = FieldFill.INSERT, updateStrategy = FieldStrategy.NEVER)
+    private LocalDateTime createdAt; // 创建时间
 
 }

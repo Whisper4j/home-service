@@ -1,95 +1,88 @@
 package com.homeservice.domain.dto.order;
 
-import com.fasterxml.jackson.annotation.*;
-import com.homeservice.enums.*;
-import com.homeservice.handler.json.*;
-import com.homeservice.validation.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.homeservice.enums.BookingType;
+import com.homeservice.handler.json.ApiId;
+import com.homeservice.handler.json.ApiIds;
+import com.homeservice.handler.json.ApiMoney;
+import com.homeservice.handler.json.RejectExplicitNull;
 
+import jakarta.validation.constraints.AssertTrue;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Digits;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.*;
 
-import lombok.*;
+import java.math.BigDecimal;
+import java.time.OffsetDateTime;
+import java.util.List;
+
+import lombok.Data;
 
 import org.hibernate.validator.constraints.UniqueElements;
 
-import java.math.BigDecimal;
-import java.time.*;
-import java.util.List;
+@Data
+public class CreateOrderDTO {
 
-/**
- * 创建订单请求类
- * 接收创建订单相关请求参数
- */
-@Builder
-public record CreateOrderDTO(
-        @JsonProperty(value = "skuId", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @ApiId
-        @Positive
-        Long skuId,
-        @JsonProperty(value = "addressId", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @ApiId
-        @Positive
-        Long addressId,
-        @JsonProperty(value = "bookingType", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        BookingType bookingType,
-        @JsonProperty(value = "startTime", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        OffsetDateTime startTime,
-        @JsonInclude(JsonInclude.Include.NON_NULL)
-        @RejectExplicitNull
-        @ApiMoney
-        @DecimalMin("0.00")
-        @DecimalMax("999999999.99")
-        @Digits(integer = 9, fraction = 2)
-        BigDecimal offerPrice,
-        @JsonInclude(JsonInclude.Include.NON_NULL)
-        @RejectExplicitNull
-        @Size(min = 0, max = 300)
-        String remark,
-        @JsonInclude(JsonInclude.Include.NON_NULL)
-        @RejectExplicitNull
-        @Size(min = 1, max = 40)
-        String contactName,
-        @JsonInclude(JsonInclude.Include.NON_NULL)
-        @RejectExplicitNull
-        @Size(min = 1, max = 11)
-        @Pattern(regexp = "^1[0-9]{10}$")
-        String contactPhone,
-        @JsonInclude(JsonInclude.Include.NON_NULL)
-        @RejectExplicitNull
-        @Size(min = 0, max = 3)
-        @UniqueElements
-        @ApiIds
-        @Valid
-        List<@NotNull @Positive Long> sceneImageIds) {
-    /**
-     * 校验联系人姓名和电话是否同时填写
-     */
+    @NotNull(message = "服务规格ID不能为空")
+    @ApiId
+    @Positive(message = "服务规格ID必须大于0")
+    private Long skuId; // 服务规格ID
+
+    @NotNull(message = "地址ID不能为空")
+    @ApiId
+    @Positive(message = "地址ID必须大于0")
+    private Long addressId; // 地址ID
+
+    @NotNull(message = "预约类型不能为空")
+    private BookingType bookingType; // 预约类型
+
+    @NotNull(message = "开始时间不能为空")
+    private OffsetDateTime startTime; // 开始时间
+
+    @RejectExplicitNull
+    @ApiMoney
+    @DecimalMin(value = "0.00", message = "offer价格不能小于0.00")
+    @DecimalMax(value = "999999999.99", message = "offer价格不能大于999999999.99")
+    @Digits(integer = 9, fraction = 2, message = "offer价格精度不正确")
+    private BigDecimal offerPrice; // 优惠报价
+
+    @RejectExplicitNull
+    @Size(max = 300, message = "备注长度不能超过300")
+    private String remark; // 备注
+
+    @RejectExplicitNull
+    @Size(min = 1, max = 40, message = "联系人长度必须在1到40之间")
+    private String contactName; // 联系人
+
+    @RejectExplicitNull
+    @Size(min = 1, max = 11, message = "联系电话长度必须在1到11之间")
+    @Pattern(regexp = "^1[0-9]{10}$", message = "联系电话格式不正确")
+    private String contactPhone; // 联系电话
+
+    @RejectExplicitNull
+    @Size(max = 3, message = "现场图片ID列表数量不能超过3")
+    @UniqueElements(message = "现场图片ID列表不能重复")
+    @ApiIds
+    @Valid
+    private List<@NotNull(message = "现场图片ID列表元素不能为空") @Positive(message = "现场图片ID列表元素必须大于0") Long> sceneImageIds; // 现场图片ID列表
+
     @AssertTrue(message = "联系人和电话必须同时提供")
     @JsonIgnore
     public boolean isContactPair() {
         return (contactName == null) == (contactPhone == null);
     }
 
-    /**
-     * 校验预约开始时间是否按半小时对齐
-     */
     @AssertTrue(message = "预约开始时间须半小时对齐")
     @JsonIgnore
     public boolean isAlignedStart() {
         return startTime == null || startTime.getMinute() % 30 == 0 && startTime.getSecond() == 0;
     }
 
-    /**
-     * 校验订单类型与报价字段是否匹配
-     */
     @AssertTrue(message = "优惠预约必须提供报价，标准预约不可携带优惠报价")
     @JsonIgnore
     public boolean isOfferShape() {

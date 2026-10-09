@@ -1,35 +1,27 @@
 package com.homeservice.domain.dto.catalog;
 
-import com.fasterxml.jackson.annotation.*;
-import com.homeservice.enums.*;
-import com.homeservice.handler.json.*;
-import com.homeservice.validation.*;
+import com.homeservice.enums.CatalogStatus;
 
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
-import lombok.*;
+import lombok.Data;
 
-import java.time.*;
+@Data
+public class CategoryDTO {
 
-/**
- * 分类请求类
- * 接收分类相关请求参数
- */
-@Builder
-public record CategoryDTO(
-        @JsonProperty(value = "name", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @Size(min = 1, max = 60)
-        @NotBlank
-        String name,
-        @JsonProperty(value = "sort", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @Min(0)
-        @Max(9999)
-        Integer sort,
-        @JsonProperty(value = "status", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        CatalogStatus status) {}
+    @Size(max = 60, message = "名称长度不能超过60")
+    @NotBlank(message = "名称不能为空")
+    private String name; // 名称
+
+    @NotNull(message = "排序不能为空")
+    @Min(value = 0, message = "排序不能小于0")
+    @Max(value = 9999, message = "排序不能大于9999")
+    private Integer sort; // 排序
+
+    @NotNull(message = "状态不能为空")
+    private CatalogStatus status; // 状态
+}

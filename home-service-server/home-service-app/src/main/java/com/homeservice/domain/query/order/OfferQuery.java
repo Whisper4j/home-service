@@ -1,35 +1,23 @@
 package com.homeservice.domain.query.order;
 
-import com.fasterxml.jackson.annotation.*;
-import com.homeservice.enums.*;
-import com.homeservice.handler.json.*;
-import com.homeservice.validation.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.AssertTrue;
+import jakarta.validation.constraints.Size;
 
-import lombok.*;
+import java.time.LocalDate;
 
-import java.time.*;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
-/**
- * 优惠报价查询类
- * 封装优惠报价相关查询条件
- */
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class OfferQuery extends com.homeservice.common.domain.PageQuery {
+    @Size(min = 1, max = 100, message = "搜索关键词长度必须在1到100之间")
+    private String keyword; // 搜索关键词
+    private LocalDate from; // 开始日期
+    private LocalDate to; // 结束日期
 
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    @Size(min = 1, max = 100)
-    private String keyword;
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    private LocalDate from;
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    private LocalDate to;
-
-    /**
-     * 校验开始值是否早于结束值
-     */
     @AssertTrue(message = "from 不得晚于 to")
     @JsonIgnore
     public boolean isValidRange() {

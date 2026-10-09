@@ -1,34 +1,30 @@
 package com.homeservice.domain.po.catalog;
 
-import com.baomidou.mybatisplus.annotation.*;
-import com.homeservice.domain.value.*;
-import com.homeservice.enums.*;
-import com.homeservice.handler.mybatis.*;
-
-import lombok.Data;
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.FieldStrategy;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableLogic;
+import com.baomidou.mybatisplus.annotation.TableName;
 
 import java.time.LocalDateTime;
 
-/**
- * 服务技能持久化类
- * 映射service_skill表数据
- */
+import lombok.Data;
+
 @Data
-@TableName(value = "service_skill", autoResultMap = true)
+@TableName("service_skill")
 public class ServiceSkill {
 
-    @TableId(value = "id", type = IdType.AUTO)
-    private Long id;
-    @TableField(value = "name")
-    private String name;
-    @TableField(value = "description")
-    private String description;
-    @TableField(value = "deleted_at")
+    @TableId(type = IdType.AUTO)
+    private Long id; // 主键ID
+    private String name; // 名称
+    private String description; // 说明
     @TableLogic(value = "null", delval = "CURRENT_TIMESTAMP")
-    private LocalDateTime deletedAt;
-    @TableField(value = "created_at", fill = FieldFill.INSERT, updateStrategy = FieldStrategy.NEVER)
-    private LocalDateTime createdAt;
-    @TableField(value = "updated_at", fill = FieldFill.INSERT_UPDATE)
-    private LocalDateTime updatedAt;
+    private LocalDateTime deletedAt; // 删除时间（NULL有效）
+    @TableField(fill = FieldFill.INSERT, updateStrategy = FieldStrategy.NEVER)
+    private LocalDateTime createdAt; // 创建时间
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    private LocalDateTime updatedAt; // 更新时间
 
 }

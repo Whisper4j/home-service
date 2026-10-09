@@ -31,7 +31,7 @@ class NotificationSenderTest {
         var registry = mock(WebSocketSessionRegistry.class);
         var sender = new NotificationSender(registry);
         var recipient = new NotificationRecipient(1, Role.CUSTOMER);
-        var event = WsEvent.builder().build();
+        var event = new WsEvent();
         assertThatThrownBy(() -> sender.afterCommit(recipient, event))
                 .isInstanceOf(IllegalStateException.class);
         TransactionSynchronizationManager.initSynchronization();
@@ -52,7 +52,7 @@ class NotificationSenderTest {
         var sender = new NotificationSender(registry);
         TransactionSynchronizationManager.initSynchronization();
         TransactionSynchronizationManager.setActualTransactionActive(true);
-        sender.afterCommit(new NotificationRecipient(2, Role.WORKER), WsEvent.builder().build());
+        sender.afterCommit(new NotificationRecipient(2, Role.WORKER), new WsEvent());
         TransactionSynchronizationManager.getSynchronizations()
                 .forEach(
                         s ->

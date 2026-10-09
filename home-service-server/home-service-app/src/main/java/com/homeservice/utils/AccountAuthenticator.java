@@ -33,11 +33,12 @@ public class AccountAuthenticator {
     public AccountPrincipal check(AccountPrincipal principal) {
         var account =
                 accountQueryService
-                        .findByAccountId(principal.accountId())
+                        .findByAccountId(principal.getAccountId())
                         .orElseThrow(() -> new ApiException(ErrorCode.UNAUTHENTICATED));
-        if (account.status() != AccountStatus.ENABLED)
+        if (account.getStatus() != AccountStatus.ENABLED)
             throw new ApiException(ErrorCode.ACCOUNT_DISABLED);
-        if (account.role() != principal.role() || account.accountId() != principal.accountId())
+        if (account.getRole() != principal.getRole()
+                || !account.getAccountId().equals(principal.getAccountId()))
             throw new ApiException(ErrorCode.FORBIDDEN);
         return principal;
     }

@@ -1,28 +1,17 @@
 package com.homeservice.domain.query.catalog;
 
-import com.fasterxml.jackson.annotation.*;
-import com.homeservice.enums.*;
-import com.homeservice.handler.json.*;
-import com.homeservice.validation.*;
+import com.homeservice.enums.CatalogStatus;
 
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.Size;
 
-import lombok.*;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
-import java.time.*;
-
-/**
- * 分类查询类
- * 封装分类相关查询条件
- */
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class CategoryQuery extends com.homeservice.common.domain.PageQuery {
-
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    @Size(min = 1, max = 100)
-    private String keyword;
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    private CatalogStatus status;
+    @Size(min = 1, max = 100, message = "搜索关键词长度必须在1到100之间")
+    private String keyword; // 搜索关键词
+    private CatalogStatus status; // 状态
 
 }

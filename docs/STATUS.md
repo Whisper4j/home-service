@@ -11,11 +11,12 @@
 ## 已完成内容
 
 - 固定版本：Spring Boot 3.5.16、MyBatis-Plus 3.5.17（Boot 3 starter + jsqlparser）、Hutool core 5.8.47、JJWT 0.13.0；底层依赖沿用 Boot 管理。真实读取三个参考工程的全部 POM、配置及代表性分层/基础设施代码，以 hmall 为主要规范。
-- 27 个 PO、27 个 BaseMapper，覆盖所有关联表；主键策略、金额、时间、显式枚举值、NULL 逻辑删除、时间填充、JSON 类型处理、生成列禁止写入及分页插件均已配置。
-- OpenAPI 的 DTO/Query/VO、嵌套对象和 WebSocket 帧：79 个具体对象模型；响应和分页包装用 `Result<T>`、`PageDTO<T>` 泛型等价表达。`Result` 已改为苍穹外卖风格的 Lombok 普通类并实现 `Serializable`，只提供 `success` 和 `error` 重载；字段仍为契约要求的 `code/message/data`，成功码为字符串 `SUCCESS`。请求、持久化与输出分离；未实现 `allowedActions` 的业务计算。
-- 后端全部 243 个 Java 源文件统一采用四空格缩进，并在最后一条 import 后保留空行；245 个显式类型使用“中文类名 + 一句直接作用”的两行注释，260 个显式方法、构造器和注解成员使用一句话注释。类与方法注解各占一行，方法体展开书写；字段块前后留空行、连续字段之间不留空行，字段不添加重复职责注释。该调整覆盖 main 与 test 源码，不改变接口契约或业务行为。
+- 27 个 PO、27 个 BaseMapper，覆盖所有关联表；主键策略、金额、时间、NULL 逻辑删除、时间填充、JSON 类型处理、生成列禁止写入及分页插件均已配置。全局枚举由28个精简为7个，只保留 `Role`、`AccountStatus`、`CatalogStatus`、`ServiceKind`、`BookingType`、`OrderStatus`、`ErrorCode`；它们沿用英文持久化/JSON值并增加中文说明。其他状态字段改用字符串，业务常量留待实现所属业务时就近定义。
+- OpenAPI 的 DTO/Query/VO、嵌套对象和 WebSocket 帧：79 个具体对象模型；响应和分页包装用 `Result<T>`、`PageDTO<T>` 泛型等价表达。app 下 111 个 domain 类及 common 的 `Result/PageQuery/PageDTO` 已统一为容易阅读的普通 Lombok 类，不再使用 record 或 Builder；字段均使用简短行尾中文注释，import 已按实际使用清理。请求、持久化与输出继续分离；未实现 `allowedActions` 的业务计算。
+- DTO/Query 只保留真实输入格式和基础交叉字段校验，每个约束均有中文 `message`；VO 已移除输入校验；PO 只保留主键、逻辑删除、字段填充、JSON 类型处理和生成列等必要 MyBatis-Plus 注解。OpenAPI YAML 仍是唯一正式接口契约，不在 Java 模型中重复维护 Swagger 注解。
+- `Result<T>` 为苍穹风格的 Lombok 普通类并实现 `Serializable`，现有两个 `success` 和三个 `error` 重载均经测试覆盖；字段仍为契约要求的 `code/message/data`，成功码为字符串 `SUCCESS`。
 - 严格 ID/金额/+08:00 时间格式、必需 nullable 与可选省略、SKU 入口字段缺失/显式 null 区分、未知字段拒绝、字符串裁剪、密码不裁剪与 UTF-8 72 字节限制、查询/路径转换及基础交叉字段校验。
-- 统一字符串错误码、真实 HTTP 状态、字段错误、MVC 异常链路及脱敏日志；空结果和超末页保留真实 total/pages。
+- 异常分工已固定并写入项目规则：DTO/Query 负责请求格式；Service 负责数据库状态、权限、事务和并发业务规则并抛业务异常；全局异常处理器统一生成失败 `Result`。MVC 已验证注解中的精确中文 `message` 会进入 `data.fieldErrors`，同时保留稳定业务码和真实 HTTP 状态；空结果和超末页保留真实 total/pages。
 - BCrypt、配置化 HS256 JWT、严格 Bearer/算法/签名/有效期/载荷检查、三端角色检查、真实账号只读查询服务、方法级公开白名单及请求上下文清理。
 - `/ws` 首帧 AUTH、5 秒超时、共享身份校验、AUTHENTICATED、4401/4403 关闭、Token 到期、连接清理、同源/显式 Origin 配置。通知仅支持明确接收者并在事务提交后发送，没有业务广播和资格过滤。
 - common/dev/test/prod 配置结构、校验后的属性类、本机无秘密示例、仅上传目录配置。应用启动必须连接真实 MySQL；SQL 自动初始化关闭。连接会话使用 `+08:00`，不要求本机 MySQL 安装命名时区表。
@@ -28,8 +29,8 @@
 
 | 实际命令或检查 | 结果 |
 | --- | --- |
-| `mvn -B -ntp -f home-service-server/pom.xml clean verify`（2026-10-09） | BUILD SUCCESS；common 2项、app 22项，共24项测试，0失败/错误/跳过；验证注释整理和 `Result` 重命名未改变既有行为 |
-| `mvn -B -ntp -f home-service-server/pom.xml clean verify -Pmysql-it` | BUILD SUCCESS；common 2 项 + app 22 项常规测试 + 3 项真实 MySQL 集成测试，共27项，0失败/错误/跳过 |
+| `mvn -B -ntp -f home-service-server/pom.xml clean verify`（2026-10-09） | JDK 17.0.12 下 BUILD SUCCESS；common 2项、app 22项，共24项测试，0失败/错误/跳过；验证普通 Lombok 模型、完整契约字段、序列化/校验、Result 重载、MVC 精确字段错误及原有基础设施行为 |
+| `mvn -B -ntp -f home-service-server/pom.xml clean verify -Pmysql-it`（2026-10-09） | JDK 17.0.12 下 BUILD SUCCESS；common 2项 + app 22项常规测试 + 3项真实 MySQL 集成测试，共27项，0失败/错误/跳过；重新验证27表 PO/Mapper、特殊 JSON、生成列和真实账号映射 |
 | `mvn -B -ntp -f home-service-server/pom.xml dependency:tree` | SUCCESS；app→common，分页 jsqlparser 已解析，只有一套 MyBatis starter，没有 Redis/MQ/Cloud/PageHelper/Fastjson/H2 |
 | `java -jar home-service-app/target/home-service-app-1.0.0-SNAPSHOT.jar --spring.profiles.active=dev` | 独立进程真实启动，验证端口18080，成功连接 MySQL 8.0.45；不是只打包或测试上下文启动 |
 | 独立 JAR 的 HTTP 请求 | 无 Token 的 `/api/customer/auth/me` 为401；公开地区 GET 和登录 POST 尚无业务 Controller，正确404；地区 POST 仍需认证并返回401。均使用统一 JSON 响应 |
@@ -44,7 +45,7 @@
 
 - 实际结构与 SQL 一致：27张 InnoDB 表、305个字段、27个主键、14个额外唯一索引、88个启用 CHECK、0普通查询二级索引、0物理外键。检查列名/类型/可空/默认值/排序规则/自增/生成表达式及索引字段顺序；未迁就实际结构修改 SQL。
 - 全部27个 Mapper 已注册并向实际表执行只读列投影；另核对 PO 主键、字段及逻辑删除/生成列写入策略。
-- 少量夹具在同线程显式回滚事务中验证：账号查询、时间、枚举、金额、分页超末页、NULL 逻辑删除、JSON NULL/空数组/对象数组/枚举数组、幂等响应与生成列不写入；退出后复核夹具记录未保留。已有设置行只读，未修改已有数据；MySQL 自增序列可能产生正常间隙。
+- 少量夹具在同线程显式回滚事务中验证：账号查询、时间、保留枚举、字符串状态、金额、分页超末页、NULL 逻辑删除、JSON NULL/空数组/对象数组/字符串数组、幂等响应与生成列不写入；退出后复核夹具记录未保留。已有设置行只读，未修改已有数据；MySQL 自增序列可能产生正常间隙。
 - MVC 使用仅在测试源集中的 Controller，验证认证与异常链路、角色/禁用/缺失账号、公开方法边界、参数格式及上下文清理；JWT 覆盖有效、过期、篡改和算法错误，BCrypt 覆盖匹配及多字节边界。
 - WebSocket 通过真实随机端口网络连接测试认证成功、缺少 AUTH 超时、无效/过期 Token、禁用/角色错误、到期断开、清理、URL Token/Origin 拒绝；账号查询替身仅用于协议测试。真实账号 Mapper 与数据库映射由独立 mysql-it 验证，未把替身结果当作数据库结果。
 - 没有运行数据库初始化或迁移，没有 H2。基础设施/映射通过不代表业务事务、资源归属、状态机、并发抢单、性能或前后端闭环通过；没有普通索引不构成性能保证。

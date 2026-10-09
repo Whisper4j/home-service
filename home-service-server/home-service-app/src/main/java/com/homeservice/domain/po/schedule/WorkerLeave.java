@@ -1,39 +1,31 @@
 package com.homeservice.domain.po.schedule;
 
-import com.baomidou.mybatisplus.annotation.*;
-import com.homeservice.domain.value.*;
-import com.homeservice.enums.*;
-import com.homeservice.handler.mybatis.*;
-
-import lombok.Data;
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.FieldStrategy;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
 
 import java.time.LocalDateTime;
 
-/**
- * 服务人员请假持久化类
- * 映射worker_leave表数据
- */
+import lombok.Data;
+
 @Data
-@TableName(value = "worker_leave", autoResultMap = true)
+@TableName("worker_leave")
 public class WorkerLeave {
 
-    @TableId(value = "id", type = IdType.AUTO)
-    private Long id;
-    @TableField(value = "worker_id")
-    private Long workerId;
-    @TableField(value = "start_time")
-    private LocalDateTime startTime;
-    @TableField(value = "end_time")
-    private LocalDateTime endTime;
-    @TableField(value = "reason")
-    private String reason;
-    @TableField(value = "status")
-    private LeaveStatus status;
-    @TableField(value = "cancelled_at")
-    private LocalDateTime cancelledAt;
-    @TableField(value = "created_at", fill = FieldFill.INSERT, updateStrategy = FieldStrategy.NEVER)
-    private LocalDateTime createdAt;
-    @TableField(value = "updated_at", fill = FieldFill.INSERT_UPDATE)
-    private LocalDateTime updatedAt;
+    @TableId(type = IdType.AUTO)
+    private Long id; // 主键ID
+    private Long workerId; // 服务人员ID
+    private LocalDateTime startTime; // 开始时间
+    private LocalDateTime endTime; // 结束时间
+    private String reason; // 原因
+    private String status; // 状态
+    private LocalDateTime cancelledAt; // 取消时间
+    @TableField(fill = FieldFill.INSERT, updateStrategy = FieldStrategy.NEVER)
+    private LocalDateTime createdAt; // 创建时间
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    private LocalDateTime updatedAt; // 更新时间
 
 }

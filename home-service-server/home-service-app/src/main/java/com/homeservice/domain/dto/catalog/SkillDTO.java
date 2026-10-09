@@ -1,31 +1,18 @@
 package com.homeservice.domain.dto.catalog;
 
-import com.fasterxml.jackson.annotation.*;
-import com.homeservice.enums.*;
-import com.homeservice.handler.json.*;
-import com.homeservice.validation.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
-import jakarta.validation.constraints.*;
+import lombok.Data;
 
-import lombok.*;
+@Data
+public class SkillDTO {
 
-import java.time.*;
+    @Size(max = 60, message = "名称长度不能超过60")
+    @NotBlank(message = "名称不能为空")
+    private String name; // 名称
 
-/**
- * 技能请求类
- * 接收技能相关请求参数
- */
-@Builder
-public record SkillDTO(
-        @JsonProperty(value = "name", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @Size(min = 1, max = 60)
-        @NotBlank
-        String name,
-        @JsonProperty(value = "description", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @Size(min = 1, max = 300)
-        @NotBlank
-        String description) {}
+    @Size(max = 300, message = "说明长度不能超过300")
+    @NotBlank(message = "说明不能为空")
+    private String description; // 说明
+}

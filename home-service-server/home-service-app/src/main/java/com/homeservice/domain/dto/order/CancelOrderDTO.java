@@ -1,25 +1,14 @@
 package com.homeservice.domain.dto.order;
 
-import com.fasterxml.jackson.annotation.*;
-import com.homeservice.enums.*;
-import com.homeservice.handler.json.*;
-import com.homeservice.validation.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
-import jakarta.validation.constraints.*;
+import lombok.Data;
 
-import lombok.*;
+@Data
+public class CancelOrderDTO {
 
-import java.time.*;
-
-/**
- * 取消订单请求类
- * 接收取消订单相关请求参数
- */
-@Builder
-public record CancelOrderDTO(
-        @JsonProperty(value = "reason", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @Size(min = 1, max = 300)
-        @NotBlank
-        String reason) {}
+    @Size(max = 300, message = "原因长度不能超过300")
+    @NotBlank(message = "原因不能为空")
+    private String reason; // 原因
+}

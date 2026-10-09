@@ -1,39 +1,29 @@
 package com.homeservice.domain.dto.schedule;
 
-import com.fasterxml.jackson.annotation.*;
-import com.homeservice.enums.*;
-import com.homeservice.handler.json.*;
-import com.homeservice.validation.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.AssertTrue;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
-import lombok.*;
+import java.time.OffsetDateTime;
 
-import java.time.*;
+import lombok.Data;
 
-/**
- * 请假请求类
- * 接收请假相关请求参数
- */
-@Builder
-public record LeaveDTO(
-        @JsonProperty(value = "startTime", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        OffsetDateTime startTime,
-        @JsonProperty(value = "endTime", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        OffsetDateTime endTime,
-        @JsonProperty(value = "reason", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @Size(min = 1, max = 300)
-        @NotBlank
-        String reason) {
-    /**
-     * 校验开始值是否早于结束值
-     */
+@Data
+public class LeaveDTO {
+
+    @NotNull(message = "开始时间不能为空")
+    private OffsetDateTime startTime; // 开始时间
+
+    @NotNull(message = "结束时间不能为空")
+    private OffsetDateTime endTime; // 结束时间
+
+    @Size(max = 300, message = "原因长度不能超过300")
+    @NotBlank(message = "原因不能为空")
+    private String reason; // 原因
+
     @AssertTrue(message = "请假起止时间须按半小时对齐且开始早于结束")
     @JsonIgnore
     public boolean isValidRange() {

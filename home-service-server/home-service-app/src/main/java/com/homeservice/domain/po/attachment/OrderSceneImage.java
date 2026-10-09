@@ -1,31 +1,26 @@
 package com.homeservice.domain.po.attachment;
 
-import com.baomidou.mybatisplus.annotation.*;
-import com.homeservice.domain.value.*;
-import com.homeservice.enums.*;
-import com.homeservice.handler.mybatis.*;
-
-import lombok.Data;
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.FieldStrategy;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
 
 import java.time.LocalDateTime;
 
-/**
- * 订单现场图片持久化类
- * 映射order_scene_image表数据
- */
+import lombok.Data;
+
 @Data
-@TableName(value = "order_scene_image", autoResultMap = true)
+@TableName("order_scene_image")
 public class OrderSceneImage {
 
-    @TableId(value = "id", type = IdType.AUTO)
-    private Long id;
-    @TableField(value = "order_id")
-    private Long orderId;
-    @TableField(value = "image_id")
-    private Long imageId;
-    @TableField(value = "sort_no")
-    private Integer sortNo;
-    @TableField(value = "created_at", fill = FieldFill.INSERT, updateStrategy = FieldStrategy.NEVER)
-    private LocalDateTime createdAt;
+    @TableId(type = IdType.AUTO)
+    private Long id; // 主键ID
+    private Long orderId; // 订单ID
+    private Long imageId; // 图片ID
+    private Integer sortNo; // 排序号
+    @TableField(fill = FieldFill.INSERT, updateStrategy = FieldStrategy.NEVER)
+    private LocalDateTime createdAt; // 创建时间
 
 }

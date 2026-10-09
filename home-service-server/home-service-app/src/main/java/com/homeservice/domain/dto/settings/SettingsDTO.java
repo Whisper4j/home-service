@@ -1,37 +1,27 @@
 package com.homeservice.domain.dto.settings;
 
-import com.fasterxml.jackson.annotation.*;
-import com.homeservice.enums.*;
-import com.homeservice.handler.json.*;
-import com.homeservice.validation.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.AssertTrue;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 
-import lombok.*;
+import lombok.Data;
 
-import java.time.*;
+@Data
+public class SettingsDTO {
 
-/**
- * 设置请求类
- * 接收设置相关请求参数
- */
-@Builder
-public record SettingsDTO(
-        @JsonProperty(value = "earliestHours", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @Min(2)
-        @Max(24)
-        Integer earliestHours,
-        @JsonProperty(value = "latestDays", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @Min(1)
-        @Max(7)
-        Integer latestDays) {
-    /**
-     * 校验预约时间窗口是否合法
-     */
+    @NotNull(message = "最早预约小时数不能为空")
+    @Min(value = 2, message = "最早预约小时数不能小于2")
+    @Max(value = 24, message = "最早预约小时数不能大于24")
+    private Integer earliestHours; // 最早预约小时数
+
+    @NotNull(message = "最远预约天数不能为空")
+    @Min(value = 1, message = "最远预约天数不能小于1")
+    @Max(value = 7, message = "最远预约天数不能大于7")
+    private Integer latestDays; // 最远预约天数
+
     @AssertTrue(message = "最早预约时间必须小于最远预约窗口")
     @JsonIgnore
     public boolean isValidWindow() {

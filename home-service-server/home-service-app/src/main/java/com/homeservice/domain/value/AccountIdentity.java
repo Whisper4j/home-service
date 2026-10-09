@@ -1,9 +1,16 @@
 package com.homeservice.domain.value;
 
-import com.homeservice.enums.*;
+import com.homeservice.enums.AccountStatus;
+import com.homeservice.enums.Role;
 
-/**
- * 账号身份值对象类
- * 表达账号身份相关业务值
- */
-public record AccountIdentity(Long accountId, Role role, AccountStatus status) {}
+import lombok.AllArgsConstructor;
+import lombok.Data;
+
+@Data
+@AllArgsConstructor
+public class AccountIdentity {
+
+    private Long accountId; // 账号ID
+    private Role role; // 账号角色
+    private AccountStatus status; // 账号状态
+}

@@ -1,32 +1,21 @@
 package com.homeservice.domain.query.account;
 
-import com.fasterxml.jackson.annotation.*;
-import com.homeservice.enums.*;
-import com.homeservice.handler.json.*;
-import com.homeservice.validation.*;
+import com.homeservice.handler.json.ApiId;
 
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 
-import lombok.*;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
-import java.time.*;
-
-/**
- * 服务人员查询类
- * 封装服务人员相关查询条件
- */
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class WorkerQuery extends com.homeservice.common.domain.PageQuery {
-
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    @Size(min = 1, max = 100)
-    private String keyword;
-    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @Size(min = 1, max = 100, message = "搜索关键词长度必须在1到100之间")
+    private String keyword; // 搜索关键词
     @ApiId
-    @Positive
-    private Long skillId;
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    private Boolean dispatchEnabled;
+    @Positive(message = "技能ID必须大于0")
+    private Long skillId; // 技能ID
+    private Boolean dispatchEnabled; // 是否参与派单
 
 }

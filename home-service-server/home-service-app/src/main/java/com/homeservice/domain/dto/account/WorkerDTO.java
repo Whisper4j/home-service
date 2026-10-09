@@ -1,54 +1,43 @@
 package com.homeservice.domain.dto.account;
 
-import com.fasterxml.jackson.annotation.*;
-import com.homeservice.enums.*;
-import com.homeservice.handler.json.*;
-import com.homeservice.validation.*;
+import com.homeservice.handler.json.ApiIds;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.*;
 
-import lombok.*;
+import java.util.List;
+
+import lombok.Data;
 
 import org.hibernate.validator.constraints.UniqueElements;
 
-import java.time.*;
-import java.util.List;
+@Data
+public class WorkerDTO {
 
-/**
- * 服务人员请求类
- * 接收服务人员相关请求参数
- */
-@Builder
-public record WorkerDTO(
-        @JsonProperty(value = "displayName", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @Size(min = 1, max = 40)
-        @NotBlank
-        String displayName,
-        @JsonProperty(value = "phone", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @Size(min = 1, max = 11)
-        @NotBlank
-        @Pattern(regexp = "^1[0-9]{10}$")
-        String phone,
-        @JsonProperty(value = "cityCode", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @Size(min = 1, max = 6)
-        @NotBlank
-        String cityCode,
-        @JsonProperty(value = "skillIds", required = true)
-        @JsonSetter(nulls = Nulls.FAIL, contentNulls = Nulls.FAIL)
-        @NotNull
-        @Size(min = 1, max = 2147483647)
-        @UniqueElements
-        @ApiIds
-        @Valid
-        List<@NotNull @Positive Long> skillIds,
-        @JsonProperty(value = "dispatchEnabled", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        Boolean dispatchEnabled) {}
+    @Size(max = 40, message = "显示名称长度不能超过40")
+    @NotBlank(message = "显示名称不能为空")
+    private String displayName; // 显示名称
+
+    @Size(max = 11, message = "手机号长度不能超过11")
+    @NotBlank(message = "手机号不能为空")
+    @Pattern(regexp = "^1[0-9]{10}$", message = "手机号格式不正确")
+    private String phone; // 手机号
+
+    @Size(max = 6, message = "城市编码长度不能超过6")
+    @NotBlank(message = "城市编码不能为空")
+    private String cityCode; // 城市编码
+
+    @NotNull(message = "技能ID列表不能为空")
+    @Size(min = 1, message = "技能ID列表至少包含1项")
+    @UniqueElements(message = "技能ID列表不能重复")
+    @ApiIds
+    @Valid
+    private List<@NotNull(message = "技能ID列表元素不能为空") @Positive(message = "技能ID列表元素必须大于0") Long> skillIds; // 技能ID列表
+
+    @NotNull(message = "是否参与派单不能为空")
+    private Boolean dispatchEnabled; // 是否参与派单
+}

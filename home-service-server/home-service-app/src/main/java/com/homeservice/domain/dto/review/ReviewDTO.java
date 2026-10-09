@@ -1,41 +1,33 @@
 package com.homeservice.domain.dto.review;
 
-import com.fasterxml.jackson.annotation.*;
-import com.homeservice.enums.*;
-import com.homeservice.handler.json.*;
-import com.homeservice.validation.*;
-
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.*;
 
-import lombok.*;
+import java.util.List;
+
+import lombok.Data;
 
 import org.hibernate.validator.constraints.UniqueElements;
 
-import java.time.*;
-import java.util.List;
+@Data
+public class ReviewDTO {
 
-/**
- * 评价请求类
- * 接收评价相关请求参数
- */
-@Builder
-public record ReviewDTO(
-        @JsonProperty(value = "score", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @Min(1)
-        @Max(5)
-        Integer score,
-        @JsonProperty(value = "tags", required = true)
-        @JsonSetter(nulls = Nulls.FAIL, contentNulls = Nulls.FAIL)
-        @NotNull
-        @Size(min = 0, max = 3)
-        @UniqueElements
-        @Valid
-        List<@NotNull ReviewTag> tags,
-        @JsonProperty(value = "content", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @Size(min = 0, max = 500)
-        String content) {}
+    @NotNull(message = "评分不能为空")
+    @Min(value = 1, message = "评分不能小于1")
+    @Max(value = 5, message = "评分不能大于5")
+    private Integer score; // 评分
+
+    @NotNull(message = "评价标签（JSON）不能为空")
+    @Size(max = 3, message = "评价标签数量不能超过3")
+    @UniqueElements(message = "评价标签（JSON）不能重复")
+    @Valid
+    private List<@NotNull(message = "评价标签元素不能为空") @Pattern(regexp = "PUNCTUAL|PROFESSIONAL|FRIENDLY", message = "评价标签无效") String> tags; // 评价标签
+
+    @NotNull(message = "评价内容不能为空")
+    @Size(max = 500, message = "评价内容长度不能超过500")
+    private String content; // 评价内容
+}

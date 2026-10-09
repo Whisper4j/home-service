@@ -30,6 +30,6 @@ public class ApiErrorController implements ErrorController {
                         Result.error(
                                 code,
                                 status == 404 ? "资源不存在" : "请求未能完成",
-                                ErrorDetailsVO.builder().build()));
+                                new ErrorDetailsVO()));
     }
 }

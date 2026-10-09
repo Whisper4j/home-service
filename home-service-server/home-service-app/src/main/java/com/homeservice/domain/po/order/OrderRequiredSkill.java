@@ -1,31 +1,26 @@
 package com.homeservice.domain.po.order;
 
-import com.baomidou.mybatisplus.annotation.*;
-import com.homeservice.domain.value.*;
-import com.homeservice.enums.*;
-import com.homeservice.handler.mybatis.*;
-
-import lombok.Data;
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.FieldStrategy;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
 
 import java.time.LocalDateTime;
 
-/**
- * 订单所需技能持久化类
- * 映射order_required_skill表数据
- */
+import lombok.Data;
+
 @Data
-@TableName(value = "order_required_skill", autoResultMap = true)
+@TableName("order_required_skill")
 public class OrderRequiredSkill {
 
-    @TableId(value = "id", type = IdType.AUTO)
-    private Long id;
-    @TableField(value = "order_id")
-    private Long orderId;
-    @TableField(value = "skill_id")
-    private Long skillId;
-    @TableField(value = "skill_name")
-    private String skillName;
-    @TableField(value = "created_at", fill = FieldFill.INSERT, updateStrategy = FieldStrategy.NEVER)
-    private LocalDateTime createdAt;
+    @TableId(type = IdType.AUTO)
+    private Long id; // 主键ID
+    private Long orderId; // 订单ID
+    private Long skillId; // 技能ID
+    private String skillName; // 技能名称
+    @TableField(fill = FieldFill.INSERT, updateStrategy = FieldStrategy.NEVER)
+    private LocalDateTime createdAt; // 创建时间
 
 }

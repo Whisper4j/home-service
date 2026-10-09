@@ -47,7 +47,17 @@ class PersistenceMetadataTest {
             assertThat(columns).isEqualTo(expected.columns().keySet());
             assertThat(metadata.isWithLogicDelete())
                     .isEqualTo(expected.columns().containsKey("deleted_at"));
-            assertThat(type.getAnnotation(TableName.class).autoResultMap()).isTrue();
+            boolean hasCustomTypeHandler =
+                    Arrays.stream(type.getDeclaredFields())
+                            .map(field -> field.getAnnotation(TableField.class))
+                            .filter(Objects::nonNull)
+                            .anyMatch(
+                                    field ->
+                                            field.typeHandler()
+                                                    != org.apache.ibatis.type.UnknownTypeHandler.class);
+            assertThat(type.getAnnotation(TableName.class).autoResultMap())
+                    .as(type.getSimpleName())
+                    .isEqualTo(hasCustomTypeHandler);
             for (Field field : type.getDeclaredFields())
                 if (field.getType().isEnum()) {
                     assertThat(

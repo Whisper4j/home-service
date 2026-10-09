@@ -1,38 +1,32 @@
 package com.homeservice.domain.po.review;
 
-import com.baomidou.mybatisplus.annotation.*;
-import com.homeservice.domain.value.*;
-import com.homeservice.enums.*;
-import com.homeservice.handler.mybatis.*;
-
-import lombok.Data;
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.FieldStrategy;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.homeservice.handler.mybatis.ReviewTagsTypeHandler;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
-/**
- * 服务评价持久化类
- * 映射service_review表数据
- */
+import lombok.Data;
+
 @Data
 @TableName(value = "service_review", autoResultMap = true)
 public class ServiceReview {
 
-    @TableId(value = "id", type = IdType.AUTO)
-    private Long id;
-    @TableField(value = "order_id")
-    private Long orderId;
-    @TableField(value = "customer_id")
-    private Long customerId;
-    @TableField(value = "worker_id")
-    private Long workerId;
-    @TableField(value = "score")
-    private Integer score;
-    @TableField(value = "content")
-    private String content;
-    @TableField(value = "tags", typeHandler = ReviewTagsTypeHandler.class)
-    private List<ReviewTag> tags;
-    @TableField(value = "created_at", fill = FieldFill.INSERT, updateStrategy = FieldStrategy.NEVER)
-    private LocalDateTime createdAt;
+    @TableId(type = IdType.AUTO)
+    private Long id; // 主键ID
+    private Long orderId; // 订单ID
+    private Long customerId; // 客户ID
+    private Long workerId; // 服务人员ID
+    private Integer score; // 评分
+    private String content; // 评价内容
+    @TableField(typeHandler = ReviewTagsTypeHandler.class)
+    private List<String> tags; // 评价标签（JSON）
+    @TableField(fill = FieldFill.INSERT, updateStrategy = FieldStrategy.NEVER)
+    private LocalDateTime createdAt; // 创建时间
 
 }

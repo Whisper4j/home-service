@@ -1,41 +1,33 @@
 package com.homeservice.domain.po.schedule;
 
-import com.baomidou.mybatisplus.annotation.*;
-import com.homeservice.domain.value.*;
-import com.homeservice.enums.*;
-import com.homeservice.handler.mybatis.*;
-
-import lombok.Data;
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.FieldStrategy;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.homeservice.enums.BookingType;
 
 import java.time.LocalDateTime;
 
-/**
- * 服务人员时间槽持久化类
- * 映射worker_time_slot表数据
- */
+import lombok.Data;
+
 @Data
-@TableName(value = "worker_time_slot", autoResultMap = true)
+@TableName("worker_time_slot")
 public class WorkerTimeSlot {
 
-    @TableId(value = "id", type = IdType.AUTO)
-    private Long id;
-    @TableField(value = "worker_id")
-    private Long workerId;
-    @TableField(value = "slot_start")
-    private LocalDateTime slotStart;
-    @TableField(value = "status")
-    private SlotStatus status;
-    @TableField(value = "booking_type")
-    private BookingType bookingType;
-    @TableField(value = "assignment_id")
-    private Long assignmentId;
-    @TableField(value = "order_id")
-    private Long orderId;
-    @TableField(value = "leave_id")
-    private Long leaveId;
-    @TableField(value = "created_at", fill = FieldFill.INSERT, updateStrategy = FieldStrategy.NEVER)
-    private LocalDateTime createdAt;
-    @TableField(value = "updated_at", fill = FieldFill.INSERT_UPDATE)
-    private LocalDateTime updatedAt;
+    @TableId(type = IdType.AUTO)
+    private Long id; // 主键ID
+    private Long workerId; // 服务人员ID
+    private LocalDateTime slotStart; // 时间槽开始时间
+    private String status; // 状态
+    private BookingType bookingType; // 预约类型
+    private Long assignmentId; // 分配记录ID
+    private Long orderId; // 订单ID
+    private Long leaveId; // 请假记录ID
+    @TableField(fill = FieldFill.INSERT, updateStrategy = FieldStrategy.NEVER)
+    private LocalDateTime createdAt; // 创建时间
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    private LocalDateTime updatedAt; // 更新时间
 
 }

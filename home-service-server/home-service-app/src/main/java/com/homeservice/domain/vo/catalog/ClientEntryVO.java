@@ -1,80 +1,36 @@
 package com.homeservice.domain.vo.catalog;
 
-import com.fasterxml.jackson.annotation.*;
-import com.homeservice.enums.*;
-import com.homeservice.handler.json.*;
-import com.homeservice.validation.*;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.homeservice.enums.ServiceKind;
 
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.*;
+import lombok.Data;
 
-import lombok.*;
+@Data
+public class ClientEntryVO {
 
-import java.time.*;
+    private String code; // 编码
 
-/**
- * 客户端入口响应类
- * 封装客户端入口相关响应数据
- */
-@Builder
-public record ClientEntryVO(
-        @JsonProperty(value = "code", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @Size(min = 1, max = 64)
-        @NotBlank
-        @Pattern(regexp = "^[A-Z][A-Z0-9_]{0,63}$")
-        String code,
-        @JsonProperty(value = "serviceKind", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        ServiceKind serviceKind,
-        @JsonProperty(value = "groupCode", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @Size(min = 1, max = 64)
-        @NotBlank
-        @Pattern(regexp = "^[A-Z][A-Z0-9_]{0,63}$")
-        String groupCode,
-        @JsonProperty(value = "groupName", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @Size(min = 1, max = 80)
-        @NotBlank
-        String groupName,
-        @JsonProperty(value = "groupDescription", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @Size(min = 0, max = 1000)
-        String groupDescription,
-        @JsonProperty(value = "groupSort", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        Integer groupSort,
-        @JsonProperty(value = "name", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @Size(min = 1, max = 80)
-        @NotBlank
-        String name,
-        @JsonProperty(value = "description", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        @Size(min = 0, max = 2000)
-        String description,
-        @JsonProperty(value = "sort", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        Integer sort,
-        @JsonProperty(value = "available", required = true)
-        @JsonSetter(nulls = Nulls.FAIL)
-        @NotNull
-        Boolean available,
-        @JsonInclude(JsonInclude.Include.NON_NULL)
-        @RejectExplicitNull
-        @Size(min = 1, max = 300)
-        String unavailableReason,
-        @JsonInclude(JsonInclude.Include.NON_NULL)
-        @RejectExplicitNull
-        @Valid
-        SkuVO sku) {}
+    private ServiceKind serviceKind; // 服务类型
+
+    private String groupCode; // 分组编码
+
+    private String groupName; // 分组名称
+
+    private String groupDescription; // 分组说明
+
+    private Integer groupSort; // 分组排序
+
+    private String name; // 名称
+
+    private String description; // 说明
+
+    private Integer sort; // 排序
+
+    private Boolean available; // 是否可用
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private String unavailableReason; // 不可用原因
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private SkuVO sku; // 规格
+}
