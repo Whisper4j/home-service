@@ -59,8 +59,7 @@ useRefresh(load)
       </p>
       <p>
         当前价 ¥{{ order.currentPrice }}；成交价
-        {{ order.dealPrice ? '¥' + order.dealPrice : '尚未锁定' }}；报价版本
-        {{ order.priceVersion }}
+        {{ order.dealPrice ? '¥' + order.dealPrice : '尚未锁定' }}
       </p>
       <p>人员：{{ order.workerName || '尚未安排' }} {{ order.workerId || '' }}</p>
       <p>本次联系人 {{ order.contactName }} · {{ order.contactPhone }}</p>
@@ -97,8 +96,7 @@ useRefresh(load)
         <h2>报价历史</h2>
         <ul class="record-list">
           <li v-for="item in history.priceHistory" :key="item.id">
-            {{ displayTime(item.createdAt) }} · ¥{{ item.previousPrice }} → ¥{{ item.newPrice }} ·
-            版本 {{ item.priceVersion }}
+            {{ displayTime(item.createdAt) }} · ¥{{ item.previousPrice }} → ¥{{ item.newPrice }}
           </li>
         </ul>
         <h2>分配历史</h2>

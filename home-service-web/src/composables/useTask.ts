@@ -39,7 +39,8 @@ export function useTask() {
         code.value = err.code
       }
       if (err instanceof ApiError && err.data.fieldErrors) {
-        error.value += '：' + err.data.fieldErrors.map((f) => `${f.field} ${f.message}`).join('；')
+        const messages = [...new Set(err.data.fieldErrors.map((fieldError) => fieldError.message))]
+        error.value += '：' + messages.join('；')
         window.dispatchEvent(new CustomEvent('field-errors', { detail: err.data.fieldErrors }))
       }
       if (!(err instanceof ApiError) || err.code !== 'NETWORK_ERROR') retryKey = undefined

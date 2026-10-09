@@ -89,11 +89,11 @@ function logout() {
     <main>
       <details class="notifications">
         <summary>{{ connection }} · 最近通知 {{ events.length }} 条</summary>
-        <p>收到通知后刷新获取最新状态；提交仍会核验报价和版本。</p>
+        <p>收到通知后刷新获取最新状态；提交时仍会核验最新状态和报价。</p>
         <ul>
           <li v-for="event in events" :key="event.eventId">
             {{ displayTime(event.occurredAt) }} · {{ label(event.type) }} · 订单
-            {{ event.orderId }} · 版本 {{ event.priceVersion }}
+            {{ event.orderId }}
           </li>
         </ul>
         <button @click="refresh">刷新当前数据</button>
