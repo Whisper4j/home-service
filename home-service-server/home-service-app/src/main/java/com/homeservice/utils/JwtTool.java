@@ -1,5 +1,7 @@
 package com.homeservice.utils;
 
+import com.homeservice.common.constant.MessageConstant;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.homeservice.config.properties.JwtProperties;
 import com.homeservice.domain.value.AccountPrincipal;
@@ -35,7 +37,7 @@ public class JwtTool {
      * 签发访问令牌
      */
     public String createToken(long accountId, Role role) {
-        if (accountId <= 0 || role == null) throw new IllegalArgumentException("令牌主体无效");
+        if (accountId <= 0 || role == null) throw new IllegalArgumentException(MessageConstant.JWT_SUBJECT_INVALID);
         Instant now = clock.instant().truncatedTo(java.time.temporal.ChronoUnit.SECONDS);
         return Jwts.builder()
                 .subject(Long.toString(accountId))

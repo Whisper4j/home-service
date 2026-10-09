@@ -1,5 +1,7 @@
 package com.homeservice.domain.dto.notification;
 
+import com.homeservice.common.constant.MessageConstant;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -10,12 +12,12 @@ import lombok.Data;
 @Data
 public class WsAuthFrame {
 
-    @NotNull(message = "类型不能为空")
-    @Pattern(regexp = "AUTH", message = "类型格式不正确")
+    @NotNull(message = MessageConstant.AUTH_TYPE_INVALID)
+    @Pattern(regexp = "AUTH", message = MessageConstant.AUTH_TYPE_INVALID)
     private String type; // 类型
 
-    @Size(max = 2048, message = "访问令牌长度不能超过2048")
-    @NotBlank(message = "访问令牌不能为空")
+    @Size(max = 2048, message = MessageConstant.TOKEN_TOO_LONG)
+    @NotBlank(message = MessageConstant.TOKEN_REQUIRED)
     private String accessToken; // 访问令牌
 
     @Override

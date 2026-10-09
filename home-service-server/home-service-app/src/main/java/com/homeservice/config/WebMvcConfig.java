@@ -1,5 +1,7 @@
 package com.homeservice.config;
 
+import com.homeservice.common.constant.MessageConstant;
+
 import com.homeservice.handler.json.*;
 import com.homeservice.interceptor.AuthenticationInterceptor;
 
@@ -38,7 +40,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 Integer.class,
                 input -> {
                     String value = input.strip();
-                    if (!value.matches("-?[0-9]+")) throw new IllegalArgumentException("需要整数");
+                    if (!value.matches("-?[0-9]+")) throw new IllegalArgumentException(MessageConstant.INTEGER_REQUIRED);
                     return Integer.valueOf(value);
                 });
         registry.addConverter(
@@ -47,7 +49,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 input -> {
                     String value = input.strip();
                     if (!value.equals("true") && !value.equals("false"))
-                        throw new IllegalArgumentException("需要 true/false");
+                        throw new IllegalArgumentException(MessageConstant.BOOLEAN_REQUIRED);
                     return Boolean.valueOf(value);
                 });
         registry.addConverter(String.class, LocalDate.class, StrictLocalDateDeserializer::parse);

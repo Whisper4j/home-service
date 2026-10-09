@@ -1,5 +1,7 @@
 package com.homeservice.utils;
 
+import com.homeservice.common.constant.MessageConstant;
+
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -18,7 +20,7 @@ public final class StrictBcryptPasswordEncoder implements PasswordEncoder {
      */
     private static void check(CharSequence value) {
         if (value == null || value.toString().getBytes(StandardCharsets.UTF_8).length > 72)
-            throw new IllegalArgumentException("密码 UTF-8 编码不能超过 72 字节");
+            throw new IllegalArgumentException(MessageConstant.PASSWORD_BYTES_TOO_LONG);
     }
 
     /**

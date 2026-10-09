@@ -1,5 +1,7 @@
 package com.homeservice.domain.dto.account;
 
+import com.homeservice.common.constant.MessageConstant;
+
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.homeservice.handler.json.ApiIds;
 import com.homeservice.handler.json.PasswordDeserializer;
@@ -21,38 +23,38 @@ import org.hibernate.validator.constraints.UniqueElements;
 @Data
 public class WorkerCreateDTO {
 
-    @Size(max = 32, message = "用户名长度不能超过32")
-    @NotBlank(message = "用户名不能为空")
-    @Pattern(regexp = "^[A-Za-z][A-Za-z0-9_]{2,31}$", message = "用户名格式不正确")
+    @Size(max = 32, message = MessageConstant.USERNAME_TOO_LONG)
+    @NotBlank(message = MessageConstant.USERNAME_REQUIRED)
+    @Pattern(regexp = "^[A-Za-z][A-Za-z0-9_]{2,31}$", message = MessageConstant.USERNAME_INVALID)
     private String username; // 用户名
 
-    @NotNull(message = "密码不能为空")
-    @Size(min = 8, max = 72, message = "密码长度必须在8到72之间")
-    @Utf8Password(message = "密码的UTF-8编码不能超过72字节")
+    @NotNull(message = MessageConstant.PASSWORD_REQUIRED)
+    @Size(min = 8, max = 72, message = MessageConstant.PASSWORD_LENGTH_INVALID)
+    @Utf8Password(message = MessageConstant.PASSWORD_BYTES_TOO_LONG)
     @JsonDeserialize(using = PasswordDeserializer.class)
     private String password; // 密码
 
-    @Size(max = 40, message = "显示名称长度不能超过40")
-    @NotBlank(message = "显示名称不能为空")
+    @Size(max = 40, message = MessageConstant.DISPLAY_NAME_TOO_LONG)
+    @NotBlank(message = MessageConstant.DISPLAY_NAME_REQUIRED)
     private String displayName; // 显示名称
 
-    @Size(max = 11, message = "手机号长度不能超过11")
-    @NotBlank(message = "手机号不能为空")
-    @Pattern(regexp = "^1[0-9]{10}$", message = "手机号格式不正确")
+    @Size(max = 11, message = MessageConstant.PHONE_INVALID)
+    @NotBlank(message = MessageConstant.PHONE_REQUIRED)
+    @Pattern(regexp = "^1[0-9]{10}$", message = MessageConstant.PHONE_INVALID)
     private String phone; // 手机号
 
-    @Size(max = 6, message = "城市编码长度不能超过6")
-    @NotBlank(message = "城市编码不能为空")
+    @Size(max = 6, message = MessageConstant.CITY_INVALID)
+    @NotBlank(message = MessageConstant.CITY_REQUIRED)
     private String cityCode; // 城市编码
 
-    @NotNull(message = "技能ID列表不能为空")
-    @Size(min = 1, message = "技能ID列表至少包含1项")
-    @UniqueElements(message = "技能ID列表不能重复")
+    @NotNull(message = MessageConstant.SKILL_REQUIRED)
+    @Size(min = 1, message = MessageConstant.SKILL_AT_LEAST_ONE)
+    @UniqueElements(message = MessageConstant.SKILL_DUPLICATED)
     @ApiIds
     @Valid
-    private List<@NotNull(message = "技能ID列表元素不能为空") @Positive(message = "技能ID列表元素必须大于0") Long> skillIds; // 技能ID列表
+    private List<@NotNull(message = MessageConstant.SKILL_INVALID) @Positive(message = MessageConstant.SKILL_INVALID) Long> skillIds; // 技能ID列表
 
-    @NotNull(message = "是否参与派单不能为空")
+    @NotNull(message = MessageConstant.DISPATCH_STATUS_REQUIRED)
     private Boolean dispatchEnabled; // 是否参与派单
 
     @Override

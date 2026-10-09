@@ -1,6 +1,7 @@
 package com.homeservice.handler.websocket;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.homeservice.common.constant.MessageConstant;
 import com.homeservice.domain.dto.notification.WsAuthFrame;
 import com.homeservice.domain.value.AccountPrincipal;
 import com.homeservice.domain.vo.notification.WsAuthAck;
@@ -72,7 +73,11 @@ public class AuthenticatedWebSocketHandler extends TextWebSocketHandler {
                     websocketScheduler.schedule(
                             () -> {
                                 synchronized (state) {
-                                    if (state.principal == null) close(state, 4401, "AUTH timeout");
+                                    if (state.principal == null)
+                                        close(
+                                                state,
+                                                4401,
+                                                MessageConstant.WEBSOCKET_AUTH_TIMEOUT);
                                 }
                             },
                             state.authDeadline);
@@ -88,22 +93,22 @@ public class AuthenticatedWebSocketHandler extends TextWebSocketHandler {
         if (state == null) return;
         synchronized (state) {
             if (state.principal != null) {
-                close(state, 4403, "Only initial AUTH is accepted");
+                close(state, 4403, MessageConstant.WEBSOCKET_PROTOCOL_INVALID);
                 return;
             }
             if (!clock.instant().isBefore(state.authDeadline)) {
-                close(state, 4401, "AUTH timeout");
+                close(state, 4401, MessageConstant.WEBSOCKET_AUTH_TIMEOUT);
                 return;
             }
             try {
                 WsAuthFrame frame = objectMapper.readValue(message.getPayload(), WsAuthFrame.class);
                 if (!validator.validate(frame).isEmpty() || !AUTH_TYPE.equals(frame.getType())) {
-                    close(state, 4401, "Invalid AUTH");
+                    close(state, 4401, MessageConstant.WEBSOCKET_AUTH_INVALID);
                     return;
                 }
                 var principal = authenticator.authenticate(frame.getAccessToken());
                 if (!clock.instant().isBefore(principal.getExpiresAt())) {
-                    close(state, 4401, "Token expired");
+                    close(state, 4401, MessageConstant.WEBSOCKET_TOKEN_EXPIRED);
                     return;
                 }
                 state.principal = principal;
@@ -118,7 +123,10 @@ public class AuthenticatedWebSocketHandler extends TextWebSocketHandler {
                         websocketScheduler.schedule(
                                 () -> {
                                     synchronized (state) {
-                                        close(state, 4401, "Token expired");
+                                        close(
+                                                state,
+                                                4401,
+                                                MessageConstant.WEBSOCKET_TOKEN_EXPIRED);
                                     }
                                 },
                                 principal.getExpiresAt());
@@ -126,9 +134,9 @@ public class AuthenticatedWebSocketHandler extends TextWebSocketHandler {
                 close(
                         state,
                         e.getErrorType().httpStatus() == 403 ? 4403 : 4401,
-                        "Authentication failed");
+                        MessageConstant.WEBSOCKET_AUTH_INVALID);
             } catch (Exception e) {
-                close(state, 4401, "Invalid AUTH");
+                close(state, 4401, MessageConstant.WEBSOCKET_AUTH_INVALID);
             }
         }
     }
@@ -175,7 +183,7 @@ public class AuthenticatedWebSocketHandler extends TextWebSocketHandler {
         State state = connections.get(session.getId());
         if (state != null)
             synchronized (state) {
-                close(state, 4401, "Transport closed");
+                close(state, 4401, MessageConstant.WEBSOCKET_SESSION_UNAVAILABLE);
             }
     }
 
@@ -187,7 +195,7 @@ public class AuthenticatedWebSocketHandler extends TextWebSocketHandler {
         State state = connections.get(session.getId());
         if (state != null)
             synchronized (state) {
-                close(state, 4401, "AUTH must be text");
+                close(state, 4401, MessageConstant.WEBSOCKET_PROTOCOL_INVALID);
             }
     }
 

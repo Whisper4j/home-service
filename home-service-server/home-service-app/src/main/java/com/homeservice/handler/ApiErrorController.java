@@ -1,5 +1,6 @@
 package com.homeservice.handler;
 
+import com.homeservice.common.constant.MessageConstant;
 import com.homeservice.common.domain.Result;
 import com.homeservice.domain.vo.error.ErrorDetailsVO;
 
@@ -29,7 +30,11 @@ public class ApiErrorController implements ErrorController {
                 .body(
                         Result.error(
                                 code,
-                                status == 404 ? "资源不存在" : "请求未能完成",
+                                status == 404
+                                        ? MessageConstant.RESOURCE_NOT_FOUND
+                                        : status >= 500
+                                                ? MessageConstant.SERVICE_UNAVAILABLE
+                                                : MessageConstant.REQUEST_INVALID,
                                 new ErrorDetailsVO()));
     }
 }

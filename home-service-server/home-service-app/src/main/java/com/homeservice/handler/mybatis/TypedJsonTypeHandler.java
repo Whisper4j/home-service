@@ -1,5 +1,7 @@
 package com.homeservice.handler.mybatis;
 
+import com.homeservice.common.constant.MessageConstant;
+
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.json.JsonMapper;
@@ -52,7 +54,7 @@ public abstract class TypedJsonTypeHandler<T> extends BaseTypeHandler<T> {
         try {
             ps.setString(i, JSON.writeValueAsString(value));
         } catch (Exception e) {
-            throw new SQLException("JSON 持久化编码失败", e);
+            throw new SQLException(MessageConstant.JSON_WRITE_FAILED, e);
         }
     }
 
@@ -64,7 +66,7 @@ public abstract class TypedJsonTypeHandler<T> extends BaseTypeHandler<T> {
         try {
             return JSON.readValue(value, type);
         } catch (Exception e) {
-            throw new SQLException("JSON 持久化解码失败", e);
+            throw new SQLException(MessageConstant.JSON_READ_FAILED, e);
         }
     }
 

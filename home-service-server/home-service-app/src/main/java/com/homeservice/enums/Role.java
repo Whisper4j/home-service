@@ -1,5 +1,7 @@
 package com.homeservice.enums;
 
+import com.homeservice.common.constant.MessageConstant;
+
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
@@ -37,6 +39,6 @@ public enum Role {
     public static Role fromValue(String value) {
         for (Role item : values())
             if (item.value.equals(value == null ? null : value.strip())) return item;
-        throw new IllegalArgumentException("无效的Role");
+        throw new IllegalArgumentException(MessageConstant.ENUM_VALUE_INVALID);
     }
 }

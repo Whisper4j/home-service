@@ -1,5 +1,7 @@
 package com.homeservice.common.domain;
 
+import com.homeservice.common.constant.MessageConstant;
+
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -9,13 +11,13 @@ import lombok.Data;
 @Data
 public class PageQuery {
 
-    @NotNull(message = "页码不能为空")
-    @Min(value = 1, message = "页码不能小于1")
+    @NotNull(message = MessageConstant.PAGE_NO_REQUIRED)
+    @Min(value = 1, message = MessageConstant.PAGE_NO_INVALID)
     private Integer pageNo = 1; // 页码
 
-    @NotNull(message = "每页数量不能为空")
-    @Min(value = 1, message = "每页数量不能小于1")
-    @Max(value = 100, message = "每页数量不能超过100")
+    @NotNull(message = MessageConstant.PAGE_SIZE_REQUIRED)
+    @Min(value = 1, message = MessageConstant.PAGE_SIZE_INVALID)
+    @Max(value = 100, message = MessageConstant.PAGE_SIZE_INVALID)
     private Integer pageSize = 20; // 每页数量
 
 }

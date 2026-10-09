@@ -1,5 +1,7 @@
 package com.homeservice.domain.query.attachment;
 
+import com.homeservice.common.constant.MessageConstant;
+
 import com.homeservice.handler.json.ApiId;
 
 import jakarta.validation.constraints.NotNull;
@@ -10,9 +12,9 @@ import lombok.Data;
 @Data
 public class OrderSceneImageQuery {
 
-    @NotNull(message = "订单ID不能为空")
+    @NotNull(message = MessageConstant.ORDER_SELECTION_INVALID)
     @ApiId
-    @Positive(message = "订单ID必须大于0")
+    @Positive(message = MessageConstant.ORDER_SELECTION_INVALID)
     private Long orderId; // 订单ID
 
 }

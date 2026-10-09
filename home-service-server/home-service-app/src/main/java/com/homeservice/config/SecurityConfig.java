@@ -1,5 +1,7 @@
 package com.homeservice.config;
 
+import com.homeservice.common.constant.MessageConstant;
+
 import com.homeservice.config.properties.JwtProperties;
 import com.homeservice.utils.StrictBcryptPasswordEncoder;
 
@@ -39,7 +41,7 @@ public class SecurityConfig {
      */
     @Bean
     public SecretKey jwtSigningKey(JwtProperties properties) {
-        if (!properties.isStrongKey()) throw new IllegalArgumentException("JWT 密钥配置无效");
+        if (!properties.isStrongKey()) throw new IllegalArgumentException(MessageConstant.JWT_SECRET_INVALID);
         return new SecretKeySpec(
                 Base64.getDecoder().decode(properties.getSecretBase64()), "HmacSHA256");
     }

@@ -1,5 +1,7 @@
 package com.homeservice.config.properties;
 
+import com.homeservice.common.constant.MessageConstant;
+
 import jakarta.validation.constraints.NotNull;
 
 import lombok.Getter;
@@ -20,7 +22,7 @@ import java.nio.file.Path;
 @ConfigurationProperties("home.upload")
 public class UploadProperties {
 
-    @NotNull
+    @NotNull(message = MessageConstant.CONFIG_VALUE_REQUIRED)
     private Path directory = Path.of("data/uploads");
 
 }

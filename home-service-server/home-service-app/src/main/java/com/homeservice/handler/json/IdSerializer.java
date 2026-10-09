@@ -1,5 +1,7 @@
 package com.homeservice.handler.json;
 
+import com.homeservice.common.constant.MessageConstant;
+
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.*;
 
@@ -15,7 +17,7 @@ public class IdSerializer extends JsonSerializer<Long> {
      */
     public void serialize(Long value, JsonGenerator gen, SerializerProvider provider)
             throws IOException {
-        if (value <= 0) throw JsonMappingException.from(gen, "ID 必须为正数");
+        if (value <= 0) throw JsonMappingException.from(gen, MessageConstant.ID_FORMAT_INVALID);
         gen.writeString(value.toString());
     }
 }

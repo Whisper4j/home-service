@@ -1,5 +1,7 @@
 package com.homeservice.domain.dto.catalog;
 
+import com.homeservice.common.constant.MessageConstant;
+
 import com.homeservice.enums.CatalogStatus;
 import com.homeservice.enums.ServiceKind;
 import com.homeservice.handler.json.ApiId;
@@ -14,22 +16,22 @@ import lombok.Data;
 @Data
 public class ServiceItemDTO {
 
-    @NotNull(message = "分类ID不能为空")
+    @NotNull(message = MessageConstant.CATALOG_SELECTION_INVALID)
     @ApiId
-    @Positive(message = "分类ID必须大于0")
+    @Positive(message = MessageConstant.CATALOG_SELECTION_INVALID)
     private Long categoryId; // 分类ID
 
-    @Size(max = 60, message = "名称长度不能超过60")
-    @NotBlank(message = "名称不能为空")
+    @Size(max = 60, message = MessageConstant.NAME_TOO_LONG_60)
+    @NotBlank(message = MessageConstant.NAME_REQUIRED)
     private String name; // 名称
 
-    @NotNull(message = "服务类型不能为空")
+    @NotNull(message = MessageConstant.SERVICE_TYPE_REQUIRED)
     private ServiceKind serviceKind; // 服务类型
 
-    @Size(max = 1000, message = "说明长度不能超过1000")
-    @NotBlank(message = "说明不能为空")
+    @Size(max = 1000, message = MessageConstant.DESCRIPTION_TOO_LONG_1000)
+    @NotBlank(message = MessageConstant.DESCRIPTION_REQUIRED)
     private String description; // 说明
 
-    @NotNull(message = "状态不能为空")
+    @NotNull(message = MessageConstant.CATALOG_STATUS_REQUIRED)
     private CatalogStatus status; // 状态
 }

@@ -1,5 +1,7 @@
 package com.homeservice.handler.json;
 
+import com.homeservice.common.constant.MessageConstant;
+
 import com.fasterxml.jackson.core.*;
 import com.fasterxml.jackson.databind.*;
 
@@ -15,7 +17,7 @@ public class IdDeserializer extends JsonDeserializer<Long> {
      */
     public static long parse(String value) {
         if (value == null || !value.strip().matches("[1-9][0-9]{0,18}"))
-            throw new IllegalArgumentException("ID 必须为正十进制字符串");
+            throw new IllegalArgumentException(MessageConstant.ID_FORMAT_INVALID);
         return Long.parseLong(value.strip());
     }
 
@@ -28,7 +30,7 @@ public class IdDeserializer extends JsonDeserializer<Long> {
         try {
             return parse(p.getText());
         } catch (IllegalArgumentException e) {
-            throw JsonMappingException.from(p, "ID 格式或范围无效");
+            throw JsonMappingException.from(p, MessageConstant.ID_FORMAT_INVALID);
         }
     }
 }

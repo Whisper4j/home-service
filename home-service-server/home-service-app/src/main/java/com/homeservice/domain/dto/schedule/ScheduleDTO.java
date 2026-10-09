@@ -1,5 +1,7 @@
 package com.homeservice.domain.dto.schedule;
 
+import com.homeservice.common.constant.MessageConstant;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.validation.constraints.AssertTrue;
@@ -18,18 +20,18 @@ import org.hibernate.validator.constraints.UniqueElements;
 @Data
 public class ScheduleDTO {
 
-    @NotNull(message = "工作时段列表不能为空")
-    @Size(min = 1, max = 14, message = "工作时段列表数量必须在1到14之间")
+    @NotNull(message = MessageConstant.WORK_INTERVAL_REQUIRED)
+    @Size(min = 1, max = 14, message = MessageConstant.WORK_INTERVAL_COUNT_INVALID)
     @Valid
-    private List<@NotNull(message = "工作时段列表元素不能为空") @Valid WorkIntervalDTO> intervals; // 工作时段列表
+    private List<@NotNull(message = MessageConstant.WORK_INTERVAL_ITEM_INVALID) @Valid WorkIntervalDTO> intervals; // 工作时段列表
 
-    @NotNull(message = "休息星期列表（JSON）不能为空")
-    @Size(max = 7, message = "休息星期列表数量不能超过7")
-    @UniqueElements(message = "休息星期列表（JSON）不能重复")
+    @NotNull(message = MessageConstant.REST_WEEKDAYS_REQUIRED)
+    @Size(max = 7, message = MessageConstant.REST_WEEKDAYS_TOO_MANY)
+    @UniqueElements(message = MessageConstant.REST_WEEKDAYS_DUPLICATED)
     @Valid
-    private List<@NotNull(message = "休息星期元素不能为空") @Min(value = 1, message = "休息星期不能小于1") @Max(value = 7, message = "休息星期不能大于7") Integer> restWeekdays; // 休息星期列表
+    private List<@NotNull(message = MessageConstant.REST_WEEKDAY_INVALID) @Min(value = 1, message = MessageConstant.REST_WEEKDAY_INVALID) @Max(value = 7, message = MessageConstant.REST_WEEKDAY_INVALID) Integer> restWeekdays; // 休息星期列表
 
-    @AssertTrue(message = "工作区间不可重叠")
+    @AssertTrue(message = MessageConstant.WORK_INTERVAL_OVERLAPPED)
     @JsonIgnore
     public boolean isNonOverlapping() {
         if (intervals == null

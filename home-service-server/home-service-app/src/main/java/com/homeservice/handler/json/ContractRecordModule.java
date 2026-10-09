@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.deser.BeanDeserializerModifier;
 import com.fasterxml.jackson.databind.deser.std.DelegatingDeserializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.homeservice.common.constant.MessageConstant;
 
 import java.io.IOException;
 import java.util.*;
@@ -87,15 +88,15 @@ public class ContractRecordModule extends SimpleModule {
             JsonNode tree = context.readTree(parser);
             for (String field : requiredFields)
                 if (!tree.has(field))
-                    throw JsonMappingException.from(parser, "缺少必需字段: " + field);
+                    throw JsonMappingException.from(parser, MessageConstant.REQUEST_INCOMPLETE);
             for (String field : rejectNullFields) {
                 JsonNode value = tree.get(field);
                 if (value != null && value.isNull())
-                    throw JsonMappingException.from(parser, "字段不接受 null: " + field);
+                    throw JsonMappingException.from(parser, MessageConstant.REQUEST_INVALID);
                 if (value != null && value.isArray())
                     for (JsonNode element : value)
                         if (element.isNull())
-                            throw JsonMappingException.from(parser, "数组不接受 null 元素: " + field);
+                            throw JsonMappingException.from(parser, MessageConstant.REQUEST_INVALID);
             }
             try (JsonParser replay = tree.traverse(parser.getCodec())) {
                 replay.nextToken();

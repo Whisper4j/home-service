@@ -1,5 +1,7 @@
 package com.homeservice.handler.json;
 
+import com.homeservice.common.constant.MessageConstant;
+
 import com.fasterxml.jackson.core.*;
 import com.fasterxml.jackson.databind.*;
 
@@ -17,7 +19,7 @@ public class ShanghaiDateTimeDeserializer extends JsonDeserializer<OffsetDateTim
     public static OffsetDateTime parse(String input) {
         String value = input.strip();
         if (!value.matches("[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\\+08:00"))
-            throw new IllegalArgumentException("时间必须精确到秒且带 +08:00");
+            throw new IllegalArgumentException(MessageConstant.DATE_TIME_FORMAT_INVALID);
         return OffsetDateTime.parse(value);
     }
 
@@ -31,7 +33,7 @@ public class ShanghaiDateTimeDeserializer extends JsonDeserializer<OffsetDateTim
         try {
             return parse(p.getText());
         } catch (IllegalArgumentException | DateTimeException e) {
-            throw JsonMappingException.from(p, "日期时间格式无效");
+            throw JsonMappingException.from(p, MessageConstant.DATE_TIME_FORMAT_INVALID);
         }
     }
 }

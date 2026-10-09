@@ -1,5 +1,7 @@
 package com.homeservice.handler.json;
 
+import com.homeservice.common.constant.MessageConstant;
+
 import com.fasterxml.jackson.core.*;
 import com.fasterxml.jackson.databind.*;
 
@@ -17,7 +19,7 @@ public class StrictLocalDateDeserializer extends JsonDeserializer<LocalDate> {
     public static LocalDate parse(String input) {
         String value = input.strip();
         if (!value.matches("[0-9]{4}-[0-9]{2}-[0-9]{2}"))
-            throw new IllegalArgumentException("日期格式无效");
+            throw new IllegalArgumentException(MessageConstant.DATE_FORMAT_INVALID);
         return LocalDate.parse(value);
     }
 
@@ -30,7 +32,7 @@ public class StrictLocalDateDeserializer extends JsonDeserializer<LocalDate> {
         try {
             return parse(p.getText());
         } catch (IllegalArgumentException | DateTimeException e) {
-            throw JsonMappingException.from(p, "日期格式无效");
+            throw JsonMappingException.from(p, MessageConstant.DATE_FORMAT_INVALID);
         }
     }
 }

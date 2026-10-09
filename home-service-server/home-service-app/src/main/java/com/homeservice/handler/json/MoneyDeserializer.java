@@ -1,5 +1,7 @@
 package com.homeservice.handler.json;
 
+import com.homeservice.common.constant.MessageConstant;
+
 import com.fasterxml.jackson.core.*;
 import com.fasterxml.jackson.databind.*;
 
@@ -19,7 +21,7 @@ public class MoneyDeserializer extends JsonDeserializer<BigDecimal> {
             return (BigDecimal) context.handleUnexpectedToken(BigDecimal.class, p);
         String value = p.getText().strip();
         if (!value.matches("(0|[1-9][0-9]{0,8})\\.[0-9]{2}"))
-            throw JsonMappingException.from(p, "金额必须是两位小数字符串");
+            throw JsonMappingException.from(p, MessageConstant.MONEY_FORMAT_INVALID);
         return new BigDecimal(value);
     }
 }

@@ -1,5 +1,7 @@
 package com.homeservice.validation;
 
+import com.homeservice.common.constant.MessageConstant;
+
 import jakarta.validation.*;
 
 import java.lang.annotation.*;
@@ -20,7 +22,7 @@ public @interface Utf8Password {
     /**
      * 定义校验失败时的提示信息
      */
-    String message() default "密码 UTF-8 编码不能超过 72 字节";
+    String message() default MessageConstant.PASSWORD_BYTES_TOO_LONG;
 
     /**
      * 定义校验分组

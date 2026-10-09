@@ -1,5 +1,7 @@
 package com.homeservice.handler.websocket;
 
+import com.homeservice.common.constant.MessageConstant;
+
 import com.homeservice.domain.value.NotificationRecipient;
 import com.homeservice.domain.vo.notification.WsEvent;
 
@@ -26,7 +28,7 @@ public class NotificationSender {
         java.util.Objects.requireNonNull(event);
         if (!TransactionSynchronizationManager.isActualTransactionActive()
                 || !TransactionSynchronizationManager.isSynchronizationActive())
-            throw new IllegalStateException("通知必须在业务事务内登记并于提交后发送");
+            throw new IllegalStateException(MessageConstant.NOTIFICATION_TRANSACTION_REQUIRED);
         TransactionSynchronizationManager.registerSynchronization(
                 new TransactionSynchronization() {
                     /**

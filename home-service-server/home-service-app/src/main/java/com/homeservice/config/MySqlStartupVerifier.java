@@ -1,5 +1,7 @@
 package com.homeservice.config;
 
+import com.homeservice.common.constant.MessageConstant;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -27,13 +29,13 @@ public class MySqlStartupVerifier implements ApplicationRunner {
         try (var connection = dataSource.getConnection()) {
             var metadata = connection.getMetaData();
             if (!"MySQL".equals(metadata.getDatabaseProductName()))
-                throw new IllegalStateException("需要 MySQL 8.0.16+");
+                throw new IllegalStateException(MessageConstant.MYSQL_VERSION_UNSUPPORTED);
             String[] version = metadata.getDatabaseProductVersion().split("[.-]");
             int major = Integer.parseInt(version[0]),
                     minor = Integer.parseInt(version[1]),
                     patch = Integer.parseInt(version[2]);
             if (major < 8 || major == 8 && minor == 0 && patch < 16)
-                throw new IllegalStateException("需要 MySQL 8.0.16+");
+                throw new IllegalStateException(MessageConstant.MYSQL_VERSION_UNSUPPORTED);
             try (var statement = connection.createStatement();
                     var result =
                             statement.executeQuery(

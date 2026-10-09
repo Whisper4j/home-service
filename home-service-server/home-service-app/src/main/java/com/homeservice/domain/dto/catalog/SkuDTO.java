@@ -1,5 +1,7 @@
 package com.homeservice.domain.dto.catalog;
 
+import com.homeservice.common.constant.MessageConstant;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.homeservice.enums.CatalogStatus;
 import com.homeservice.handler.json.ApiId;
@@ -29,69 +31,69 @@ import org.hibernate.validator.constraints.UniqueElements;
 @Data
 public class SkuDTO {
 
-    @NotNull(message = "服务项目ID不能为空")
+    @NotNull(message = MessageConstant.CATALOG_SELECTION_INVALID)
     @ApiId
-    @Positive(message = "服务项目ID必须大于0")
+    @Positive(message = MessageConstant.CATALOG_SELECTION_INVALID)
     private Long itemId; // 服务项目ID
 
-    @Size(max = 80, message = "名称长度不能超过80")
-    @NotBlank(message = "名称不能为空")
+    @Size(max = 80, message = MessageConstant.NAME_TOO_LONG_80)
+    @NotBlank(message = MessageConstant.NAME_REQUIRED)
     private String name; // 名称
 
-    @NotNull(message = "标准价格不能为空")
+    @NotNull(message = MessageConstant.STANDARD_PRICE_REQUIRED)
     @ApiMoney
-    @DecimalMin(value = "0.00", message = "标准价格不能小于0.00")
-    @DecimalMax(value = "999999999.99", message = "标准价格不能大于999999999.99")
-    @Digits(integer = 9, fraction = 2, message = "标准价格精度不正确")
+    @DecimalMin(value = "0.00", message = MessageConstant.AMOUNT_NEGATIVE)
+    @DecimalMax(value = "999999999.99", message = MessageConstant.AMOUNT_TOO_LARGE)
+    @Digits(integer = 9, fraction = 2, message = MessageConstant.AMOUNT_SCALE_INVALID)
     private BigDecimal standardPrice; // 标准价格
 
-    @NotNull(message = "最低优惠价不能为空")
+    @NotNull(message = MessageConstant.MINIMUM_OFFER_PRICE_REQUIRED)
     @ApiMoney
-    @DecimalMin(value = "0.00", message = "最低优惠价不能小于0.00")
-    @DecimalMax(value = "999999999.99", message = "最低优惠价不能大于999999999.99")
-    @Digits(integer = 9, fraction = 2, message = "最低优惠价精度不正确")
+    @DecimalMin(value = "0.00", message = MessageConstant.AMOUNT_NEGATIVE)
+    @DecimalMax(value = "999999999.99", message = MessageConstant.AMOUNT_TOO_LARGE)
+    @Digits(integer = 9, fraction = 2, message = MessageConstant.AMOUNT_SCALE_INVALID)
     private BigDecimal minimumOfferPrice; // 最低优惠价
 
-    @NotNull(message = "服务时长（分钟）不能为空")
-    @Min(value = 30, message = "服务时长（分钟）不能小于30")
-    @Max(value = 720, message = "服务时长（分钟）不能大于720")
-    @MultipleOf(value = 30, message = "服务时长（分钟）必须是30的整数倍")
+    @NotNull(message = MessageConstant.DURATION_REQUIRED)
+    @Min(value = 30, message = MessageConstant.DURATION_RANGE_INVALID)
+    @Max(value = 720, message = MessageConstant.DURATION_RANGE_INVALID)
+    @MultipleOf(value = 30, message = MessageConstant.DURATION_STEP_INVALID)
     private Integer durationMinutes; // 服务时长（分钟）
 
-    @Size(max = 20, message = "计价单位长度不能超过20")
-    @NotBlank(message = "计价单位不能为空")
+    @Size(max = 20, message = MessageConstant.UNIT_TOO_LONG)
+    @NotBlank(message = MessageConstant.UNIT_REQUIRED)
     private String unit; // 计价单位
 
-    @NotNull(message = "技能ID列表不能为空")
-    @Size(min = 1, message = "技能ID列表至少包含1项")
-    @UniqueElements(message = "技能ID列表不能重复")
+    @NotNull(message = MessageConstant.SKILL_REQUIRED)
+    @Size(min = 1, message = MessageConstant.SKILL_AT_LEAST_ONE)
+    @UniqueElements(message = MessageConstant.SKILL_DUPLICATED)
     @ApiIds
     @Valid
-    private List<@NotNull(message = "技能ID列表元素不能为空") @Positive(message = "技能ID列表元素必须大于0") Long> skillIds; // 技能ID列表
+    private List<@NotNull(message = MessageConstant.SKILL_INVALID) @Positive(message = MessageConstant.SKILL_INVALID) Long> skillIds; // 技能ID列表
 
-    @NotNull(message = "状态不能为空")
+    @NotNull(message = MessageConstant.CATALOG_STATUS_REQUIRED)
     private CatalogStatus status; // 状态
 
-    @NotNull(message = "是否支持优惠不能为空")
+    @NotNull(message = MessageConstant.SUPPORTS_OFFER_REQUIRED)
     private Boolean supportsOffer; // 是否支持优惠
 
-    @Size(max = 2000, message = "说明长度不能超过2000")
-    @NotBlank(message = "说明不能为空")
+    @Size(max = 2000, message = MessageConstant.DESCRIPTION_TOO_LONG_2000)
+    @NotBlank(message = MessageConstant.DESCRIPTION_REQUIRED)
     private String description; // 说明
 
-    @Size(max = 1000, message = "包含内容长度不能超过1000")
-    @NotBlank(message = "包含内容不能为空")
+    @Size(max = 1000, message = MessageConstant.INCLUDED_CONTENT_TOO_LONG)
+    @NotBlank(message = MessageConstant.INCLUDED_CONTENT_REQUIRED)
     private String included; // 包含内容
 
-    @Size(max = 1000, message = "不含内容长度不能超过1000")
-    @NotBlank(message = "不含内容不能为空")
+    @Size(max = 1000, message = MessageConstant.EXCLUDED_CONTENT_TOO_LONG)
+    @NotBlank(message = MessageConstant.EXCLUDED_CONTENT_REQUIRED)
     private String excluded; // 不含内容
 
-    @NotNull(message = "是否客户自备配件不能为空")
+    @NotNull(message = MessageConstant.CUSTOMER_SUPPLIES_PARTS_REQUIRED)
     private Boolean customerSuppliesParts; // 是否客户自备配件
 
     @JsonProperty(value = "clientEntryCode", required = true)
-    @Size(min = 1, max = 64, message = "客户端入口编码长度必须在1到64之间")
-    @Pattern(regexp = "^[A-Z][A-Z0-9_]{0,63}$", message = "客户端入口编码格式不正确")
+    @Size(min = 1, max = 64, message = MessageConstant.CLIENT_ENTRY_INVALID)
+    @Pattern(regexp = "^[A-Z][A-Z0-9_]{0,63}$", message = MessageConstant.CLIENT_ENTRY_INVALID)
     private String clientEntryCode; // 客户端入口编码
 }

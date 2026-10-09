@@ -1,5 +1,7 @@
 package com.homeservice.domain.dto.catalog;
 
+import com.homeservice.common.constant.MessageConstant;
+
 import com.homeservice.enums.CatalogStatus;
 
 import jakarta.validation.constraints.Max;
@@ -13,15 +15,15 @@ import lombok.Data;
 @Data
 public class CategoryDTO {
 
-    @Size(max = 60, message = "名称长度不能超过60")
-    @NotBlank(message = "名称不能为空")
+    @Size(max = 60, message = MessageConstant.NAME_TOO_LONG_60)
+    @NotBlank(message = MessageConstant.NAME_REQUIRED)
     private String name; // 名称
 
-    @NotNull(message = "排序不能为空")
-    @Min(value = 0, message = "排序不能小于0")
-    @Max(value = 9999, message = "排序不能大于9999")
+    @NotNull(message = MessageConstant.SORT_NO_REQUIRED)
+    @Min(value = 0, message = MessageConstant.SORT_NO_INVALID)
+    @Max(value = 9999, message = MessageConstant.SORT_NO_INVALID)
     private Integer sort; // 排序
 
-    @NotNull(message = "状态不能为空")
+    @NotNull(message = MessageConstant.CATALOG_STATUS_REQUIRED)
     private CatalogStatus status; // 状态
 }

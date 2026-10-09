@@ -1,6 +1,7 @@
 package com.homeservice.handler.websocket;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.homeservice.common.constant.MessageConstant;
 import com.homeservice.domain.value.*;
 import com.homeservice.domain.vo.notification.WsEvent;
 import com.homeservice.utils.AccountAuthenticator;
@@ -79,7 +80,11 @@ public class WebSocketSessionRegistry {
                                 ? 4403
                                 : 4401;
                 try {
-                    binding.session().close(new CloseStatus(code, "Session unavailable"));
+                    binding.session()
+                            .close(
+                                    new CloseStatus(
+                                            code,
+                                            MessageConstant.WEBSOCKET_SESSION_UNAVAILABLE));
                 } catch (Exception ignored) {
                     /* 已断开 */
                 }

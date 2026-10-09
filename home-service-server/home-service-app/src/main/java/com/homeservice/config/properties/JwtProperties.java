@@ -1,5 +1,7 @@
 package com.homeservice.config.properties;
 
+import com.homeservice.common.constant.MessageConstant;
+
 import jakarta.validation.constraints.*;
 
 import lombok.Getter;
@@ -21,15 +23,15 @@ import java.util.Base64;
 @ConfigurationProperties("home.jwt")
 public class JwtProperties {
 
-    @NotBlank
+    @NotBlank(message = MessageConstant.CONFIG_VALUE_REQUIRED)
     private String secretBase64;
-    @NotNull
+    @NotNull(message = MessageConstant.CONFIG_VALUE_REQUIRED)
     private Duration tokenTtl = Duration.ofHours(2);
 
     /**
      * 校验JWT密钥强度
      */
-    @AssertTrue(message = "JWT 密钥必须是至少 32 随机字节的 Base64")
+    @AssertTrue(message = MessageConstant.JWT_SECRET_INVALID)
     public boolean isStrongKey() {
         try {
             return Base64.getDecoder().decode(secretBase64).length >= 32;
@@ -41,7 +43,7 @@ public class JwtProperties {
     /**
      * 校验JWT有效期配置
      */
-    @AssertTrue(message = "JWT 有效期必须至少 1 秒且为整秒")
+    @AssertTrue(message = MessageConstant.JWT_TTL_INVALID)
     public boolean isValidTtl() {
         return tokenTtl != null && tokenTtl.getSeconds() > 0 && tokenTtl.getNano() == 0;
     }

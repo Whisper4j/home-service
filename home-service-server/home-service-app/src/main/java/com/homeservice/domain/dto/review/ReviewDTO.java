@@ -1,5 +1,7 @@
 package com.homeservice.domain.dto.review;
 
+import com.homeservice.common.constant.MessageConstant;
+
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -16,18 +18,18 @@ import org.hibernate.validator.constraints.UniqueElements;
 @Data
 public class ReviewDTO {
 
-    @NotNull(message = "评分不能为空")
-    @Min(value = 1, message = "评分不能小于1")
-    @Max(value = 5, message = "评分不能大于5")
+    @NotNull(message = MessageConstant.SCORE_REQUIRED)
+    @Min(value = 1, message = MessageConstant.SCORE_INVALID)
+    @Max(value = 5, message = MessageConstant.SCORE_INVALID)
     private Integer score; // 评分
 
-    @NotNull(message = "评价标签（JSON）不能为空")
-    @Size(max = 3, message = "评价标签数量不能超过3")
-    @UniqueElements(message = "评价标签（JSON）不能重复")
+    @NotNull(message = MessageConstant.REVIEW_TAGS_REQUIRED)
+    @Size(max = 3, message = MessageConstant.REVIEW_TAGS_TOO_MANY)
+    @UniqueElements(message = MessageConstant.REVIEW_TAGS_DUPLICATED)
     @Valid
-    private List<@NotNull(message = "评价标签元素不能为空") @Pattern(regexp = "PUNCTUAL|PROFESSIONAL|FRIENDLY", message = "评价标签无效") String> tags; // 评价标签
+    private List<@NotNull(message = MessageConstant.REVIEW_TAG_INVALID) @Pattern(regexp = "PUNCTUAL|PROFESSIONAL|FRIENDLY", message = MessageConstant.REVIEW_TAG_INVALID) String> tags; // 评价标签
 
-    @NotNull(message = "评价内容不能为空")
-    @Size(max = 500, message = "评价内容长度不能超过500")
+    @NotNull(message = MessageConstant.REVIEW_CONTENT_REQUIRED)
+    @Size(max = 500, message = MessageConstant.REVIEW_CONTENT_TOO_LONG)
     private String content; // 评价内容
 }

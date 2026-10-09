@@ -2,6 +2,7 @@ package com.homeservice.handler;
 
 import cn.hutool.core.util.IdUtil;
 
+import com.homeservice.common.constant.MessageConstant;
 import com.homeservice.common.domain.Result;
 import com.homeservice.common.exception.BusinessException;
 import com.homeservice.domain.vo.error.*;
@@ -35,6 +36,10 @@ import java.util.*;
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
+
+    private static final Set<String> INTERNAL_REQUEST_FIELDS =
+            Set.of("expectedPrice", "priceVersion");
+
     /**
      * 处理业务异常
      */
@@ -50,7 +55,11 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(BindException.class)
     public ResponseEntity<Result<ErrorDetailsVO>> validation(BindException e) {
-        var fields = e.getBindingResult().getAllErrors().stream().map(this::fieldError).toList();
+        var fields =
+                e.getBindingResult().getAllErrors().stream()
+                        .map(this::fieldError)
+                        .distinct()
+                        .toList();
         ErrorDetailsVO details = new ErrorDetailsVO();
         details.setFieldErrors(fields);
         return business(new ApiException(ErrorCode.VALIDATION_ERROR, details));
@@ -72,7 +81,7 @@ public class GlobalExceptionHandler {
         // 不回显 Jackson/绑定异常原文，其中可能包含密码、Token 或完整请求。
         FieldErrorVO field = new FieldErrorVO();
         field.setField("request");
-        field.setMessage("请求格式或字段值无效");
+        field.setMessage(MessageConstant.REQUEST_FORMAT_INVALID);
         ErrorDetailsVO details = new ErrorDetailsVO();
         details.setFieldErrors(List.of(field));
         return business(new ApiException(ErrorCode.VALIDATION_ERROR, details));
@@ -99,7 +108,7 @@ public class GlobalExceptionHandler {
                 .body(
                         Result.error(
                                 ErrorCode.VALIDATION_ERROR.code(),
-                                "不支持的请求方法",
+                                MessageConstant.METHOD_NOT_SUPPORTED,
                                 new ErrorDetailsVO()));
     }
 
@@ -111,8 +120,8 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(415)
                 .body(
                         Result.error(
-                                "VALIDATION_ERROR",
-                                "不支持的请求媒体类型",
+                                ErrorCode.VALIDATION_ERROR.code(),
+                                MessageConstant.MEDIA_TYPE_NOT_SUPPORTED,
                                 new ErrorDetailsVO()));
     }
 
@@ -125,8 +134,8 @@ public class GlobalExceptionHandler {
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(
                         Result.error(
-                                "VALIDATION_ERROR",
-                                "不支持的响应媒体类型",
+                                ErrorCode.VALIDATION_ERROR.code(),
+                                MessageConstant.RESPONSE_MEDIA_TYPE_NOT_SUPPORTED,
                                 new ErrorDetailsVO()));
     }
 
@@ -161,11 +170,20 @@ public class GlobalExceptionHandler {
 
     private FieldErrorVO fieldError(org.springframework.validation.ObjectError error) {
         FieldErrorVO field = new FieldErrorVO();
-        field.setField(
+        String fieldName =
                 error instanceof org.springframework.validation.FieldError value
                         ? value.getField()
-                        : "request");
-        field.setMessage(error.getDefaultMessage() == null ? "参数无效" : error.getDefaultMessage());
+                        : "request";
+        if (INTERNAL_REQUEST_FIELDS.contains(fieldName)) {
+            field.setField("request");
+            field.setMessage(MessageConstant.OFFER_CONTEXT_EXPIRED);
+            return field;
+        }
+        field.setField(fieldName);
+        field.setMessage(
+                error.getDefaultMessage() == null
+                        ? MessageConstant.PARAMETER_INVALID
+                        : error.getDefaultMessage());
         return field;
     }
 }

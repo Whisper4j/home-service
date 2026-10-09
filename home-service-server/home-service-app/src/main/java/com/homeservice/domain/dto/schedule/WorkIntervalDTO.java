@@ -1,5 +1,7 @@
 package com.homeservice.domain.dto.schedule;
 
+import com.homeservice.common.constant.MessageConstant;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.validation.constraints.AssertTrue;
@@ -12,13 +14,13 @@ import lombok.Data;
 @Data
 public class WorkIntervalDTO {
 
-    @NotNull(message = "开始时间不能为空")
+    @NotNull(message = MessageConstant.START_TIME_REQUIRED)
     private LocalTime start; // 开始时间
 
-    @NotNull(message = "结束时间不能为空")
+    @NotNull(message = MessageConstant.END_TIME_REQUIRED)
     private LocalTime end; // 结束时间
 
-    @AssertTrue(message = "工作区间必须在 08:00—22:00 且开始早于结束")
+    @AssertTrue(message = MessageConstant.WORK_INTERVAL_INVALID)
     @JsonIgnore
     public boolean isValidInterval() {
         return start == null

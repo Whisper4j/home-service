@@ -1,5 +1,7 @@
 package com.homeservice.handler.json;
 
+import com.homeservice.common.constant.MessageConstant;
+
 import com.fasterxml.jackson.core.*;
 import com.fasterxml.jackson.databind.*;
 
@@ -17,7 +19,7 @@ public class HalfHourTimeDeserializer extends JsonDeserializer<LocalTime> {
     public static LocalTime parse(String input) {
         String value = input.strip();
         if (!value.matches("([01][0-9]|2[0-3]):(00|30)"))
-            throw new IllegalArgumentException("时间需 HH:mm 半小时对齐");
+            throw new IllegalArgumentException(MessageConstant.TIME_FORMAT_INVALID);
         return LocalTime.parse(value);
     }
 
@@ -30,7 +32,7 @@ public class HalfHourTimeDeserializer extends JsonDeserializer<LocalTime> {
         try {
             return parse(p.getText());
         } catch (IllegalArgumentException | DateTimeException e) {
-            throw JsonMappingException.from(p, "时间格式无效");
+            throw JsonMappingException.from(p, MessageConstant.TIME_FORMAT_INVALID);
         }
     }
 }

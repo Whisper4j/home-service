@@ -1,5 +1,7 @@
 package com.homeservice.domain.dto.account;
 
+import com.homeservice.common.constant.MessageConstant;
+
 import com.homeservice.handler.json.ApiIds;
 
 import jakarta.validation.constraints.NotBlank;
@@ -18,26 +20,26 @@ import org.hibernate.validator.constraints.UniqueElements;
 @Data
 public class WorkerDTO {
 
-    @Size(max = 40, message = "显示名称长度不能超过40")
-    @NotBlank(message = "显示名称不能为空")
+    @Size(max = 40, message = MessageConstant.DISPLAY_NAME_TOO_LONG)
+    @NotBlank(message = MessageConstant.DISPLAY_NAME_REQUIRED)
     private String displayName; // 显示名称
 
-    @Size(max = 11, message = "手机号长度不能超过11")
-    @NotBlank(message = "手机号不能为空")
-    @Pattern(regexp = "^1[0-9]{10}$", message = "手机号格式不正确")
+    @Size(max = 11, message = MessageConstant.PHONE_INVALID)
+    @NotBlank(message = MessageConstant.PHONE_REQUIRED)
+    @Pattern(regexp = "^1[0-9]{10}$", message = MessageConstant.PHONE_INVALID)
     private String phone; // 手机号
 
-    @Size(max = 6, message = "城市编码长度不能超过6")
-    @NotBlank(message = "城市编码不能为空")
+    @Size(max = 6, message = MessageConstant.CITY_INVALID)
+    @NotBlank(message = MessageConstant.CITY_REQUIRED)
     private String cityCode; // 城市编码
 
-    @NotNull(message = "技能ID列表不能为空")
-    @Size(min = 1, message = "技能ID列表至少包含1项")
-    @UniqueElements(message = "技能ID列表不能重复")
+    @NotNull(message = MessageConstant.SKILL_REQUIRED)
+    @Size(min = 1, message = MessageConstant.SKILL_AT_LEAST_ONE)
+    @UniqueElements(message = MessageConstant.SKILL_DUPLICATED)
     @ApiIds
     @Valid
-    private List<@NotNull(message = "技能ID列表元素不能为空") @Positive(message = "技能ID列表元素必须大于0") Long> skillIds; // 技能ID列表
+    private List<@NotNull(message = MessageConstant.SKILL_INVALID) @Positive(message = MessageConstant.SKILL_INVALID) Long> skillIds; // 技能ID列表
 
-    @NotNull(message = "是否参与派单不能为空")
+    @NotNull(message = MessageConstant.DISPATCH_STATUS_REQUIRED)
     private Boolean dispatchEnabled; // 是否参与派单
 }

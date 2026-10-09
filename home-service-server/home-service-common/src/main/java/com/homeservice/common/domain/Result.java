@@ -1,5 +1,7 @@
 package com.homeservice.common.domain;
 
+import com.homeservice.common.constant.MessageConstant;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import java.io.Serializable;
@@ -18,14 +20,14 @@ public class Result<T> implements Serializable {
     public static <T> Result<T> success() {
         Result<T> result = new Result<>();
         result.code = "SUCCESS";
-        result.message = "成功";
+        result.message = MessageConstant.SUCCESS;
         return result;
     }
 
     public static <T> Result<T> success(T object) {
         Result<T> result = new Result<>();
         result.code = "SUCCESS";
-        result.message = "成功";
+        result.message = MessageConstant.SUCCESS;
         result.data = object;
         return result;
     }

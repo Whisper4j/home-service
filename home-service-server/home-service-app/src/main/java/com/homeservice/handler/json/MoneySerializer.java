@@ -1,5 +1,7 @@
 package com.homeservice.handler.json;
 
+import com.homeservice.common.constant.MessageConstant;
+
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.*;
 
@@ -17,11 +19,11 @@ public class MoneySerializer extends JsonSerializer<BigDecimal> {
     public void serialize(BigDecimal value, JsonGenerator gen, SerializerProvider provider)
             throws IOException {
         if (value.signum() < 0 || value.compareTo(new BigDecimal("999999999.99")) > 0)
-            throw JsonMappingException.from(gen, "金额超出契约范围");
+            throw JsonMappingException.from(gen, MessageConstant.AMOUNT_TOO_LARGE);
         try {
             gen.writeString(value.setScale(2, RoundingMode.UNNECESSARY).toPlainString());
         } catch (ArithmeticException e) {
-            throw JsonMappingException.from(gen, "金额精度超出两位小数");
+            throw JsonMappingException.from(gen, MessageConstant.AMOUNT_SCALE_INVALID);
         }
     }
 }

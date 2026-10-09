@@ -1,5 +1,7 @@
 package com.homeservice.enums;
 
+import com.homeservice.common.constant.MessageConstant;
+
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
@@ -36,6 +38,6 @@ public enum CatalogStatus {
     public static CatalogStatus fromValue(String value) {
         for (CatalogStatus item : values())
             if (item.value.equals(value == null ? null : value.strip())) return item;
-        throw new IllegalArgumentException("无效的CatalogStatus");
+        throw new IllegalArgumentException(MessageConstant.ENUM_VALUE_INVALID);
     }
 }

@@ -1,5 +1,7 @@
 package com.homeservice.handler;
 
+import com.homeservice.common.constant.MessageConstant;
+
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 
@@ -38,7 +40,7 @@ public class RequestBindingAdvice {
                     public void setAsText(String text) {
                         String value = text.strip();
                         if (!value.equals("true") && !value.equals("false"))
-                            throw new IllegalArgumentException("需要 true/false");
+                            throw new IllegalArgumentException(MessageConstant.BOOLEAN_REQUIRED);
                         setValue(Boolean.valueOf(value));
                     }
                 });

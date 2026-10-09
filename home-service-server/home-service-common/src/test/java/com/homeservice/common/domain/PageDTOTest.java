@@ -2,6 +2,8 @@ package com.homeservice.common.domain;
 
 import static org.assertj.core.api.Assertions.*;
 
+import com.homeservice.common.constant.MessageConstant;
+
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -32,7 +34,7 @@ class PageDTOTest {
         assertThat(new PageQuery().getPageSize()).isEqualTo(20);
         Result<Void> empty = Result.success();
         assertThat(empty.getCode()).isEqualTo("SUCCESS");
-        assertThat(empty.getMessage()).isEqualTo("成功");
+        assertThat(empty.getMessage()).isEqualTo(MessageConstant.SUCCESS);
         assertThat(empty.getData()).isNull();
         assertThat(Result.success("x").getData()).isEqualTo("x");
         Result<Void> simpleError = Result.error("失败");

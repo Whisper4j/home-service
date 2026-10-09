@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.*;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.fasterxml.jackson.databind.*;
+import com.homeservice.common.constant.MessageConstant;
 import com.homeservice.common.domain.*;
 import com.homeservice.domain.dto.account.*;
 import com.homeservice.domain.dto.catalog.SkuDTO;
@@ -25,6 +26,7 @@ import org.junit.jupiter.api.*;
 import java.math.BigDecimal;
 import java.time.*;
 import java.util.List;
+import java.util.Set;
 
 /**
  * 契约模型测试类
@@ -184,6 +186,34 @@ class ContractModelsTest extends ProtocolTestBase {
     }
 
     /**
+     * 验证报价校验只返回面向用户的提示，不暴露内部字段含义。
+     */
+    @Test
+    void offerValidationMessagesAreFriendly() {
+        ChangeOfferDTO missing = new ChangeOfferDTO();
+        Set<String> missingMessages =
+                validator.validate(missing).stream()
+                        .map(jakarta.validation.ConstraintViolation::getMessage)
+                        .collect(java.util.stream.Collectors.toSet());
+        assertThat(missingMessages)
+                .contains(
+                        MessageConstant.OFFER_PRICE_REQUIRED,
+                        MessageConstant.OFFER_CONTEXT_EXPIRED,
+                        MessageConstant.PAYMENT_CONFIRMATION_REQUIRED)
+                .noneMatch(message -> message.contains("new") || message.contains("版本"));
+
+        ChangeOfferDTO tooLarge = new ChangeOfferDTO();
+        tooLarge.setNewPrice(new BigDecimal("1000000000.00"));
+        tooLarge.setExpectedPrice(new BigDecimal("128.00"));
+        tooLarge.setPriceVersion(1);
+        tooLarge.setConfirmSimulatedPayment(true);
+        assertThat(validator.validate(tooLarge))
+                .extracting(jakarta.validation.ConstraintViolation::getMessage)
+                .contains(MessageConstant.AMOUNT_TOO_LARGE)
+                .noneMatch(message -> message.contains("999999"));
+    }
+
+    /**
      * 验证collection与Cross字段ValidationIsReal场景
      */
     @Test
@@ -193,7 +223,7 @@ class ContractModelsTest extends ProtocolTestBase {
         profile.setPhone("123");
         assertThat(validator.validate(profile))
                 .extracting(jakarta.validation.ConstraintViolation::getMessage)
-                .contains("显示名称不能为空", "手机号格式不正确");
+                .contains(MessageConstant.DISPLAY_NAME_REQUIRED, MessageConstant.PHONE_INVALID);
         assertThat(validator.validate(json.readValue(SKU, SkuDTO.class))).isEmpty();
         assertThat(validator.validate(json.readValue(SKU.replace("120,", "121,"), SkuDTO.class)))
                 .isNotEmpty();

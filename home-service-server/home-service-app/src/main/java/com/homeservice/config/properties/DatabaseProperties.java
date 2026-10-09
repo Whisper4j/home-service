@@ -1,5 +1,7 @@
 package com.homeservice.config.properties;
 
+import com.homeservice.common.constant.MessageConstant;
+
 import jakarta.validation.constraints.*;
 
 import lombok.Getter;
@@ -18,19 +20,19 @@ import org.springframework.validation.annotation.Validated;
 @ConfigurationProperties("home.database")
 public class DatabaseProperties {
 
-    @NotBlank
+    @NotBlank(message = MessageConstant.CONFIG_VALUE_REQUIRED)
     private String host;
-    @Min(1)
-    @Max(65535)
+    @Min(value = 1, message = MessageConstant.CONFIG_VALUE_INVALID)
+    @Max(value = 65535, message = MessageConstant.CONFIG_VALUE_INVALID)
     private int port;
-    @NotBlank
-    @Pattern(regexp = "[A-Za-z0-9_]+")
+    @NotBlank(message = MessageConstant.CONFIG_VALUE_REQUIRED)
+    @Pattern(regexp = "[A-Za-z0-9_]+", message = MessageConstant.CONFIG_VALUE_INVALID)
     private String name;
-    @NotBlank
+    @NotBlank(message = MessageConstant.CONFIG_VALUE_REQUIRED)
     private String username;
-    @NotBlank
+    @NotBlank(message = MessageConstant.CONFIG_VALUE_REQUIRED)
     private String password;
-    @NotBlank
+    @NotBlank(message = MessageConstant.CONFIG_VALUE_REQUIRED)
     private String sslMode;
     private boolean allowPublicKeyRetrieval;
 

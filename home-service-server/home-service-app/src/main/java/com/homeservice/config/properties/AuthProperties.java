@@ -1,5 +1,7 @@
 package com.homeservice.config.properties;
 
+import com.homeservice.common.constant.MessageConstant;
+
 import jakarta.validation.constraints.*;
 
 import lombok.Getter;
@@ -34,13 +36,13 @@ public class AuthProperties {
                     "GET /api/customer/skus",
                     "GET /api/customer/skus/{id}",
                     "GET /api/customer/service-entries");
-    @NotNull
+    @NotNull(message = MessageConstant.CONFIG_VALUE_REQUIRED)
     private List<String> publicEndpoints = List.copyOf(CONTRACT_PUBLIC_ENDPOINTS);
 
     /**
      * 校验认证白名单是否属于契约公开接口
      */
-    @AssertTrue(message = "认证白名单不得超出 OpenAPI 的公开方法与路径")
+    @AssertTrue(message = MessageConstant.AUTH_WHITELIST_INVALID)
     public boolean isContractSubset() {
         return publicEndpoints != null && CONTRACT_PUBLIC_ENDPOINTS.containsAll(publicEndpoints);
     }

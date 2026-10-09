@@ -1,5 +1,7 @@
 package com.homeservice.config.properties;
 
+import com.homeservice.common.constant.MessageConstant;
+
 import jakarta.validation.constraints.*;
 
 import lombok.Getter;
@@ -21,13 +23,13 @@ import java.util.List;
 @ConfigurationProperties("home.websocket")
 public class WebSocketProperties {
 
-    @NotNull
+    @NotNull(message = MessageConstant.CONFIG_VALUE_REQUIRED)
     private List<String> allowedOrigins = List.of();
 
     /**
      * 校验WebSocket来源配置
      */
-    @AssertTrue(message = "Origin 只接受明确的 http(s) 源，不接受通配符、路径或凭据")
+    @AssertTrue(message = MessageConstant.WEBSOCKET_ORIGIN_INVALID)
     public boolean isExplicitOrigins() {
         if (allowedOrigins == null) return false;
         try {

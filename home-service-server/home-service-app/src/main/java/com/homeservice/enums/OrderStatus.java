@@ -1,5 +1,7 @@
 package com.homeservice.enums;
 
+import com.homeservice.common.constant.MessageConstant;
+
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
@@ -44,6 +46,6 @@ public enum OrderStatus {
     public static OrderStatus fromValue(String value) {
         for (OrderStatus item : values())
             if (item.value.equals(value == null ? null : value.strip())) return item;
-        throw new IllegalArgumentException("无效的OrderStatus");
+        throw new IllegalArgumentException(MessageConstant.ENUM_VALUE_INVALID);
     }
 }

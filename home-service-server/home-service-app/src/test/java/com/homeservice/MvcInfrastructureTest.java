@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import com.homeservice.common.constant.MessageConstant;
 import com.homeservice.enums.*;
 import com.homeservice.support.ProtocolTestBase;
 import com.homeservice.utils.*;
@@ -115,8 +116,10 @@ class MvcInfrastructureTest extends ProtocolTestBase {
                                 .content("{\"expectedPrice\":\"128.00\",\"priceVersion\":0}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
-                .andExpect(jsonPath("$.data.fieldErrors[0].field").value("priceVersion"))
-                .andExpect(jsonPath("$.data.fieldErrors[0].message").value("价格版本不能小于1"));
+                .andExpect(jsonPath("$.data.fieldErrors[0].field").value("request"))
+                .andExpect(
+                        jsonPath("$.data.fieldErrors[0].message")
+                                .value(MessageConstant.OFFER_CONTEXT_EXPIRED));
         mvc.perform(get("/api/customer/probe/business").header("Authorization", auth))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value("STATE_CONFLICT"));

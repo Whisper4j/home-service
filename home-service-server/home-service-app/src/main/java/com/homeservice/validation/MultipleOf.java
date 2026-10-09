@@ -1,5 +1,7 @@
 package com.homeservice.validation;
 
+import com.homeservice.common.constant.MessageConstant;
+
 import jakarta.validation.*;
 
 import java.lang.annotation.*;
@@ -20,7 +22,7 @@ public @interface MultipleOf {
     /**
      * 定义校验失败时的提示信息
      */
-    String message() default "数值必须符合指定粒度";
+    String message() default MessageConstant.PARAMETER_INVALID;
 
     /**
      * 定义校验分组

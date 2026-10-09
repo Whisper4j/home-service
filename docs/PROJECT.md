@@ -379,7 +379,7 @@ home-service/
 - `deleted_at` 只在原有逻辑删除表上使用 NULL/时间语义；生成列 `scope_identity` 可读但禁止 ORM 插入、更新。通用 Mapper 删除 SKU 不等于完成“删除并释放入口”的事务规则。
 - JSON 使用明确集合元素和专用 Jackson 类型处理器；两个排班字段的 SQL NULL 表示未配置，空集合含义与 NULL 不同。默认 NOT_NULL 更新策略下，需要清空可空列时由未来 Service 显式 `.set(column, null)`，不能依靠 `updateById` 的 null 值清空。
 - DTO、Query、VO 与 PO 分离，响应为 `Result<T>`，分页为 `PageQuery/PageDTO<T>`。`Result` 采用苍穹外卖风格的 Lombok 普通类并实现 `Serializable`，提供两个 `success` 和三个 `error` 重载；字段仍遵守本项目 OpenAPI 的 `code/message/data`，成功码为字符串 `SUCCESS`。包装响应不按每个接口重复创建类；覆盖命名 Schema、嵌套对象和 WebSocket 帧，业务接口仍未实现。
-- `domain` 模型统一使用容易阅读的普通 Lombok 类，不使用 `record` 或 Builder 堆叠。每个字段用简短的行尾 `// 中文含义` 说明用途，不在模型字段上写大段 Javadoc；import 只保留实际使用的类型。DTO/Query 只保留请求格式、长度、数值范围和基础交叉字段校验，并为每个约束提供明确中文 `message`；VO 不承担输入校验；PO 只保留主键、逻辑删除、自动填充、JSON 类型处理和生成列等确有作用的 MyBatis-Plus 映射注解。
+- `domain` 模型统一使用容易阅读的普通 Lombok 类，不使用 `record` 或 Builder 堆叠。每个字段用简短的行尾 `// 中文含义` 说明用途，不在模型字段上写大段 Javadoc；import 只保留实际使用的类型。DTO/Query 只保留请求格式、长度、数值范围和基础交叉字段校验，并为每个约束提供明确中文 `message`；提示文字统一引用 common 的 `MessageConstant`，新增提示先在该类命名后复用，不在注解、异常或错误码中散落文本。VO 不承担输入校验；PO 只保留主键、逻辑删除、自动填充、JSON 类型处理和生成列等确有作用的 MyBatis-Plus 映射注解。
 - OpenAPI YAML 继续是唯一正式接口契约和前端代码生成来源，不在模型上重复维护 Swagger `@ApiModel`/`@ApiModelProperty`。代码阅读依靠清晰字段名和行尾中文注释；接口浏览、联调和生成依靠 `docs/api/openapi.yaml`，避免 Java 注解与既有契约出现两份定义。
 - Java 源码采用四空格缩进；最后一条 import 后保留空行。非模型类可在职责确有必要时使用简短中文说明；注解各占一行，方法体展开书写。
 - ID 仅对 ID 字段转为十进制字符串，范围为正的有符号 BIGINT；金额用 BigDecimal/两位小数字符串；时间严格 `+08:00`、精确到秒。统计及分页数值保持数值。可选未发生字段省略，必需 nullable 字段保留 null；`SkuDTO.clientEntryCode` 缺失非法、显式 null 合法。
@@ -388,8 +388,8 @@ home-service/
 ### 14.2 认证、异常与通知
 
 - 错误处理固定分为三层：DTO/Query 用 Bean Validation 拦截与数据库和业务状态无关的格式错误；Service 校验资源归属、账号/订单状态、金额资格、幂等、事务与并发条件，失败时抛出带稳定 `ErrorCode` 的 `ApiException`/`BusinessException`；`GlobalExceptionHandler` 是 HTTP 失败响应的统一出口。
-- Controller 在正常路径只返回 `Result.success(...)`，不在 Service 或 Controller 中到处 `return Result.error(...)`。`Result.error(...)` 的重载保留给全局异常处理器和框架错误入口组装统一响应。字段校验的精确中文原因放在 `data.fieldErrors`，顶层 `code/message` 保持契约稳定；正常的空列表、未找到可选结果或布尔判断按方法语义返回，不滥用异常。
-- 全局异常输出 `code/message/data` 并保留真实 HTTP 状态，业务码来自 OpenAPI；未知异常不暴露 SQL、堆栈和凭证。生产仅有框架错误处理入口，没有登录、注册、me、订单等业务 Controller，也没有开发登录后门。
+- Controller 在正常路径只返回 `Result.success(...)`，不在 Service 或 Controller 中到处 `return Result.error(...)`。`Result.error(...)` 的重载保留给全局异常处理器和框架错误入口组装统一响应。用户能够修正的字段校验原因放在 `data.fieldErrors`，顶层 `code/message` 保持契约稳定；正常的空列表、未找到可选结果或布尔判断按方法语义返回，不滥用异常。
+- 全局异常输出 `code/message/data` 并保留真实 HTTP 状态，业务码来自 OpenAPI。`expectedPrice`、`priceVersion` 等并发保护字段校验失败时只返回通用的报价已失效提示，不向前端解释内部版本机制；请求解析和未知异常同样不回显字段实现、SQL、堆栈或凭证。生产仅有框架错误处理入口，没有登录、注册、me、订单等业务 Controller，也没有开发登录后门。
 - HS256 JWT 配置化签名密钥和有效期，载荷使用 accountId/role/exp；请求校验 Bearer 格式、算法、签名、过期和载荷，并经最小只读 `IAccountQueryService` 查询真实账号的存在、状态和角色。UserContext 只保存账号身份，完成、异常及异步移交后清理；workerId 必须另查人员资料，不能当成 accountId。
 - 公开白名单精确到 HTTP 方法和路径且只能取 OpenAPI 公开集合。三端路径角色检查不代替资源归属、状态迁移或优惠资格校验，这些由未来 Service 实现。
 - `/ws` 握手拒绝 URL 查询参数；5 秒内首帧 AUTH，认证前无业务数据，成功返回 AUTHENTICATED。按契约使用 4401/4403，管理认证超时、Token 到期及断线清理。身份保存在独立会话绑定中，不读取 HTTP ThreadLocal。
